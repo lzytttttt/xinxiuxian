@@ -1,0 +1,1026 @@
+[
+  {
+    "seed": "golden-000",
+    "level": 24,
+    "cultivation": 857,
+    "fates": [
+      "fate_brk_blue:6",
+      "fate_artifact_purple:15"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_dawn_dew",
+      "ev_early_market_price",
+      "ev_early_water_carry",
+      "ev_early_first_breath",
+      "ev_early_wood_chop",
+      "ev_early_herb_plot",
+      "ev_early_rabbit_snare",
+      "ev_early_rain_eaves",
+      "ev_early_storyteller",
+      "ev_early_gate_knock"
+    ]
+  },
+  {
+    "seed": "golden-001",
+    "level": 49,
+    "cultivation": 44044,
+    "fates": [
+      "fate_luck_green:1",
+      "fate_artifact_blue:6"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_well_echo",
+      "ev_early_water_carry",
+      "ev_early_step_sweep",
+      "ev_early_lost_purse",
+      "ev_early_rabbit_snare",
+      "ev_early_market_price",
+      "ev_early_boar_hunt",
+      "ev_mid_secret_map",
+      "ev_mid_retreat_prep",
+      "ev_early_shallows",
+      "ev_mid_sect_faction_tear",
+      "ev_mid_sect_chore",
+      "ev_mid_faction_vote",
+      "ev_mid_pill_decline",
+      "ev_mid_heart_whisper",
+      "ev_mid_demon_offer",
+      "ev_mid_market_haggle",
+      "ev_mid_righteous_watch",
+      "ev_mid_ruin_shard"
+    ]
+  },
+  {
+    "seed": "golden-002",
+    "level": 28,
+    "cultivation": 1064,
+    "fates": [
+      "fate_artifact_gold:26",
+      "fate_luck_blue:1"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_cliff_flower",
+      "ev_early_errand_run"
+    ]
+  },
+  {
+    "seed": "golden-003",
+    "level": 58,
+    "cultivation": 9947,
+    "fates": [
+      "fate_xianqi_green:3",
+      "fate_trib_blue:2"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_mid_sect_faction_tear",
+      "ev_early_grass_scent",
+      "ev_mid_peer_mock",
+      "ev_mid_grudge_at_door",
+      "ev_mid_righteous_watch",
+      "ev_mid_caravan_road",
+      "ev_mid_relic_pool"
+    ]
+  },
+  {
+    "seed": "golden-004",
+    "level": 13,
+    "cultivation": 358,
+    "fates": [
+      "fate_artifact_blue:9",
+      "fate_root_green:1"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_wood_chop",
+      "ev_early_water_carry",
+      "ev_early_first_lesson",
+      "ev_early_stone_skip",
+      "ev_early_step_sweep",
+      "ev_early_rabbit_snare",
+      "ev_early_storyteller",
+      "ev_early_road_block"
+    ]
+  },
+  {
+    "seed": "golden-005",
+    "level": 22,
+    "cultivation": 855,
+    "fates": [
+      "fate_xianqi_green:3",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_wood_chop",
+      "ev_early_water_carry",
+      "ev_early_valley_shout",
+      "ev_early_market_price",
+      "ev_early_rabbit_snare",
+      "ev_early_old_iron",
+      "ev_early_errand_run",
+      "ev_early_cliff_flower",
+      "ev_early_beast_cub",
+      "ev_early_first_lesson",
+      "ev_early_elder_lecture"
+    ]
+  },
+  {
+    "seed": "golden-006",
+    "level": 14,
+    "cultivation": 457,
+    "fates": [
+      "fate_trib_green:1",
+      "fate_luck_gold:9"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_early_valley_shout",
+      "ev_early_shallows",
+      "ev_early_market_price",
+      "ev_early_storyteller",
+      "ev_early_wolf_cub",
+      "ev_early_wood_chop",
+      "ev_early_dawn_dew",
+      "ev_early_road_block",
+      "ev_early_water_carry"
+    ]
+  },
+  {
+    "seed": "golden-007",
+    "level": 29,
+    "cultivation": 1285,
+    "fates": [
+      "fate_trib_green:1",
+      "fate_brk_gold:19"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_lost_purse",
+      "ev_early_wood_chop",
+      "ev_early_water_carry",
+      "ev_early_beast_cub",
+      "ev_mid_accept_disciple",
+      "ev_mid_sect_faction_tear",
+      "ev_early_market_price",
+      "ev_mid_sect_chore",
+      "ev_mid_grudge_at_door",
+      "ev_mid_grand_meet"
+    ]
+  },
+  {
+    "seed": "golden-008",
+    "level": 45,
+    "cultivation": 4052,
+    "fates": [
+      "fate_artifact_blue:6",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 5,
+    "eventIds": [
+      "ev_early_road_block",
+      "ev_early_fist_lesson",
+      "ev_mid_artifact_deep_soak",
+      "ev_early_first_breath",
+      "ev_mid_grotto_spring",
+      "ev_mid_grudge_at_door",
+      "ev_mid_grand_meet"
+    ]
+  },
+  {
+    "seed": "golden-009",
+    "level": 15,
+    "cultivation": 482,
+    "fates": [
+      "fate_root_green:1",
+      "fate_luck_blue:1"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_beast_cub",
+      "ev_early_dawn_dew",
+      "ev_early_first_breath",
+      "ev_early_rain_eaves",
+      "ev_early_road_block",
+      "ev_early_boar_hunt",
+      "ev_early_market_price",
+      "ev_early_rabbit_snare",
+      "ev_early_stone_skip",
+      "ev_early_wood_chop",
+      "ev_early_first_lesson",
+      "ev_early_shallows"
+    ]
+  },
+  {
+    "seed": "golden-010",
+    "level": 31,
+    "cultivation": 1435,
+    "fates": [
+      "fate_root_green:1",
+      "fate_xianqi_blue:6"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_early_stone_skip",
+      "ev_early_water_carry",
+      "ev_early_wolf_cub",
+      "ev_early_first_breath",
+      "ev_early_step_sweep",
+      "ev_early_shallows"
+    ]
+  },
+  {
+    "seed": "golden-011",
+    "level": 26,
+    "cultivation": 1182,
+    "fates": [
+      "fate_root_green:1",
+      "fate_brk_green:1"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_water_carry",
+      "ev_early_wood_chop",
+      "ev_early_boar_hunt",
+      "ev_early_shallows",
+      "ev_early_rabbit_snare",
+      "ev_early_first_lesson",
+      "ev_early_rain_eaves",
+      "ev_early_gate_knock",
+      "ev_mid_sect_chore"
+    ]
+  },
+  {
+    "seed": "golden-012",
+    "level": 74,
+    "cultivation": 31123,
+    "fates": [
+      "fate_artifact_purple:15",
+      "fate_trib_green:1"
+    ],
+    "artifacts": 6,
+    "eventIds": [
+      "ev_early_night_hum",
+      "ev_mid_market_haggle",
+      "ev_mid_retreat_prep",
+      "ev_mid_grotto_spring",
+      "ev_mid_faction_vote",
+      "ev_late_gather_xianqi",
+      "ev_late_seclude",
+      "ev_late_junior_challenge",
+      "ev_mid_sect_chore",
+      "ev_mid_take_blame",
+      "ev_late_rival_meet",
+      "ev_mid_ruin_shard"
+    ]
+  },
+  {
+    "seed": "golden-013",
+    "level": 23,
+    "cultivation": 832,
+    "fates": [
+      "fate_brk_blue:3",
+      "fate_xianqi_purple:23"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_elder_lecture",
+      "ev_early_cliff_flower",
+      "ev_early_storyteller",
+      "ev_early_wolf_cub",
+      "ev_early_step_sweep",
+      "ev_early_first_breath",
+      "ev_early_old_iron",
+      "ev_early_errand_run",
+      "ev_early_rabbit_snare",
+      "ev_early_market_price",
+      "ev_early_dawn_dew",
+      "ev_early_wood_chop",
+      "ev_early_water_carry",
+      "ev_early_lost_purse",
+      "ev_early_stone_skip"
+    ]
+  },
+  {
+    "seed": "golden-014",
+    "level": 23,
+    "cultivation": 716,
+    "fates": [
+      "fate_artifact_purple:18",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_wolf_cub",
+      "ev_early_fist_lesson",
+      "ev_early_first_breath",
+      "ev_early_rabbit_snare",
+      "ev_early_lost_purse",
+      "ev_early_cliff_flower",
+      "ev_early_grass_scent"
+    ]
+  },
+  {
+    "seed": "golden-015",
+    "level": 42,
+    "cultivation": 3457,
+    "fates": [
+      "fate_trib_purple:5",
+      "fate_luck_blue:2"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_old_iron",
+      "ev_early_first_lesson",
+      "ev_mid_peer_mock",
+      "ev_early_lost_purse",
+      "ev_mid_artifact_deep_soak",
+      "ev_early_herb_plot",
+      "ev_mid_caravan_road"
+    ]
+  },
+  {
+    "seed": "golden-016",
+    "level": 38,
+    "cultivation": 3580,
+    "fates": [
+      "fate_artifact_blue:7",
+      "fate_trib_purple:5"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_gate_knock",
+      "ev_early_dawn_dew",
+      "ev_mid_heart_seed",
+      "ev_early_rain_eaves",
+      "ev_mid_righteous_watch",
+      "ev_mid_peer_mock",
+      "ev_early_water_carry",
+      "ev_early_old_iron",
+      "ev_early_boar_hunt",
+      "ev_mid_pill_rush_bet"
+    ]
+  },
+  {
+    "seed": "golden-017",
+    "level": 22,
+    "cultivation": 892,
+    "fates": [
+      "fate_xianqi_green:4",
+      "fate_artifact_gold:24"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_gate_knock",
+      "ev_early_first_breath",
+      "ev_early_rabbit_snare",
+      "ev_early_first_lesson",
+      "ev_early_errand_run",
+      "ev_early_wood_chop",
+      "ev_early_fist_lesson",
+      "ev_early_storyteller",
+      "ev_early_old_iron"
+    ]
+  },
+  {
+    "seed": "golden-018",
+    "level": 73,
+    "cultivation": 37650,
+    "fates": [
+      "fate_artifact_gold:30",
+      "fate_trib_purple:4"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_mid_pill_decline",
+      "ev_mid_righteous_watch",
+      "ev_mid_artifact_warm_vein",
+      "ev_mid_pill_qi_surge",
+      "ev_mid_peer_mock",
+      "ev_mid_faction_vote"
+    ]
+  },
+  {
+    "seed": "golden-019",
+    "level": 24,
+    "cultivation": 950,
+    "fates": [
+      "fate_artifact_blue:8",
+      "fate_root_blue:1"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_lost_purse",
+      "ev_early_storyteller",
+      "ev_early_water_carry",
+      "ev_early_wood_chop",
+      "ev_early_road_block",
+      "ev_early_fist_lesson",
+      "ev_early_grass_scent",
+      "ev_early_shallows"
+    ]
+  },
+  {
+    "seed": "golden-020",
+    "level": 16,
+    "cultivation": 455,
+    "fates": [
+      "fate_luck_gold:10",
+      "fate_artifact_purple:17"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_grass_scent",
+      "ev_early_rabbit_snare",
+      "ev_early_first_breath",
+      "ev_early_herb_plot",
+      "ev_early_shallows",
+      "ev_early_market_price",
+      "ev_early_stone_milk",
+      "ev_early_lost_purse",
+      "ev_early_dawn_dew",
+      "ev_early_fist_lesson"
+    ]
+  },
+  {
+    "seed": "golden-021",
+    "level": 52,
+    "cultivation": 7810,
+    "fates": [
+      "fate_luck_blue:1",
+      "fate_trib_purple:5"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_first_breath",
+      "ev_early_valley_shout",
+      "ev_mid_shield_elder",
+      "ev_early_water_carry",
+      "ev_mid_recruit_prodigy",
+      "ev_mid_ruin_shard",
+      "ev_mid_take_blame",
+      "ev_mid_grudge_at_door",
+      "ev_mid_artifact_warm_vein"
+    ]
+  },
+  {
+    "seed": "golden-022",
+    "level": 62,
+    "cultivation": 13016,
+    "fates": [
+      "fate_xianqi_blue:9",
+      "fate_root_blue:3"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_errand_run",
+      "ev_early_dawn_dew",
+      "ev_early_stone_skip",
+      "ev_early_water_carry",
+      "ev_mid_relic_pool",
+      "ev_mid_pill_decline",
+      "ev_mid_take_blame",
+      "ev_mid_shield_elder"
+    ]
+  },
+  {
+    "seed": "golden-023",
+    "level": 18,
+    "cultivation": 767,
+    "fates": [
+      "fate_luck_purple:5",
+      "fate_artifact_green:2"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_wood_chop",
+      "ev_early_grass_scent",
+      "ev_early_errand_run",
+      "ev_early_first_breath",
+      "ev_early_stone_skip",
+      "ev_early_storyteller",
+      "ev_early_dawn_dew",
+      "ev_early_first_lesson",
+      "ev_early_lost_purse",
+      "ev_early_dream_path",
+      "ev_early_gate_knock",
+      "ev_early_wolf_cub"
+    ]
+  },
+  {
+    "seed": "golden-024",
+    "level": 41,
+    "cultivation": 3977,
+    "fates": [
+      "fate_artifact_green:2",
+      "fate_brk_blue:4"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_wood_chop",
+      "ev_early_valley_shout",
+      "ev_mid_heart_whisper",
+      "ev_mid_shield_elder"
+    ]
+  },
+  {
+    "seed": "golden-025",
+    "level": 23,
+    "cultivation": 886,
+    "fates": [
+      "fate_root_green:1",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_road_block",
+      "ev_early_first_breath",
+      "ev_early_boar_hunt",
+      "ev_early_dawn_dew",
+      "ev_early_storyteller",
+      "ev_early_wolf_cub",
+      "ev_early_rain_eaves",
+      "ev_early_herb_plot"
+    ]
+  },
+  {
+    "seed": "golden-026",
+    "level": 43,
+    "cultivation": 3110,
+    "fates": [
+      "fate_brk_blue:3",
+      "fate_xianqi_gold:31"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_market_price",
+      "ev_early_dawn_dew",
+      "ev_early_herb_plot",
+      "ev_mid_artifact_warm_vein",
+      "ev_early_valley_shout",
+      "ev_mid_pill_decline"
+    ]
+  },
+  {
+    "seed": "golden-027",
+    "level": 31,
+    "cultivation": 7794,
+    "fates": [
+      "fate_luck_green:1",
+      "fate_brk_purple:12"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_errand_run",
+      "ev_early_rabbit_snare",
+      "ev_early_market_price",
+      "ev_early_fist_lesson",
+      "ev_early_step_sweep",
+      "ev_early_first_breath"
+    ]
+  },
+  {
+    "seed": "golden-028",
+    "level": 73,
+    "cultivation": 48124,
+    "fates": [
+      "fate_artifact_gold:30",
+      "fate_brk_purple:8"
+    ],
+    "artifacts": 6,
+    "eventIds": [
+      "ev_early_step_sweep",
+      "ev_mid_righteous_watch",
+      "ev_mid_pill_qi_surge",
+      "ev_mid_immortal_remnant",
+      "ev_mid_heart_seed",
+      "ev_mid_ruin_shard",
+      "ev_late_junior_challenge",
+      "ev_mid_recruit_prodigy"
+    ]
+  },
+  {
+    "seed": "golden-029",
+    "level": 14,
+    "cultivation": 406,
+    "fates": [
+      "fate_xianqi_green:4",
+      "fate_luck_blue:2"
+    ],
+    "artifacts": 0,
+    "eventIds": [
+      "ev_early_first_breath",
+      "ev_early_wood_chop",
+      "ev_early_step_sweep",
+      "ev_early_dawn_dew",
+      "ev_early_storyteller",
+      "ev_early_errand_run",
+      "ev_early_water_carry",
+      "ev_early_herb_plot"
+    ]
+  },
+  {
+    "seed": "golden-030",
+    "level": 31,
+    "cultivation": 1756,
+    "fates": [
+      "fate_root_green:1",
+      "fate_artifact_purple:16"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_grass_scent",
+      "ev_mid_sect_chore",
+      "ev_early_stone_milk",
+      "ev_mid_artifact_warm_vein",
+      "ev_early_wood_chop",
+      "ev_early_elder_lecture",
+      "ev_early_errand_run",
+      "ev_early_rain_eaves"
+    ]
+  },
+  {
+    "seed": "golden-031",
+    "level": 17,
+    "cultivation": 523,
+    "fates": [
+      "fate_brk_gold:16",
+      "fate_trib_purple:5"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_wolf_cub",
+      "ev_early_errand_run",
+      "ev_early_first_lesson",
+      "ev_early_first_breath",
+      "ev_early_rabbit_snare",
+      "ev_early_beast_cub",
+      "ev_early_step_sweep",
+      "ev_early_old_iron",
+      "ev_early_wood_chop"
+    ]
+  },
+  {
+    "seed": "golden-032",
+    "level": 21,
+    "cultivation": 813,
+    "fates": [
+      "fate_luck_green:1",
+      "fate_brk_blue:5"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_storyteller",
+      "ev_early_step_sweep",
+      "ev_early_road_block",
+      "ev_early_wood_chop",
+      "ev_early_water_carry",
+      "ev_early_boar_hunt",
+      "ev_early_first_breath"
+    ]
+  },
+  {
+    "seed": "golden-033",
+    "level": 56,
+    "cultivation": 8744,
+    "fates": [
+      "fate_trib_green:1",
+      "fate_luck_blue:3"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_mid_ruin_shard",
+      "ev_mid_fame_invite",
+      "ev_mid_name_spread",
+      "ev_mid_heart_mirror"
+    ]
+  },
+  {
+    "seed": "golden-034",
+    "level": 32,
+    "cultivation": 1105,
+    "fates": [
+      "fate_trib_blue:3",
+      "fate_artifact_gold:22"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_storyteller",
+      "ev_early_step_sweep",
+      "ev_early_stone_skip",
+      "ev_early_fist_lesson",
+      "ev_early_lost_purse",
+      "ev_early_road_block",
+      "ev_mid_artifact_warm_vein",
+      "ev_early_wolf_cub",
+      "ev_mid_demon_offer",
+      "ev_early_errand_run"
+    ]
+  },
+  {
+    "seed": "golden-035",
+    "level": 33,
+    "cultivation": 1717,
+    "fates": [
+      "fate_root_purple:6",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_step_sweep",
+      "ev_early_road_block",
+      "ev_early_water_carry",
+      "ev_early_rabbit_snare",
+      "ev_early_grass_scent",
+      "ev_early_market_price",
+      "ev_early_shallows",
+      "ev_mid_heart_whisper",
+      "ev_mid_artifact_warm_vein",
+      "ev_mid_accept_disciple",
+      "ev_early_lost_purse"
+    ]
+  },
+  {
+    "seed": "golden-036",
+    "level": 24,
+    "cultivation": 693,
+    "fates": [
+      "fate_luck_purple:5",
+      "fate_trib_blue:2"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_rabbit_snare",
+      "ev_early_old_iron",
+      "ev_early_first_breath",
+      "ev_early_herb_plot",
+      "ev_early_lost_purse",
+      "ev_early_wolf_cub",
+      "ev_early_step_sweep"
+    ]
+  },
+  {
+    "seed": "golden-037",
+    "level": 31,
+    "cultivation": 1334,
+    "fates": [
+      "fate_luck_green:1",
+      "fate_root_green:1"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_first_breath",
+      "ev_early_fist_lesson",
+      "ev_mid_heart_mirror"
+    ]
+  },
+  {
+    "seed": "golden-038",
+    "level": 13,
+    "cultivation": 438,
+    "fates": [
+      "fate_root_purple:6",
+      "fate_luck_purple:6"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_early_cliff_flower",
+      "ev_early_rain_eaves",
+      "ev_early_dream_path",
+      "ev_early_dawn_dew",
+      "ev_early_step_sweep",
+      "ev_early_first_breath",
+      "ev_early_water_carry",
+      "ev_early_valley_shout",
+      "ev_early_wolf_cub",
+      "ev_early_storyteller"
+    ]
+  },
+  {
+    "seed": "golden-039",
+    "level": 44,
+    "cultivation": 5762,
+    "fates": [
+      "fate_brk_green:1",
+      "fate_root_green:1"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_rabbit_snare",
+      "ev_mid_relic_pool",
+      "ev_early_wood_chop",
+      "ev_early_rain_eaves",
+      "ev_mid_pill_rush_bet",
+      "ev_mid_peer_mock",
+      "ev_mid_pill_decline",
+      "ev_mid_heart_mirror",
+      "ev_mid_pill_qi_surge",
+      "ev_mid_accept_disciple"
+    ]
+  },
+  {
+    "seed": "golden-040",
+    "level": 52,
+    "cultivation": 5210,
+    "fates": [
+      "fate_brk_green:1",
+      "fate_root_blue:2"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_stone_skip",
+      "ev_early_valley_shout",
+      "ev_early_shallows",
+      "ev_mid_relic_pool",
+      "ev_early_step_sweep",
+      "ev_mid_sect_faction_tear",
+      "ev_mid_pill_rush_bet",
+      "ev_early_storyteller",
+      "ev_mid_sect_chore",
+      "ev_mid_faction_vote",
+      "ev_mid_ruin_shard",
+      "ev_mid_sect_schism"
+    ]
+  },
+  {
+    "seed": "golden-041",
+    "level": 17,
+    "cultivation": 539,
+    "fates": [
+      "fate_trib_gold:9",
+      "fate_artifact_green:2"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_errand_run",
+      "ev_early_rabbit_snare",
+      "ev_early_fist_lesson",
+      "ev_early_herb_plot"
+    ]
+  },
+  {
+    "seed": "golden-042",
+    "level": 44,
+    "cultivation": 3917,
+    "fates": [
+      "fate_trib_blue:1",
+      "fate_artifact_green:3"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_first_breath",
+      "ev_early_lost_purse",
+      "ev_early_wood_chop",
+      "ev_early_step_sweep",
+      "ev_mid_heart_seed",
+      "ev_mid_ruin_shard",
+      "ev_mid_name_spread"
+    ]
+  },
+  {
+    "seed": "golden-043",
+    "level": 13,
+    "cultivation": 354,
+    "fates": [
+      "fate_xianqi_green:4",
+      "fate_trib_blue:3"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_early_step_sweep",
+      "ev_early_storyteller",
+      "ev_early_first_breath"
+    ]
+  },
+  {
+    "seed": "golden-044",
+    "level": 29,
+    "cultivation": 1621,
+    "fates": [
+      "fate_root_blue:1",
+      "fate_brk_blue:2"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_storyteller",
+      "ev_early_rabbit_snare",
+      "ev_early_water_carry",
+      "ev_early_old_iron",
+      "ev_early_herb_plot",
+      "ev_early_first_breath",
+      "ev_early_rain_eaves",
+      "ev_early_dawn_dew",
+      "ev_mid_market_haggle",
+      "ev_mid_sect_faction_tear"
+    ]
+  },
+  {
+    "seed": "golden-045",
+    "level": 13,
+    "cultivation": 392,
+    "fates": [
+      "fate_xianqi_gold:46",
+      "fate_trib_gold:7"
+    ],
+    "artifacts": 4,
+    "eventIds": [
+      "ev_early_step_sweep",
+      "ev_early_wood_chop",
+      "ev_early_first_breath",
+      "ev_early_errand_run",
+      "ev_early_lost_purse"
+    ]
+  },
+  {
+    "seed": "golden-046",
+    "level": 25,
+    "cultivation": 1025,
+    "fates": [
+      "fate_artifact_purple:17",
+      "fate_xianqi_green:3"
+    ],
+    "artifacts": 1,
+    "eventIds": [
+      "ev_early_storyteller",
+      "ev_early_market_price",
+      "ev_early_water_carry",
+      "ev_early_step_sweep"
+    ]
+  },
+  {
+    "seed": "golden-047",
+    "level": 19,
+    "cultivation": 562,
+    "fates": [
+      "fate_brk_green:2",
+      "fate_luck_green:1"
+    ],
+    "artifacts": 3,
+    "eventIds": [
+      "ev_early_wood_chop",
+      "ev_early_first_lesson",
+      "ev_early_boar_hunt",
+      "ev_early_step_sweep",
+      "ev_early_grass_scent"
+    ]
+  },
+  {
+    "seed": "golden-048",
+    "level": 15,
+    "cultivation": 435,
+    "fates": [
+      "fate_trib_green:1",
+      "fate_brk_blue:6"
+    ],
+    "artifacts": 2,
+    "eventIds": [
+      "ev_early_old_iron",
+      "ev_early_wood_chop",
+      "ev_early_errand_run",
+      "ev_early_herb_plot",
+      "ev_early_road_block",
+      "ev_early_water_carry",
+      "ev_early_shallows"
+    ]
+  },
+  {
+    "seed": "golden-049",
+    "level": 94,
+    "cultivation": 16891876,
+    "fates": [
+      "fate_root_green:1",
+      "fate_artifact_purple:17"
+    ],
+    "artifacts": 13,
+    "eventIds": [
+      "ev_early_cliff_flower",
+      "ev_mid_secret_map",
+      "ev_mid_heart_mirror",
+      "ev_mid_evil_clash",
+      "ev_mid_caravan_road",
+      "ev_late_rival_final",
+      "ev_mid_grand_meet",
+      "ev_mid_pill_qi_surge",
+      "ev_late_last_disciple",
+      "ev_late_mortal_town",
+      "ev_mid_take_blame",
+      "ev_mid_righteous_watch",
+      "ev_mid_pill_rush_bet",
+      "ev_late_seclude",
+      "ev_mid_artifact_deep_soak",
+      "ev_mid_sect_chore",
+      "ev_mid_grotto_spring",
+      "ev_mid_recruit_prodigy",
+      "ev_mid_ruin_shard",
+      "ev_late_found_sect",
+      "ev_late_rival_meet",
+      "ev_late_fame_letters",
+      "ev_late_karma",
+      "ev_late_teach",
+      "ev_late_keepsake"
+    ]
+  }
+]

@@ -15,7 +15,14 @@
     "test:ui": "vitest run --project ui",
     "coverage": "vitest run --project engine --coverage",
     "lint": "eslint src/ --max-warnings 0",
-    "verify": "npm run typecheck && npm run lint && npm test"
+    "sim": "tsx tools/sim.ts",
+    "sim:golden": "tsx tools/sim.ts --golden",
+    "sim:golden:write": "tsx tools/sim.ts --golden --write",
+    "sim:calibrate": "tsx tools/sim.ts --calibrate",
+    "sim:calibrate:write": "tsx tools/sim.ts --calibrate --write",
+    "content:names": "tsx tools/gen-names.ts",
+    "content:names:check": "tsx tools/gen-names.ts --check",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run sim:golden"
   },
   "dependencies": {
     "immer": "^11.1.18",
@@ -25,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",

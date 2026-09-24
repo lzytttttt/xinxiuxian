@@ -1,3 +1,21 @@
-// 引擎公共导出（barrel）。store 只从这里 import。
-// Phase 1 起填充 RunState / rollYear / applyChoice 等实现。
-export {};
+export * from './types/effects';
+export * from './types/log';
+export * from './types/meta';
+export * from './types/rng';
+export * from './types/run';
+
+export { makeRng, makeRngBag, STREAM_NAMES } from './rng';
+export { defineEvent, defineFate, defineRollTable, bundle } from './registry';
+export { drawCard, drawCards, createRun, pityGuard, type CharCard } from './newRun';
+export { rollYear, applyChoice, type TickResult } from './tick';
+export { powerOf, realmName, stageName, levelTier, talentTier, luckMult, lifespanGain } from './selectors';
+export { formatPower, type EncounterPayload } from './encounter';
+export { resolveChoice, interpolate, clampAll } from './interpret';
+export { evalCondition, makeEvalCtx } from './conditions';
+export { drawFates, applyFates, FATE_ATTRS, FATE_COLORS, midFateValue, fateFull } from './fate';
+export { totalPower, displayInterval, battleOutcome, escapeChance, ownTier } from './power';
+export type { BattleResult } from './power';
+export { enterImmortalRealm, resolveAscensionChoice, shouldTribulate, perilTick } from './tribulation';
+export { pickEnemyTier, buildEncounter } from './encounter';
+export { buildArtifact, resolveArtifact, subdueRate, pickArtifactTier } from './artifact';
+export { attemptBreak } from './breakthrough';
