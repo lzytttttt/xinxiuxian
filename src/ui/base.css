@@ -1,0 +1,974 @@
+/* base.css —— 排版、氛围、组件配方、动画词表、外壳布局
+   只消费 tokens.css 的变量。氛围层的波点与柔光梯度按 tech/04-visual.md §三
+   的配方内联，是"零字面量"的既定例外。 */
+
+/* ═══ 一、重置与排版 ═══ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink-2);
+  font-family: var(--font-round);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-color: var(--bg-page);
+  background-image: var(--amb-a), var(--amb-b),
+    radial-gradient(circle, var(--dots) 1.5px, transparent 1.6px);
+  background-size: auto, auto, 24px 24px;
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ink-1);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 数字：圆体 + 表格数字对齐。
+   不再用等宽字体——参考硬规则 11 禁止 UI 文本使用系统等宽。 */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 700;
+}
+
+/* 元信息 5.3:1。不用 --ink-soft：它只有 3.9:1，仅够大字，不足以承载元信息。 */
+.meta,
+.hint {
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ═══ 二、面板与卡片 ═══ */
+
+.panel {
+  background: var(--surface-1);
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-md);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-bottom: var(--bw) solid var(--hairline);
+  color: var(--ink-1);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 面板标题的标记由丝带（.ribbon）承担，不另加图标——
+   不用 emoji、不用 Unicode 符号（硬规则 15 / 16）。 */
+
+.ring-value {
+  color: var(--primary-deep);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.mt-sm {
+  margin-top: var(--sp-2);
+}
+
+.panel-body {
+  padding: var(--sp-4);
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-card);
+  /* 卡片无 box-shadow —— 硬规则 8。层次来自描边与抬起，不来自海拔阴影。 */
+  transition: transform var(--t-slow) var(--ease), border-color var(--t-base) var(--ease);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--hairline-lit);
+}
+
+/* 稀有度用左侧 4px 色条表达，不给整卡染色。
+   浅色底加宽到 4px：2px 在奶油底上会被 2px 描边吃掉。 */
+.card[data-rarity]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--rc, var(--r-fan));
+}
+
+.card[data-rarity='fan'] {
+  --rc: var(--r-fan);
+}
+.card[data-rarity='ling'] {
+  --rc: var(--r-ling);
+}
+.card[data-rarity='xuan'] {
+  --rc: var(--r-xuan);
+}
+.card[data-rarity='di'] {
+  --rc: var(--r-di);
+}
+.card[data-rarity='tian'] {
+  --rc: var(--r-tian);
+}
+.card[data-rarity='xian'] {
+  --rc: var(--r-xian);
+}
+
+/* ═══ 三、弹层 ═══ */
+
+.mask {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(61, 52, 40, 0.35);
+  animation: 凝气 var(--t-base) var(--ease);
+  z-index: 50;
+}
+
+/* 居中弹层用 SVG blob 剪影（硬规则 9），剪影定义在 index.html。
+   objectBoundingBox 单位会随尺寸拉伸，所以宽度固定在 360px。
+   边缘内缩很大，padding 必须给到规格值，否则内容会被切。 */
+.modal {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  padding: var(--sp-7) var(--sp-7) var(--sp-6);
+  clip-path: url(#animal-modal-clip);
+  background: var(--bg-content);
+  color: var(--ink-2);
+  animation: 凝气 300ms var(--ease);
+}
+
+.modal-title {
+  margin-bottom: var(--sp-3);
+  color: var(--ink-1);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.modal-body {
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+/* 底部抽屉是另一种形态：宽度铺满，blob 会被拉变形。
+   这是对硬规则 9 的有意收窄，不是违反。 */
+@media (max-width: 1023px) {
+  .mask {
+    align-items: flex-end;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    clip-path: none;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding: var(--sp-5) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ═══ 四、通用控件 ═══ */
+
+/* 主按钮：唯一使用 3D 堆叠阴影的按钮（硬规则 5）。
+   底色用 --primary-deep 而非 --primary：白字在亮档薄荷青上只有 2.1:1。 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 10px var(--sp-5);
+  border: var(--bw) solid var(--primary-deep-active);
+  border-radius: var(--r-pill);
+  background: var(--primary-deep);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-3d);
+  transition: all var(--t-base) var(--ease);
+}
+
+.btn:hover {
+  background: var(--primary-deep-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-3d-hover);
+}
+
+.btn:active {
+  background: var(--primary-deep-active);
+  transform: translateY(2px);
+  box-shadow: var(--shadow-3d-press);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--focus-ring-btn);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  background: var(--surface-4);
+  border-color: var(--hairline);
+  color: var(--ink-4);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* 次级按钮：柔和抬升，不用 3D */
+.btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 8px var(--sp-4);
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--t-base) var(--ease);
+}
+
+.btn-soft:hover {
+  border-color: var(--hairline-lit);
+  box-shadow: var(--shadow-base);
+  transform: translateY(-1px);
+}
+
+.btn-soft:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-soft:focus-visible {
+  outline: 3px solid var(--focus-ring-btn);
+  outline-offset: 2px;
+}
+
+/* 文字按钮：无阴影、无描边 */
+.btn-ghost {
+  padding: 6px var(--sp-3);
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--primary-deep);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.btn-ghost:hover {
+  background: var(--primary-bg);
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-ghost:focus-visible {
+  outline: 3px solid var(--focus-ring-btn);
+  outline-offset: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px var(--sp-3);
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.chip b {
+  color: var(--ink-1);
+  font-weight: 700;
+}
+
+.chip .num {
+  color: var(--primary-deep);
+}
+
+.bar {
+  height: 10px;
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-4);
+  box-shadow: var(--shadow-track);
+  overflow: hidden;
+}
+
+.bar > i {
+  display: block;
+  width: var(--p, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary-deep);
+  transition: width var(--t-slow) var(--ease);
+}
+
+/* 填充色用 --tone-* 加深档，不用装饰调色板（--r-* 与 --island-*）。
+   进度条是数值的唯一指示物，必须 ≥3:1；--r-tian 只有 1.61:1。 */
+.bar[data-tone='gold'] > i {
+  background: var(--tone-gold);
+}
+
+.bar[data-tone='crimson'] > i {
+  background: var(--tone-red);
+}
+
+.ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: conic-gradient(var(--primary-deep) var(--p, 0%), var(--surface-4) 0);
+  box-shadow: var(--shadow-base);
+}
+
+.ring::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: var(--bw) solid var(--hairline);
+}
+
+.ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  z-index: 1;
+}
+
+.input {
+  padding: 10px var(--sp-4);
+  background: var(--surface-input);
+  border: var(--bw-input) solid var(--hairline);
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--t-base) var(--ease);
+}
+
+.input::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.input:focus {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+  border-color: var(--hairline-lit);
+}
+
+/* ═══ 五、燕尾丝带标题 ═══
+   只给主面板标题与品牌名。丝带很重，每个面板都挂会吵。 */
+
+.ribbon {
+  position: relative;
+  display: inline-flex;
+  filter: drop-shadow(0 0.08em 0.12em rgba(61, 52, 40, 0.05));
+  --rf: var(--primary-deep);
+  --rb: var(--primary);
+  --rk: #0a5f58;
+  --rt: #fff;
+}
+
+.ribbon-back-left,
+.ribbon-back-right {
+  position: absolute;
+  bottom: -0.4em;
+  width: 1.7em;
+  height: 1.7em;
+  background: var(--rb);
+}
+
+.ribbon-back-left {
+  left: 0;
+  clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 30% 50%, 0% 0%);
+}
+
+.ribbon-back-right {
+  right: 0;
+  clip-path: polygon(0% 0%, 100% 0%, 70% 50%, 100% 100%, 0% 100%);
+}
+
+.ribbon-fold-left,
+.ribbon-fold-right {
+  position: absolute;
+  bottom: -0.45em;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.ribbon-fold-left {
+  left: 0;
+  border-width: 0 0.95em 0.45em 0;
+  border-color: transparent var(--rk) transparent transparent;
+}
+
+.ribbon-fold-right {
+  right: 0;
+  border-width: 0 0 0.45em 0.95em;
+  border-color: transparent transparent transparent var(--rk);
+}
+
+.ribbon-front {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2em;
+  padding: 0 1.6em;
+  background: var(--rf);
+  color: var(--rt);
+  border-radius: 0.2em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transform: perspective(11.5em) rotateX(3deg);
+}
+
+/* CJK 视觉居中补偿 */
+.ribbon-text {
+  font-weight: 900;
+  padding-top: 0.11em;
+}
+
+/* ═══ 六、日志流 ═══ */
+
+.feed {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+
+.log {
+  padding: 6px 0;
+  border-bottom: 2px dashed var(--hairline-dash);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 32px;
+  animation: 浮起 var(--t-base) var(--ease) both;
+}
+
+.log:last-child {
+  border-bottom: none;
+}
+
+/* 日志语义色。
+   注意：岛屿调色板（--island-*）与 --r-* 是装饰色，不能当文字用
+   （--island-blue 仅 2.4:1、--r-tian 仅 1.8:1）。这里一律用 --tone-* 加深档。 */
+.log[data-cls='year'] {
+  color: var(--ink-3);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.log[data-cls='brk'] {
+  color: var(--tone-green);
+  font-weight: 700;
+}
+
+.log[data-cls='ev1'] {
+  color: var(--ink-2);
+}
+
+.log[data-cls='ev2'] {
+  color: var(--ink-1);
+}
+
+.log[data-cls='ev3'] {
+  color: var(--tone-gold);
+}
+
+.log[data-cls='ev4'] {
+  color: var(--tone-gold);
+  font-weight: 700;
+}
+
+.log[data-cls='huan'] {
+  color: var(--tone-blue);
+}
+
+.log[data-cls='rare'] {
+  color: var(--tone-violet);
+  font-weight: 700;
+}
+
+.log[data-cls='red'] {
+  color: var(--tone-red);
+}
+
+.log[data-cls='gold'] {
+  color: var(--tone-gold);
+}
+
+.log[data-cls='xian'] {
+  color: var(--tone-violet);
+}
+
+/* 天劫横幅：渐变的每一档都是加深色，整体仍可读 */
+.log[data-cls='rainbow'] {
+  background: linear-gradient(
+    90deg,
+    var(--tone-gold),
+    var(--tone-green),
+    var(--tone-blue),
+    var(--tone-violet),
+    var(--tone-gold)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+.log[data-cls='god'] {
+  color: var(--tone-gold);
+  font-weight: 700;
+}
+
+.log[data-cls='special'] {
+  color: var(--tone-green);
+  font-weight: 700;
+}
+
+.log[data-cls='dead'] {
+  color: var(--ink-3);
+}
+
+/* LogLine.fx 的视觉出口（Phase 1 由引擎置位） */
+.fx-trib {
+  animation: 劫雷 420ms var(--ease) both;
+}
+
+.fx-levelup {
+  animation: 顿悟 900ms var(--ease) both;
+}
+
+.fx-ascend {
+  animation: 飞升 2200ms var(--ease) both;
+}
+
+/* ═══ 七、外壳布局 ═══ */
+
+.shell {
+  width: 100%;
+  max-width: 680px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-4) calc(56px + env(safe-area-inset-bottom) + var(--sp-5));
+}
+
+.resbar {
+  position: sticky;
+  top: var(--sp-2);
+  z-index: 5;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2);
+  border: var(--bw) solid var(--hairline);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.resbar-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.resbar-realm {
+  color: var(--ink-1);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resbar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--sp-3);
+}
+
+.main {
+  min-width: 0;
+}
+
+.feed {
+  height: calc(100dvh - 260px);
+  padding: var(--sp-4);
+}
+
+.side,
+.rail {
+  display: none;
+}
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  height: calc(56px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface-2);
+  border-top: var(--bw) solid var(--hairline);
+}
+
+.tabbar button {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tabbar button::before {
+  content: '';
+  width: 22px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  transition: background var(--t-base) var(--ease);
+}
+
+.tabbar button[aria-current='true'] {
+  color: var(--primary-deep);
+}
+
+.tabbar button[aria-current='true']::before {
+  background: var(--primary);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 10px var(--sp-3);
+  border: var(--bw) solid transparent;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition: all var(--t-base) var(--ease);
+}
+
+.nav-item:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink-1);
+}
+
+.nav-item[aria-current='true'] {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+  color: var(--primary-deep);
+}
+
+.nav-item:disabled {
+  color: var(--ink-4);
+  cursor: default;
+}
+
+.brand {
+  font-size: 17px;
+}
+
+.zone-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 6px 0;
+  border-bottom: 2px dashed var(--hairline-dash);
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.zone-row:last-child {
+  border-bottom: none;
+}
+
+.zone-row[data-cap='true'] {
+  color: var(--primary-deep);
+  font-weight: 700;
+}
+
+.zone-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: var(--bw) solid var(--hairline);
+  color: var(--ink-1);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.zone-total .num {
+  color: var(--primary-deep);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    max-width: 1400px;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr) 320px;
+    gap: var(--sp-5);
+    align-items: start;
+    padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  }
+
+  .tabbar {
+    display: none;
+  }
+
+  .rail,
+  .side {
+    display: flex;
+    position: sticky;
+    top: var(--sp-5);
+    flex-direction: column;
+    gap: var(--sp-5);
+  }
+
+  .side {
+    gap: var(--sp-4);
+  }
+
+  .feed {
+    height: calc(100dvh - 220px);
+  }
+}
+
+/* ═══ 八、动画词表 ═══
+   过渡一律 var(--ease)，时长 150-350ms。过场动画（飞升 / 劫雷 / 顿悟 / 流光）
+   是演出不是过渡，不受 350ms 上限约束，但受「视觉强度」设置门控。 */
+
+@keyframes 凝气 {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes 浮起 {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes 流光 {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes 灵光 {
+  0%,
+  100% {
+    box-shadow: var(--shadow-base);
+  }
+  50% {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@keyframes 翻页 {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes 碎裂 {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  16% {
+    transform: translateX(-3px);
+  }
+  33% {
+    transform: translateX(3px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+  66% {
+    transform: translateX(3px);
+  }
+  83% {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes 飞升 {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  35% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes 顿悟 {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+@keyframes 丹火 {
+  0%,
+  100% {
+    box-shadow: var(--shadow-base);
+  }
+  50% {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@keyframes 劫雷 {
+  0%,
+  20%,
+  40% {
+    filter: brightness(0.6);
+  }
+  10%,
+  30% {
+    filter: brightness(1.4);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+/* ═══ 九、无障碍 ═══ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: opacity var(--t-fast) !important;
+  }
+}
+
+/* ═══ 十、z-index 阶梯 ═══
+   sticky 头部 / 底部导航      5
+   弹层遮罩                   50
+   天劫特效                   60
+   决策回顾                   70
+   toast                      98-99
+
+   浅色版没有"氛围 0 / 内容 1"两层——氛围改用 body 自身背景，不再需要伪元素叠层。
+*/
+

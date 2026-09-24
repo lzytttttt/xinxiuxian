@@ -1,0 +1,134 @@
+/* tokens.css —— 全站唯一的字面量来源。只放变量与 @font-face，零选择器。
+   值与设计法则取自 animal-island-ui 的设计系统（CC BY-NC 4.0），
+   完整对照与偏离说明见 doc/tech/04-visual.md §一 / §八 / §九。 */
+
+/* Nunito 变量字体，latin 子集，39 KB。unicode-range 锁死拉丁区段——
+   中日韩汉字不进这个 face，浏览器直接走系统中文栈，不产生中文字形下载。 */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('./fonts/nunito-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* ── 底：奶油羊皮纸。绝不用冷灰（#fafafa / #f5f5f5 是硬违规） */
+  --bg-page: #f8f8f0;
+  --bg-content: rgb(247, 243, 223);
+  --surface-1: rgb(247, 243, 223);
+  --surface-2: #fffdf5;
+  --surface-3: #f0e8d8;
+  --surface-4: #f0ece2;
+  --surface-input: #fffbe7;
+  --hairline: #c4b89e;
+  --hairline-lit: #a89878;
+  --hairline-dash: rgba(196, 184, 158, 0.5);
+
+  /* ── 墨：暖褐。绝不用纯黑（#000 / #111 是硬违规） */
+  --ink-1: #794f27; /* 标题、强调正文      6.6:1 on --bg-page */
+  --ink-2: #725d42; /* 正文                5.9:1 */
+  --ink-3: #6f6250; /* 次要 / 元信息        5.3:1 on --surface-1 */
+  --ink-4: #c4b89e; /* 禁用（无障碍豁免） */
+  --ink-soft: #8a7b66; /* 装饰性次要文本，仅 ≥3:1 场合（大字 / 非必要） */
+
+  /* ── 日志与数值的文本色阶
+     岛屿调色板（--island-*）与 --r-* 是**装饰色**，只用于色块 / 描边 / 填充，
+     直接当文字用全部不达标（--island-blue 仅 2.4:1，--r-tian 仅 1.8:1）。
+     以下是各色相对应的加深档，全部实测 ≥4.5:1 on --bg-page。 */
+  --tone-green: #4a7a1a; /* 4.8:1 —— 突破 / 成长 */
+  --tone-blue: #2f5bbf; /* 5.8:1 —— 灵根 / 信息 */
+  --tone-violet: #7a3fc9; /* 5.8:1 —— 混沌 / 魔修 */
+  --tone-red: #c0392b; /* 5.1:1 —— 伤害 / 丹毒 / 失败 */
+  --tone-gold: #7a5f22; /* 5.6:1 —— 高亮数值 / 天品 */
+
+  /* ── 主色：薄荷青。分两条轨道，见 doc/tech/04-visual.md §八 */
+  --primary: #19c8b9; /* 装饰轨道：描边 / 图标 / 大面积 / focus ring，不承载小字 */
+  --primary-hover: #3dd4c6;
+  --primary-active: #11a89b;
+  --primary-bg: #e6f9f6;
+  --primary-deep: #0d7a71; /* 信息轨道：承载白字的按钮底 / 进度填充 5.2:1 */
+  --primary-deep-hover: #0e8177; /* 4.8:1 */
+  --primary-deep-active: #0a5f58;
+
+  /* ── 状态色 */
+  --success: #6fba2c;
+  --success-active: #5a9e1e;
+  --warning: #f5c31c;
+  --warning-active: #dba90e;
+  --error: #e05a5a;
+  --error-active: #c94444;
+
+  /* ── 岛屿调色板（装饰块与分类色用） */
+  --island-pink: #f8a6b2;
+  --island-purple: #b77dee;
+  --island-blue: #889df0;
+  --island-yellow: #f7cd67;
+  --island-orange: #e59266;
+  --island-teal: #82d5bb;
+  --island-green: #8ac68a;
+  --island-red: #fc736d;
+  --island-lime: #d1da49;
+  --island-brown: #9a835a;
+  --island-peach: #e18c6f;
+
+  /* ── 六档稀有度：饱和度与视觉重量单调递增（浅色底不能用"亮度递增"） */
+  --r-fan: #9f927d;
+  --r-ling: #8ac68a;
+  --r-xuan: #889df0;
+  --r-di: #b77dee;
+  --r-tian: #e0b800;
+  --r-xian: #e05a5a;
+
+  /* ── 几何 */
+  --r-sm: 12px; /* 交互元件最小圆角，12px 是下限 */
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-card: 20px;
+  --r-pill: 50px;
+  --bw: 2px;
+  --bw-input: 2.5px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ── 阴影：暖调，绝不用冷黑 rgba(0,0,0,*) */
+  --shadow-sm: 0 2px 4px 0 rgba(61, 52, 40, 0.06);
+  --shadow-base: 0 3px 10px 0 rgba(61, 52, 40, 0.1);
+  --shadow-lg: 0 8px 24px 0 rgba(61, 52, 40, 0.14);
+  --shadow-3d: 0 5px 0 0 #bdaea0;
+  --shadow-3d-hover: 0 6px 0 0 #bdaea0;
+  --shadow-3d-press: 0 1px 0 0 #bdaea0;
+  --shadow-3d-danger: 0 5px 0 0 #c94444;
+  --shadow-input-3d: 0 3px 0 0 #d4c9b4;
+  --shadow-track: inset 0 2px 4px rgba(114, 93, 66, 0.15);
+
+  /* ── 焦点：黄。绝不用蓝色焦点环 */
+  --focus-ring: #ffcc00;
+  --focus-ring-warn: #f5c31c;
+  --focus-ring-btn: #19c8b9;
+
+  /* ── 氛围：羊皮纸波点 + 双色柔光 */
+  --dots: rgba(114, 93, 66, 0.055);
+  --amb-a: radial-gradient(120% 80% at 50% 0%, rgba(25, 200, 185, 0.07), transparent 60%);
+  --amb-b: radial-gradient(100% 70% at 100% 100%, rgba(247, 205, 103, 0.12), transparent 55%);
+
+  /* ── 字体 */
+  --font-round: 'Nunito', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui,
+    sans-serif;
+
+  /* ── 动效 */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 150ms;
+  --t-base: 250ms;
+  --t-slow: 350ms;
+  --t-setpiece: 1200ms;
+}
