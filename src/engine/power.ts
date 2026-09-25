@@ -1,17 +1,24 @@
 import { WEAK_RATIO } from './constants';
 import { escapeRate, powerOf, levelTier } from './selectors';
+import type { ContentBundle } from './types/effects';
 import type { Rng } from './types/rng';
 import type { RunState } from './types/run';
 
 export type BattleResult = 'win' | 'draw' | 'lose';
 
-export function totalPower(s: RunState): number {
-  return powerOf(s);
+export function totalPower(s: RunState, c: ContentBundle): number {
+  return powerOf(s, c);
 }
 
-export function displayInterval(power: number, rng: Rng): { lo: number; hi: number } {
-  const lo = Math.max(1, Math.round(power * (0.6 + rng.next() * 0.3)));
-  const hi = Math.round(power * (1.1 + rng.next() * 0.4));
+/** `narrow` = 区间收窄比例（0~0.5，剑心通明；硬上限见 SWORD_HEART_NARROW_MAX） */
+export function displayInterval(
+  power: number,
+  rng: Rng,
+  narrow = 0,
+): { lo: number; hi: number } {
+  const k = 1 - Math.min(0.5, Math.max(0, narrow));
+  const lo = Math.max(1, Math.round(power * (1 + (0.6 + rng.next() * 0.3 - 1) * k)));
+  const hi = Math.round(power * (1 + (1.1 + rng.next() * 0.4 - 1) * k));
   return { lo, hi };
 }
 

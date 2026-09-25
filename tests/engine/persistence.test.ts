@@ -6,6 +6,7 @@ import type { ContentBundle, EventDef } from '../../src/engine/types/effects';
 import type { RunState } from '../../src/engine/types/run';
 import { checksumOf, migrate, verifyChecksum, type SaveEnvelope } from '../../src/store/persistence';
 import fixture from '../fixtures/save-v1.json';
+import fixtureV2 from '../fixtures/save-v2.json';
 
 const EV_TWO = defineEvent({
   id: 'ev_migrate_two',
@@ -31,7 +32,7 @@ const bundle: ContentBundle = { events: [EV_TWO] as EventDef[], fates: [], rollT
 
 const v1 = fixture as unknown as SaveEnvelope;
 
-describe('存档迁移 v1 → v2（Phase 2）', () => {
+describe('存档迁移链 v1 → v3（Phase 2/3）', () => {
   it('fixture 是真实的 v1 档：无 decisionLog、deferredQueue 为 string[]', () => {
     expect(v1.v).toBe(1);
     expect(v1.run).not.toBeNull();
@@ -45,16 +46,31 @@ describe('存档迁移 v1 → v2（Phase 2）', () => {
     expect(() => verifyChecksum(v1)).not.toThrow();
   });
 
-  it('迁移产出合法 v2：decisionLog 补空数组、deferredQueue 转 DeferredEntry、校验和重算', () => {
-    const v2 = migrate(v1);
-    expect(v2.v).toBe(2);
-    const run = v2.run as RunState;
+  it('迁移产出合法 v3：decisionLog 补空数组、deferredQueue 转 DeferredEntry、powerTrail 补 null', () => {
+    const v3 = migrate(v1);
+    expect(v3.v).toBe(3);
+    const run = v3.run as RunState;
     expect(run.decisionLog).toEqual([]);
     expect(run.deferredQueue).toEqual([]);
-    expect(checksumOf(v2.meta, run)).toBe(v2.checksum);
-    expect(() => verifyChecksum(v2)).not.toThrow();
+    expect(run.powerTrail).toBeNull();
+    expect(checksumOf(v3.meta, run)).toBe(v3.checksum);
+    expect(() => verifyChecksum(v3)).not.toThrow();
     expect(run.eventLog).toEqual(v1.run?.eventLog);
     expect(run.cultivation).toBe(v1.run?.cultivation);
+  });
+
+  it('v2 fixture（Phase 2 真实导出）→ v3：只补 powerTrail，其余字段不动', () => {
+    const v2 = fixtureV2 as unknown as SaveEnvelope;
+    expect(v2.v).toBe(2);
+    expect(() => verifyChecksum(v2)).not.toThrow();
+    const v3 = migrate(v2);
+    expect(v3.v).toBe(3);
+    const run = v3.run as RunState;
+    expect(run.powerTrail).toBeNull();
+    expect(run.decisionLog).toEqual(v2.run?.decisionLog);
+    expect(run.deferredQueue).toEqual(v2.run?.deferredQueue);
+    expect(run.arts).toEqual(v2.run?.arts);
+    expect(() => verifyChecksum(v3)).not.toThrow();
   });
 
   it('旧档 string[] 形态的 deferredQueue 转成 {eventId, year:0}', () => {
@@ -62,8 +78,8 @@ describe('存档迁移 v1 → v2（Phase 2）', () => {
       ...v1,
       run: { ...(v1.run as object), deferredQueue: ['ev_early_dawn_dew'] },
     } as unknown as SaveEnvelope;
-    const v2 = migrate(legacy);
-    expect(v2.run?.deferredQueue).toEqual([{ eventId: 'ev_early_dawn_dew', year: 0 }]);
+    const v3 = migrate(legacy);
+    expect(v3.run?.deferredQueue).toEqual([{ eventId: 'ev_early_dawn_dew', year: 0 }]);
   });
 
   it('迁移后的旧档可继续游戏：rollYear → applyChoice 不抛且写入 decisionLog', () => {

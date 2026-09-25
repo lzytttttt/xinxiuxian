@@ -22,11 +22,12 @@
     "sim:calibrate:write": "tsx tools/sim.ts --calibrate --write",
     "sim:pacing": "tsx tools/sim.ts --pacing",
     "sim:replay": "tsx tools/sim.ts --replay",
+    "sim:balance": "tsx tools/balance.ts",
     "content:names": "tsx tools/gen-names.ts",
     "content:names:check": "tsx tools/gen-names.ts --check",
     "content:validate": "tsx tools/validate-content.ts",
     "content:stats": "tsx tools/validate-content.ts --stats",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run content:validate && npm run sim:golden"
+    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run content:validate && npm run sim:golden && npm run sim:balance"
   },
   "dependencies": {
     "immer": "^11.1.18",

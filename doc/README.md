@@ -100,6 +100,7 @@ doc/
 | [v0.1.0-01-scaffold-port.md](v0.1.0-01-scaffold-port.md) | Phase 0 脚手架（依赖版本决策、编译器强制引擎纯净、外壳）+ Phase 1 忠实移植（引擎/核心循环/135 事件/store/UI/黄金回归） | Phase 0 与 Phase 1 均已交付 |
 | [v0.1.0-02-visual-island-retheme.md](v0.1.0-02-visual-island-retheme.md) | 视觉改版：深色仙侠 → 岛屿治愈系（推翻 [tech/04-visual.md](tech/04-visual.md) 原方向） | 已交付 |
 | [v0.1.0-03-decision-dsl.md](v0.1.0-03-decision-dsl.md) | Phase 2 决策闸门：槽 14 仲裁 + DSL 硬化 + 60 事件多选项 + 内容校验器 + 重放确定性 | 已交付（2026-09-25） |
+| [v0.1.0-04-arts-build.md](v0.1.0-04-arts-build.md) | Phase 3 功法与构筑：六乘区 + 软封顶 + 42 门功法 + 悟性经济 + 流派共鸣 + 六条协同 + 战力构成面板 | 已交付（2026-09-25） |
 
 ---
 
@@ -113,7 +114,7 @@ doc/
 | `v0.1.0-01` | Phase 0-1 脚手架与忠实移植 | [v0.1.0-01-scaffold-port.md](v0.1.0-01-scaffold-port.md) | Phase 0、Phase 1 交付记录均已回填；参考实现源码不可达，三张缺失表按锚点外推（M1 为自洽基线） |
 | `v0.1.0-02` | **视觉改版：岛屿治愈系** | [v0.1.0-02-visual-island-retheme.md](v0.1.0-02-visual-island-retheme.md) | **推翻** Phase 0 的深色方向；`tech/04-visual.md` 整体重写 |
 | `v0.1.0-03` | Phase 2 决策闸门 | [v0.1.0-03-decision-dsl.md](v0.1.0-03-decision-dsl.md) | 槽 14 仲裁、DSL 硬化、60 事件多选项、校验器、重放确定性；决策密度按**选项点**口径验收；交付记录已回填（存档迁移 v1→v2、`--replay` CLI 为收尾补做） |
-| `v0.1.0-04` | Phase 3 功法与构筑 | 待建 | |
+| `v0.1.0-04` | Phase 3 功法与构筑 | [v0.1.0-04-arts-build.md](v0.1.0-04-arts-build.md) | 六乘区与软封顶、42 门功法、悟性经济、共鸣与协同、战力构成面板；槽位受洞府未上线限制（初始 3 + 道台事件 1）；软封顶与悟性成本两表按公式修正 |
 | `v0.1.0-05` | Phase 4 丹药与炼丹 | 待建 | |
 | `v0.1.0-06` | Phase 5 宗门与羁绊 | 待建 | |
 | `v0.1.0-07` | Phase 6 传承与洞府 | 待建 | |
@@ -195,6 +196,7 @@ doc/
 - [x] **视觉改版：岛屿治愈系**（`v0.1.0-02`；原深色方向推翻，`tech/04-visual.md` 重写，对比度全表实测达标）
 - [x] **Phase 1 忠实移植**（引擎地基 / 核心循环 14 槽 / 135 事件 / 命名生成 / store+UI / 黄金回归与分位标定；`npm run verify` 全绿）
 - [x] **Phase 2 决策闸门与 DSL 硬化**（槽 14 仲裁 / 60 事件改写为 2-4 真实选项 / 内容校验器 / 重放确定性 / 存档迁移 v1→v2；验收 2.1-2.5 全绿，选项点 p50 = 31）
-- [ ] Phase 3-7
+- [x] **Phase 3 功法与构筑**（六乘区 + 软封顶 / 42 门功法 / 悟性经济 / 共鸣与六条协同 / 战力构成面板 / 存档迁移 v2→v3；验收 3.1-3.5 全绿，`P` 比值 L30/50/70 = 2.11/2.54/2.89）
+- [ ] Phase 4-7
 
-**下一步**：Phase 3 —— 功法与构筑。六乘区与预算表、软封顶、六流派与共鸣、悟性经济、战力构成面板。详见 [plan/01-tasks.md](plan/01-tasks.md) 与 [product/04-arts-build.md](product/04-arts-build.md)。
+**下一步**：Phase 4 —— 丹药与炼丹。药材与丹方 schema、控火小游戏、丹毒与两惩罚、毒体/丹火不侵协同接入 `arts.ts`、炼丹屏；并把 Z5 的丹药来源补上（同时把 `tools/balance.ts` 的 L90 比值上界收回 4.5）。详见 [plan/01-tasks.md](plan/01-tasks.md) 与 [product/05-alchemy.md](product/05-alchemy.md)。

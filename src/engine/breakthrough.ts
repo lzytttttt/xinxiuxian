@@ -29,6 +29,8 @@ import {
   talentMult,
   talentTier,
 } from './selectors';
+import { thunderBreakMult, thunderFailLoss } from './arts';
+import type { ContentBundle } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
 import type { RunState } from './types/run';
@@ -102,17 +104,18 @@ function cultivPower(s: RunState): number {
   return s.cultivation * (1 + s.root / 500);
 }
 
-export function attemptBreak(s: RunState, rng: RngBag): LogLine[] {
+export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLine[] {
   const logs: LogLine[] = [];
   const max = s.realm.arc === 'immortal' ? REALM_MAX_IMMORTAL : REALM_MAX_MORTAL;
   const tier = talentTier(s.root);
   const gate = s.realm.level % 10 === 9 ? GATE_PENALTY : 1;
   const age = ageCoef(s);
   const talent = talentMult(s.root);
+  const thunder = thunderBreakMult(s, c);
 
   if (s.realm.level < max && s.realm.level % 10 !== 0) {
     const table = breakChance(tier, localLevel(s), s.realm.arc);
-    const base = table / 100 * age * gate * talent * s.breakthroughMult;
+    const base = table / 100 * age * gate * talent * s.breakthroughMult * thunder;
     if (base <= 0.25) {
       if (rng.break.chance(base)) levelUp(s, rng, logs, false);
     } else {
@@ -125,6 +128,7 @@ export function attemptBreak(s: RunState, rng: RngBag): LogLine[] {
           (s.realm.level % 10 === 9 ? GATE_PENALTY : 1) *
           talent *
           s.breakthroughMult *
+          thunder *
           Math.pow(CHAIN_MULT, step) *
           chainMult;
         if (p <= 0.25 || s.realm.level >= max || s.realm.level % 10 === 0) break;
@@ -140,6 +144,11 @@ export function attemptBreak(s: RunState, rng: RngBag): LogLine[] {
   }
 
   if (!s.brokeThisYear && !s.dead) {
+    const loss = thunderFailLoss(s, c);
+    if (loss > 0) {
+      s.cultivation = Math.max(0, s.cultivation * (1 - loss));
+      logs.push({ cls: 'red', text: '雷气反噬，经脉受损，修为略有倒退。' });
+    }
     if (s.realm.level >= max) {
       const coef = combatCoef(tier, s.realm.arc);
       const mult = s.realm.arc === 'immortal' ? MAX_LEVEL_CULT_IMMORTAL_MULT : 1;

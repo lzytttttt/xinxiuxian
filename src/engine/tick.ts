@@ -18,6 +18,7 @@ import {
   TOXICITY_DECAY_MIN,
   TOXICITY_DECAY_RATE,
 } from './constants';
+import { plunderDrain, swordNarrow, toxicityDecayMult } from './arts';
 import { evalCondition, makeEvalCtx } from './conditions';
 import { buildEncounter, encounterDecision, resolveEncounter, type EncounterPayload } from './encounter';
 import { resolveArtifact } from './artifact';
@@ -27,6 +28,7 @@ import {
   luckMult,
   powerOf,
   realmName,
+  recordPowerTrail,
   xianqiFateMult,
   xianqiRate,
 } from './selectors';
@@ -250,13 +252,18 @@ function deferAll(s: RunState, candidates: Candidate[]): void {
   }
 }
 
-function autoBattleChoice(s: RunState, payload: EncounterPayload, rng: RngBag): string {
+function autoBattleChoice(
+  s: RunState,
+  payload: EncounterPayload,
+  rng: RngBag,
+  c: ContentBundle,
+): string {
   if (s.battlePolicy === 'yes') return 'fight';
   if (s.battlePolicy === 'no') return 'flee';
   if (s.battlePolicy === 'random') return rng.misc.chance(0.5) ? 'fight' : 'flee';
   if (s.battlePolicy === 'smart') {
     const mid = (payload.lo + payload.hi) / 2;
-    return powerOf(s) >= mid * s.smartX ? 'fight' : 'flee';
+    return powerOf(s, c) >= mid * s.smartX ? 'fight' : 'flee';
   }
   return 'fight';
 }
@@ -266,10 +273,10 @@ function encounterTick(s: RunState, rng: RngBag, c: ContentBundle, logs: LogLine
   if (!rng.encounter.chance(rate)) return null;
   const payload = buildEncounter(s, rng, c);
   if (s.battlePolicy === 'manual') {
-    return encounterDecision(payload);
+    return encounterDecision(payload, swordNarrow(s, c) > 0);
   }
-  const choiceId = autoBattleChoice(s, payload, rng);
-  for (const line of resolveEncounter(s, choiceId, payload, rng)) push(s, logs, line);
+  const choiceId = autoBattleChoice(s, payload, rng, c);
+  for (const line of resolveEncounter(s, choiceId, payload, rng, c)) push(s, logs, line);
   return null;
 }
 
@@ -310,9 +317,10 @@ function rootShiftTick(s: RunState, rng: RngBag, logs: LogLine[]): void {
   });
 }
 
-function toxicityTick(s: RunState): void {
+function toxicityTick(s: RunState, c: ContentBundle): void {
   if (s.toxicity <= 0) return;
-  const decay = Math.max(TOXICITY_DECAY_MIN, s.toxicity * TOXICITY_DECAY_RATE);
+  const decay =
+    Math.max(TOXICITY_DECAY_MIN, s.toxicity * TOXICITY_DECAY_RATE) * toxicityDecayMult(s, c);
   s.toxicity = Math.max(0, s.toxicity - decay);
 }
 
@@ -331,12 +339,14 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
     text: `第 ${s.year} 年 · ${s.age} 岁 · ${realmName(s.realm.level)}`,
   });
 
-  for (const line of attemptBreak(s, rng)) push(s, logs, line);
+  for (const line of attemptBreak(s, rng, c)) push(s, logs, line);
   if (s.dead) return { logs, pending: null, ended: s.endedReason as RunEndReason | null };
 
   rootShiftTick(s, rng, logs);
-  toxicityTick(s);
+  toxicityTick(s, c);
   s.insight += insightPerYear(s);
+  const drain = plunderDrain(s, c);
+  if (drain > 0) s.simPoints = Math.max(0, s.simPoints - drain);
 
   const candidates: Candidate[] = [];
   const schedPending = scheduledTick(s, rng, c, logs);
@@ -353,7 +363,7 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   if (s.dead) return { logs, pending: null, ended: s.endedReason as RunEndReason | null };
 
   if (shouldTribulate(s)) {
-    const trib = runTribulation(s, rng);
+    const trib = runTribulation(s, rng, c);
     for (const line of trib.logs) push(s, logs, line);
     if (trib.pending) {
       deferAll(s, candidates);
@@ -388,11 +398,12 @@ export function applyChoice(
   s.stats.decisions += 1;
   s.awaiting = null;
   let followUp: Decision | null = null;
+  const powerBefore = powerOf(s, c);
 
   if (d.source === 'system' && d.kind === 'encounter') {
     const payload = d.payload as EncounterPayload | undefined;
     if (payload) {
-      for (const line of resolveEncounter(s, choiceId, payload, rng)) push(s, logs, line);
+      for (const line of resolveEncounter(s, choiceId, payload, rng, c)) push(s, logs, line);
     }
   } else if (d.source === 'system' && d.kind === 'tribulation') {
     for (const line of resolveAscensionChoice(s, choiceId)) push(s, logs, line);
@@ -437,6 +448,7 @@ export function applyChoice(
 
   s.decisionLog.push({ year: s.year, kind: d.kind, eventId: d.eventId, choiceId });
   clampAll(s);
+  recordPowerTrail(s, c, d.title, powerBefore);
   if (followUp) s.awaiting = followUp;
   if (s.dead) return { logs, pending: followUp, ended: s.endedReason as RunEndReason | null };
   if (s.endedReason === 'zhengdao' || s.endedReason === 'immortal') {

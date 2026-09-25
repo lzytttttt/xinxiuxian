@@ -126,6 +126,7 @@ export function createRun(
     scheduled: [],
     chainDepth: 0,
     decisionLog: [],
+    powerTrail: null,
     battlePolicy: opts.battlePolicy ?? 'manual',
     smartX: 1,
     autopilot: null,

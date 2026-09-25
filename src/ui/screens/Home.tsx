@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { TALENT_NAMES } from '../../engine/constants';
 import { useRunStore } from '../../store/runStore';
+import { ArtCard } from '../components/ArtCard';
 import type { CharCard } from '../../engine/newRun';
 
 function rarityOf(card: CharCard): string {
@@ -51,11 +52,75 @@ function Card({ card, onPick }: { card: CharCard; onPick: () => void }) {
 export function Home() {
   const cards = useRunStore((s) => s.cards);
   const refreshCards = useRunStore((s) => s.refreshCards);
-  const startRun = useRunStore((s) => s.startRun);
+  const pickCard = useRunStore((s) => s.pickCard);
+  const pendingCard = useRunStore((s) => s.pendingCard);
+  const starterOptions = useRunStore((s) => s.starterOptions);
+  const chooseStarter = useRunStore((s) => s.chooseStarter);
+  const cancelStarter = useRunStore((s) => s.cancelStarter);
 
   useEffect(() => {
     if (cards.length === 0) refreshCards();
   }, [cards.length, refreshCards]);
+
+  if (pendingCard && starterOptions.length > 0) {
+    return (
+      <>
+        <main className="main">
+          <section className="panel">
+            <div className="panel-title">
+              <span>择一功法定道途</span>
+              <span className="hint">六流派各一门入门功法，三选一</span>
+            </div>
+            <div className="panel-body resbar-chips">
+              {starterOptions.map((def) => (
+                <ArtCard
+                  key={def.id}
+                  def={def}
+                  state={undefined}
+                  equipped={false}
+                  insight={0}
+                  chooseLabel="以此门入道"
+                  onEquip={() => chooseStarter(def.id)}
+                />
+              ))}
+            </div>
+            <div className="panel-body">
+              <button className="btn-soft" type="button" onClick={cancelStarter}>
+                返回重择命帖
+              </button>
+            </div>
+          </section>
+        </main>
+
+        <aside className="side">
+          <section className="panel">
+            <div className="panel-title">
+              <span>你选的命帖</span>
+            </div>
+            <div className="panel-body">
+              <div className="zone-row">
+                <span>灵根</span>
+                <span className="num">
+                  {TALENT_NAMES[pendingCard.tier - 1] ?? '灵根'} · {pendingCard.value}
+                </span>
+              </div>
+              <div className="zone-row">
+                <span>气运</span>
+                <span className="num">{pendingCard.luck}</span>
+              </div>
+              <div className="zone-row">
+                <span>模拟点</span>
+                <span className="num">{pendingCard.simPoints}</span>
+              </div>
+              <p className="hint mt-sm">
+                起手功法决定你的起步方向：四条同流派可成「二重共鸣」，六条为「极意」（随洞府开放）。
+              </p>
+            </div>
+          </section>
+        </aside>
+      </>
+    );
+  }
 
   return (
     <>
@@ -67,7 +132,7 @@ export function Home() {
           </div>
           <div className="panel-body resbar-chips">
             {cards.map((card) => (
-              <Card key={`${card.tier}-${card.value}-${card.luck}`} card={card} onPick={() => startRun(card)} />
+              <Card key={`${card.tier}-${card.value}-${card.luck}`} card={card} onPick={() => pickCard(card)} />
             ))}
           </div>
           <div className="panel-body">

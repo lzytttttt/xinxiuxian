@@ -1,4 +1,5 @@
 import { CHAIN_DEPTH_MAX, TOXICITY_MAX } from './constants';
+import { grantArt, toxicityGain } from './arts';
 import { evalCondition, makeEvalCtx, type EvalCtx } from './conditions';
 import { readTarget } from './selectors';
 import type {
@@ -250,13 +251,9 @@ function applyOne(env: Env, e: Effect, path: string): void {
     case 'grantHerb':
       s.herbs[e.id] = (s.herbs[e.id] ?? 0) + e.count;
       return;
-    case 'grantArt': {
-      const art = s.arts[e.id] ?? { level: 1, insight: 0 };
-      if (art.level === 0) art.level = 1;
-      s.arts[e.id] = art;
-      return;
-    }
-    case 'learnRecipe': {
+    case 'grantArt':
+      grantArt(s, e.id, env.ctx.content);
+      return;    case 'learnRecipe': {
       const rec = s.recipes[e.id] ?? { known: false, mastery: 0 };
       rec.known = true;
       s.recipes[e.id] = rec;
@@ -266,7 +263,10 @@ function applyOne(env: Env, e: Effect, path: string): void {
       overlay.set(key({ k: 'insight' }), read(s, { k: 'insight' }, overlay) + e.value);
       return;
     case 'addToxicity':
-      overlay.set(key({ k: 'toxicity' }), read(s, { k: 'toxicity' }, overlay) + e.value);
+      overlay.set(
+        key({ k: 'toxicity' }),
+        read(s, { k: 'toxicity' }, overlay) + toxicityGain(s, env.ctx.content, e.value),
+      );
       return;
     case 'bond':
       // Phase 5：羁绊系统未建，此处不产生状态变更
@@ -485,6 +485,17 @@ const TARGET_LABELS: Record<string, string> = {
   yearsStayed: '滞留年数',
 };
 
+function insightCostOf(cost: Effect[] | undefined): number {
+  if (!cost) return 0;
+  let total = 0;
+  for (const e of cost) {
+    if (e.op !== 'sub') continue;
+    if (e.target.k !== 'insight') continue;
+    total += e.value;
+  }
+  return total;
+}
+
 export function formatCost(cost: Effect[] | undefined): string | undefined {
   if (!cost || cost.length === 0) return undefined;
   const parts: string[] = [];
@@ -536,6 +547,8 @@ export function buildEventDecision(
     if (!enabled && c.disabledReason) ch.disabledReason = c.disabledReason;
     const costLabel = formatCost(c.cost);
     if (costLabel) ch.costLabel = costLabel;
+    const insightCost = insightCostOf(c.cost);
+    if (insightCost > 0) ch.insightCost = insightCost;
     if (c.hint) ch.hint = c.hint;
     return ch;
   });

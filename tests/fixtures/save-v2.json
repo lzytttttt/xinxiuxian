@@ -1,0 +1,261 @@
+{
+  "v": 2,
+  "meta": {
+    "version": 1,
+    "legacyPoints": 12,
+    "lifetimeLegacy": 0,
+    "cave": {
+      "药园": 0,
+      "丹房": 0,
+      "藏经阁": 0,
+      "悟道室": 0,
+      "聚灵阵": 0,
+      "静室": 0
+    },
+    "unlocks": {
+      "arts": [],
+      "recipes": [],
+      "sects": []
+    },
+    "sectLegacy": {},
+    "pastLives": [],
+    "pastPartners": [],
+    "achievements": [
+      "ach_first_breakthrough"
+    ],
+    "codex": {
+      "encounters": "",
+      "artifacts": "",
+      "realms": ""
+    },
+    "pity": 0,
+    "autoPolicy": {
+      "battlePolicy": "manual",
+      "smartX": 1
+    },
+    "settings": {
+      "reducedMotion": false,
+      "visualIntensity": "mid",
+      "textSpeed": 1,
+      "tickMs": 300
+    },
+    "totals": {
+      "runs": 3,
+      "years": 4,
+      "ascensions": 0,
+      "zhengdao": 0,
+      "bestLevel": 0
+    }
+  },
+  "run": {
+    "runId": "save-v1-fixture",
+    "seed": "save-v1-fixture",
+    "life": 3,
+    "createdAt": 1758600000000,
+    "age": 4,
+    "year": 4,
+    "simPoints": 100,
+    "cultivation": 954.8008830915464,
+    "root": 50,
+    "luck": 9002,
+    "artifactPower": 89,
+    "artifactBonus": 100,
+    "xianqi": 0,
+    "chaosQi": 0,
+    "realm": {
+      "arc": "mortal",
+      "stage": 1,
+      "level": 9
+    },
+    "fates": [],
+    "breakthroughMult": 1,
+    "tribulationReqMult": 1,
+    "yearsStayed": 0,
+    "qiDeviationRisk": 0,
+    "innate": 50,
+    "brokeThisYear": true,
+    "pinnacleThisYear": false,
+    "tribPassed": 0,
+    "gotSpecial": false,
+    "ascended": false,
+    "dead": false,
+    "ascendMode": "",
+    "endedReason": null,
+    "conquered": [],
+    "fruits": [
+      {
+        "tier": 3,
+        "name": "寒蛇窟镜",
+        "year": 2,
+        "power": 890
+      }
+    ],
+    "maxCount": {
+      "ev_early_dawn_dew": 1,
+      "ev_early_gate_knock": 1,
+      "ev_early_cliff_flower": 1,
+      "ev_early_rain_eaves": 1
+    },
+    "arts": {},
+    "slots": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "insight": 4,
+    "herbs": {},
+    "recipes": {},
+    "pills": {},
+    "toxicity": 0,
+    "sect": {
+      "id": null,
+      "rank": 0,
+      "contribution": 0,
+      "joinedYear": null,
+      "defections": 0,
+      "tension": {}
+    },
+    "bonds": {
+      "list": [],
+      "nextId": 1
+    },
+    "flags": {},
+    "cooldowns": {
+      "ev_early_dawn_dew": 11,
+      "ev_early_gate_knock": 14,
+      "ev_early_cliff_flower": 14,
+      "ev_early_rain_eaves": 13
+    },
+    "onceFired": [],
+    "recencyQueue": [
+      "ev_early_dawn_dew",
+      "ev_early_gate_knock",
+      "ev_early_cliff_flower",
+      "ev_early_rain_eaves"
+    ],
+    "deferredQueue": [],
+    "scheduled": [],
+    "chainDepth": 0,
+    "battlePolicy": "manual",
+    "smartX": 1,
+    "autopilot": null,
+    "awaiting": null,
+    "stats": {
+      "years": 4,
+      "events": 4,
+      "encounters": 0,
+      "battlesWon": 0,
+      "battlesLost": 0,
+      "escapes": 0,
+      "artifacts": 1,
+      "breakthroughs": 8,
+      "decisions": 0
+    },
+    "eventLog": [
+      "ev_early_dawn_dew",
+      "ev_early_gate_knock",
+      "ev_early_cliff_flower",
+      "ev_early_rain_eaves"
+    ],
+    "log": [
+      {
+        "cls": "year",
+        "text": "第 1 年 · 1 岁 · 练气一重"
+      },
+      {
+        "cls": "brk",
+        "text": "瓶颈应声而破，你踏入练气二重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "brk",
+        "text": "接连突破！你一路冲至练气三重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "ev2",
+        "text": "晨露 · 五更天，草叶上挂着的露水映着将出的日头，一粒粒像碎玉。"
+      },
+      {
+        "cls": "gold",
+        "text": "你以掌接露，凑到唇边，一股凉意从喉间直落到丹田。"
+      },
+      {
+        "cls": "year",
+        "text": "第 2 年 · 2 岁 · 练气三重"
+      },
+      {
+        "cls": "brk",
+        "text": "瓶颈应声而破，你踏入练气四重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "brk",
+        "text": "接连突破！你一路冲至练气五重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "brk",
+        "text": "接连突破！你一路冲至练气六重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "ev2",
+        "text": "叩门 · 你循着山道走了三日，终于站在那座青石山门前。守门人扫你一眼，问：来做什么？"
+      },
+      {
+        "cls": "gold",
+        "text": "你说想上山学本事。守门人让你在阶下站到日落，才挥手放你去偏院打杂。"
+      },
+      {
+        "cls": "rare",
+        "text": "寒蛇窟镜被你收入囊中，法宝之力 +89。"
+      },
+      {
+        "cls": "year",
+        "text": "第 3 年 · 3 岁 · 练气六重"
+      },
+      {
+        "cls": "brk",
+        "text": "瓶颈应声而破，你踏入练气七重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "brk",
+        "text": "接连突破！你一路冲至练气八重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "ev2",
+        "text": "崖花 · 崖壁半腰那株开得正好的白花，离你脚下只有两丈——但那两丈是溜光的石面。"
+      },
+      {
+        "cls": "gold",
+        "text": "你指尖扣着石缝挪过去，把花连根带土取下，香气顺着袖口往上走。"
+      },
+      {
+        "cls": "year",
+        "text": "第 4 年 · 4 岁 · 练气八重"
+      },
+      {
+        "cls": "brk",
+        "text": "瓶颈应声而破，你踏入练气九重。",
+        "fx": "levelup"
+      },
+      {
+        "cls": "ev2",
+        "text": "檐下 · 骤雨把你困在破庙檐下，同避雨的挑担老汉把伞往你这边偏了偏，说起了山上的事。"
+      },
+      {
+        "cls": "ev1",
+        "text": "你听得入神，雨停了才想起担子，赶路时反倒越走越轻。"
+      }
+    ],
+    "decisionLog": []
+  },
+  "checksum": "08d8e29e",
+  "savedAt": 1790297882422
+}

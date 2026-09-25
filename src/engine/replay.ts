@@ -1,4 +1,5 @@
 import { createRun, drawCard, type CharCard } from './newRun';
+import { grantStarterArt } from './arts';
 import { makeRngBag } from './rng';
 import { applyChoice, rollYear } from './tick';
 import type { ContentBundle, Decision } from './types/effects';
@@ -12,6 +13,13 @@ export interface RunOptions {
   /** 固定卡片，或用本局 RNG bag 现抽（后者与 Phase 1 的抽取序列一致） */
   card?: CharCard | ((rng: RngBag) => CharCard);
   battlePolicy?: RunState['battlePolicy'];
+  /** 开局三选一的结果：入道即得的功法 id（由调用方决定，引擎只落地） */
+  startArts?: string[];
+  /**
+   * 纯观察钩子：每年结算（含决策应答）完成后回调一次。
+   * 不得在其中修改状态或消费 RNG——只供平衡工具按等级采样。
+   */
+  onYear?: (s: RunState, year: number) => void;
 }
 
 /** 应答函数：给定决策返回 choiceId。重放时由记录驱动，模拟时由策略驱动。 */
@@ -39,6 +47,7 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
     createdAt: 0,
     battlePolicy: opts.battlePolicy ?? 'manual',
   });
+  for (const id of opts.startArts ?? []) grantStarterArt(s, id, content);
   const logs: LogLine[] = [];
   let ended: string | null = null;
 
@@ -67,6 +76,7 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
       ended = s.endedReason;
       break;
     }
+    if (opts.onYear) opts.onYear(s, s.year);
   }
 
   return { state: s, logs, decisions: [...s.decisionLog], ended, years: s.year };

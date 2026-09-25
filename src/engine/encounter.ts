@@ -10,6 +10,7 @@ import {
   TIER_WEIGHTS,
 } from './constants';
 import { battleOutcome, displayInterval } from './power';
+import { hasSynergy, swordNarrow } from './arts';
 import { escapeRate, levelTier, powerOf } from './selectors';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
@@ -61,17 +62,18 @@ export function buildEncounter(s: RunState, rng: RngBag, c: ContentBundle): Enco
   const tier = pickEnemyTier(s, rng);
   const [lo, hi] = tierRange(tier);
   const power = rng.encounter.int(lo, hi);
-  const iv = displayInterval(power, rng.encounter);
+  const iv = displayInterval(power, rng.encounter, swordNarrow(s, c));
   return { tier, power, lo: iv.lo, hi: iv.hi, name: pickName(tier, c, rng) };
 }
 
-export function encounterDecision(payload: EncounterPayload): Decision {
+export function encounterDecision(payload: EncounterPayload, narrowed = false): Decision {
+  const head = narrowed ? '（剑心通明：气息的轮廓清晰了些）' : '';
   return {
     source: 'system',
     kind: 'encounter',
     eventId: `enc_tier${payload.tier}`,
     title: '机缘',
-    body: `${payload.name}拦在你前路，气息隐而不发，你只能隐约觉出它的战力在 ${formatPower(payload.lo)} 到 ${formatPower(payload.hi)} 之间。`,
+    body: `${head}${payload.name}拦在你前路，气息隐而不发，你只能隐约觉出它的战力在 ${formatPower(payload.lo)} 到 ${formatPower(payload.hi)} 之间。`,
     choices: [
       { id: 'fight', label: '出手争夺', show: true, enable: true, hint: { risk: 2, reward: 3 } },
       { id: 'flee', label: '退避三舍', show: true, enable: true, hint: { risk: 0, reward: 0 } },
@@ -91,9 +93,10 @@ export function resolveEncounter(
   choiceId: string,
   payload: EncounterPayload,
   rng: RngBag,
+  c: ContentBundle,
 ): LogLine[] {
   const logs: LogLine[] = [];
-  const own = powerOf(s);
+  const own = powerOf(s, c);
   const immortal = s.realm.arc === 'immortal';
 
   if (choiceId === 'flee') {
@@ -132,9 +135,14 @@ export function resolveEncounter(
     s.root += gains.root;
     s.luck += gains.luck;
     s.conquered.push({ tier: payload.tier, name: payload.name, year: s.year, power: payload.power });
+    let plunder = 0;
+    if (hasSynergy(s, c, 'plunder')) {
+      plunder = rng.encounter.int(1, payload.tier);
+      s.simPoints += plunder;
+    }
     logs.push({
       cls: 'gold',
-      text: `你击溃了${payload.name}，修为大涨（灵根 +${gains.root}、气运 +${gains.luck}、模拟点 +${gains.simPoints}）。`,
+      text: `你击溃了${payload.name}，修为大涨（灵根 +${gains.root}、气运 +${gains.luck}、模拟点 +${gains.simPoints}${plunder > 0 ? `，掠夺 +${plunder}` : ''}）。`,
     });
     return logs;
   }

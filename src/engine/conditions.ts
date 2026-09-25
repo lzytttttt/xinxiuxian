@@ -1,3 +1,4 @@
+import { schoolCount } from './arts';
 import type { Condition, ContentBundle } from './types/effects';
 import type { Rng } from './types/rng';
 import type { RunState } from './types/run';
@@ -53,8 +54,7 @@ export function evalCondition(s: RunState, c: Condition, ctx: EvalCtx, path = ''
     case 'rankAtLeast':
       return s.sect.rank >= c.rank;
     case 'school':
-      // Phase 3 接入功法定义后按槽位统计
-      return false;
+      return schoolCount(s, ctx.content, c.id) >= c.countAtLeast;
     case 'bondType':
       return s.bonds.list.filter((b) => b.type === c.type).length >= c.countAtLeast;
     case 'hasPill':

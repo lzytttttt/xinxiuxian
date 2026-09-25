@@ -308,9 +308,10 @@ export function talentTier(root: number): number;
 export function talentMult(root: number): number;
 export function breakChance(tier: number, localLvl: number, arc: Arc): number;
 export function escapeRate(level: number, encTier: number): number;
-export function supportBonus(s: RunState): number;         // 羁绊助战，cap 30%
-export function zones(s: RunState): ZoneBreakdown;         // 六乘区明细（供面板）
-export function effectiveToxicity(s: RunState): number;
+export function zones(s: RunState, c: ContentBundle): ZoneBreakdown; // 六乘区明细（供面板与引擎共用）
+export function recordPowerTrail(s, c, label, before): void;         // 面板「最近变化」
+// 羁绊助战（cap 30%）随 Phase 5 的 bonds 系统接入，未提前建桩
+// effectiveToxicity 随 Phase 4 的丹药系统接入（当前 Z5 直接读 s.toxicity）
 ```
 
 ### `luckMult` 的硬约束
@@ -352,3 +353,5 @@ export interface ZoneDetail {
 `PowerBreakdown.tsx` 直接消费 `zones()` 的返回值。
 
 **验收断言**：`Σ sources[].delta` 加上基础值必须精确等于 `mult`（写成单元测试）。这条抓的是经典的"面板骗人"bug。
+
+> Phase 3 实现说明：`zones(s, c)` 需要内容表（功法被动定义在内容侧）；0 值来源不上面板（求和仍精确）；硬上限截断会以 `kind: 'cap'` 的负值来源行显式出现。

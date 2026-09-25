@@ -17,7 +17,8 @@ import {
   TRIB_REQ2,
 } from './constants';
 import { powerOf } from './selectors';
-import type { Decision } from './types/effects';
+import { luckyTribMult } from './arts';
+import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
 import type { RunState } from './types/run';
@@ -33,23 +34,24 @@ export function shouldTribulate(s: RunState): boolean {
   return s.realm.level >= 91 && !s.brokeThisYear && s.simPoints - s.age <= 0;
 }
 
-export function runTribulation(s: RunState, rng: RngBag): TribulationResult {
+export function runTribulation(s: RunState, rng: RngBag, c: ContentBundle): TribulationResult {
   const logs: LogLine[] = [];
   const immortal = s.realm.arc === 'immortal';
   const reqs = immortal ? TRIB_REQ2 : TRIB_REQ;
   const mults = immortal ? TRIB_MULT2 : TRIB_MULT;
   const bonus = immortal ? TRIB_BONUS2 : TRIB_BONUS;
+  const luckyMult = luckyTribMult(s, c);
 
   logs.push({ cls: 'rainbow', text: '劫云压顶，九重雷光在云中翻涌——你已无路可退！', fx: 'trib' });
 
   for (let i = 0; i < 9; i++) {
     const req = (reqs[i] ?? 0) * s.tribulationReqMult;
-    const power = powerOf(s);
+    const power = powerOf(s, c);
     let passed = false;
     if (power >= req) {
       passed = true;
       logs.push({ cls: 'rainbow', text: `第${cnNum(i + 1)}重劫雷应声而散，你硬抗而过！` });
-    } else if (rng.tribulation.next() < s.luck / LUCK_TRIB_DIV) {
+    } else if (rng.tribulation.next() < (s.luck / LUCK_TRIB_DIV) * luckyMult) {
       passed = true;
       logs.push({ cls: 'rainbow', text: `第${cnNum(i + 1)}重劫雷擦身而过——侥幸！` });
     } else if (!immortal && s.xianqi >= 1) {

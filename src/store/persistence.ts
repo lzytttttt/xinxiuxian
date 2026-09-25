@@ -3,7 +3,7 @@ import type { DeferredEntry, RunState } from '../engine/types/run';
 
 export const SAVE_KEY = 'xiuxian.save';
 export const SETTINGS_KEY = 'xiuxian.settings';
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
 
 export interface SaveEnvelope {
   v: number;
@@ -61,7 +61,7 @@ export function verifyChecksum(env: SaveEnvelope): void {
   }
 }
 
-const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
+export const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
   // v1 → v2：Phase 2 把 deferredQueue 由 string[] 改为 DeferredEntry[]，并新增 decisionLog。
   1: (env) => {
     const old = env as SaveEnvelope;
@@ -76,6 +76,14 @@ const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
       decisionLog: (run.decisionLog ?? []) as RunState['decisionLog'],
     };
     return { ...old, v: 2, run: migrated, checksum: checksumOf(old.meta, migrated) };
+  },
+  // v2 → v3：Phase 3 新增 powerTrail（战力最近变化）；arts/slots/insight 字段 Phase 1 起即存在
+  2: (env) => {
+    const old = env as SaveEnvelope;
+    if (!old.run) return { ...old, v: 3 };
+    const run = old.run as RunState & { powerTrail?: RunState['powerTrail'] };
+    const migrated: RunState = { ...run, powerTrail: run.powerTrail ?? null };
+    return { ...old, v: 3, run: migrated, checksum: checksumOf(old.meta, migrated) };
   },
 };
 

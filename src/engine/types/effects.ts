@@ -2,6 +2,21 @@ import type { LogTone, RunEndReason } from './log';
 
 export type SchoolId = '剑修' | '丹修' | '体修' | '毒修' | '雷修' | '魔修';
 
+/** 战力构成乘区：Z5 本 Phase 无内容侧来源，故不入 id 集合 */
+export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4' | 'z6';
+
+export interface ArtDef {
+  id: string;
+  name: string;
+  school: SchoolId;
+  /** 1 凡 / 2 灵 / 3 玄 / 4 地 / 5 天，仅影响获取权重与文案 */
+  quality: 1 | 2 | 3 | 4 | 5;
+  /** 每级增量；L 级贡献 = 值 × L（区内加法） */
+  passives: Partial<Record<ZoneId, number>>;
+  text: string;
+  requires?: Condition;
+}
+
 export type BondType = '道侣' | '师徒' | '挚友' | '宿敌' | '同门';
 
 export type FateAttr = 'root' | 'luck' | 'xianqi' | 'artifact' | 'brk' | 'trib';
@@ -158,6 +173,8 @@ export interface ContentBundle {
   events: EventDef[];
   fates: Fate[];
   rollTables: RollTable[];
+  /** Phase 3：功法表；缺省为空（引擎测试可用不带动功法的 fixture bundle） */
+  arts?: ArtDef[];
   names?: NameTables;
 }
 
@@ -170,6 +187,8 @@ export interface DecisionChoice {
   enable: boolean;
   disabledReason?: string;
   costLabel?: string;
+  /** 该选项的悟性代价（供策略与 UI 判断能否为升级保留悟性） */
+  insightCost?: number;
   hint?: { risk: 0 | 1 | 2 | 3; reward: 0 | 1 | 2 | 3 };
 }
 

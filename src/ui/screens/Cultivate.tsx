@@ -3,6 +3,7 @@ import { powerOf, realmName, talentTier } from '../../engine/selectors';
 import { TALENT_NAMES, TOXICITY_MAX } from '../../engine/constants';
 import { useRunStore } from '../../store/runStore';
 import { LogFeed } from '../components/LogFeed';
+import { PowerBreakdown } from '../panels/PowerBreakdown';
 import type { CSSProperties } from 'react';
 
 const END_TEXT: Record<string, string> = {
@@ -32,7 +33,8 @@ export function Cultivate() {
     return () => document.removeEventListener('visibilitychange', onHide);
   }, []);
 
-  const power = useMemo(() => (run ? powerOf(run) : 0), [run, version]);
+  const content = useRunStore((s) => s.content);
+  const power = useMemo(() => (run ? powerOf(run, content) : 0), [run, content, version]);
   if (!run) return null;
 
   const toxStyle = { '--p': `${(run.toxicity / TOXICITY_MAX) * 100}%` } as CSSProperties;
@@ -88,26 +90,7 @@ export function Cultivate() {
       </main>
 
       <aside className="side">
-        <section className="panel">
-          <div className="panel-title">
-            <span>战力</span>
-            <span className="hint">六乘区 Phase 3</span>
-          </div>
-          <div className="panel-body">
-            <div className="zone-row">
-              <span>修为</span>
-              <span className="num">{Math.round(run.cultivation)}</span>
-            </div>
-            <div className="zone-row">
-              <span>法宝之力</span>
-              <span className="num">{Math.round(run.artifactPower)}</span>
-            </div>
-            <div className="zone-total">
-              <span>总战力</span>
-              <span className="num">{Math.round(power)}</span>
-            </div>
-          </div>
-        </section>
+        <PowerBreakdown />
 
         <section className="panel">
           <div className="panel-title">

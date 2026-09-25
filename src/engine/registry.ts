@@ -1,4 +1,4 @@
-import type { ContentBundle, EventDef, Fate, NameTables, RollTable } from './types/effects';
+import type { ArtDef, ContentBundle, EventDef, Fate, NameTables, RollTable } from './types/effects';
 
 export function defineEvent(e: EventDef): EventDef {
   return e;
@@ -6,6 +6,10 @@ export function defineEvent(e: EventDef): EventDef {
 
 export function defineFate(f: Fate): Fate {
   return f;
+}
+
+export function defineArt(a: ArtDef): ArtDef {
+  return a;
 }
 
 export function defineRollTable(t: RollTable): RollTable {
@@ -16,12 +20,14 @@ export function bundle(parts: {
   events: EventDef[];
   fates: Fate[];
   rollTables?: RollTable[];
+  arts?: ArtDef[];
   names?: NameTables;
 }): ContentBundle {
   return {
     events: parts.events,
     fates: parts.fates,
     rollTables: parts.rollTables ?? [],
+    ...(parts.arts ? { arts: parts.arts } : {}),
     ...(parts.names ? { names: parts.names } : {}),
   };
 }

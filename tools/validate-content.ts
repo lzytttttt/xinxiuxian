@@ -3,6 +3,7 @@ import { evalCondition, makeEvalCtx } from '../src/engine/conditions';
 import { createRun } from '../src/engine/newRun';
 import { makeRngBag } from '../src/engine/rng';
 import type {
+  ArtDef,
   BondType,
   Condition,
   ContentBundle,
@@ -51,10 +52,47 @@ const TARGET_KINDS = new Set([
 ]);
 
 interface Tables {
-  arts?: { id: string }[];
+  arts?: ArtDef[];
   pills?: { id: string }[];
   herbs?: { id: string }[];
   recipes?: { id: string }[];
+}
+
+/** 引擎侧消费的 flag（不在内容里读，拦截「死 flag」误报） */
+const ENGINE_FLAGS = new Set(['dao_seat']);
+
+const SCHOOL_SET = new Set(['剑修', '丹修', '体修', '毒修', '雷修', '魔修']);
+const ZONE_SET = new Set(['z1', 'z2', 'z3', 'z4', 'z6']);
+
+function checkArts(arts: ArtDef[] | undefined): void {
+  if (!arts) return;
+  const ids = new Set<string>();
+  const perSchool = new Map<string, number>();
+  for (const art of arts) {
+    if (ids.has(art.id)) error('功法 id 唯一', `${art.id} 重复`);
+    ids.add(art.id);
+    if (!SCHOOL_SET.has(art.school)) error('功法流派合法', `${art.id}: 未知流派 ${art.school}`);
+    perSchool.set(art.school, (perSchool.get(art.school) ?? 0) + 1);
+    const zones = Object.keys(art.passives);
+    if (zones.length === 0) error('功法至少一个被动', `${art.id}: passives 为空`);
+    for (const [zone, per] of Object.entries(art.passives)) {
+      if (!ZONE_SET.has(zone)) error('功法乘区合法', `${art.id}: 未知乘区 ${zone}`);
+      if (!(per > 0)) error('功法被动为正', `${art.id}.${zone} = ${per}`);
+      if (per > 0.2) warn('功法被动量级', `${art.id}.${zone} = ${per}/级（>0.2，注意触顶）`);
+    }
+    if (art.requires) {
+      const conds: Condition[] = [art.requires];
+      for (const c of conds) {
+        walkCondition(c, (x) => {
+          if (x.op === 'chance' || x.op === 'roll')
+            error('功法 requires 不得含随机节点', `${art.id}: 功法门槛必须是确定条件`);
+        });
+      }
+    }
+  }
+  for (const [school, n] of perSchool) {
+    if (n < 4) warn('流派功法数', `${school} 只有 ${n} 门（<4，凑不齐一条共鸣线）`);
+  }
 }
 
 function walkCondition(c: Condition, visit: (x: Condition) => void): void {
@@ -305,9 +343,12 @@ function eligibleIn(s: RunState, ev: EventDef, content: ContentBundle): boolean 
   return true;
 }
 
-function main(): void {  const content = BUNDLE as ContentBundle & Tables;
+function main(): void {
+  const content = BUNDLE as ContentBundle & Tables;
   const stats = process.argv.includes('--stats');
   const skipReach = process.argv.includes('--no-reach');
+
+  checkArts(content.arts);
 
   const ids = new Set<string>();
   const flagWrites = new Map<string, string[]>();
@@ -358,7 +399,7 @@ function main(): void {  const content = BUNDLE as ContentBundle & Tables;
     }
   }
   for (const [flag, writers] of flagWrites) {
-    if (!flagReads.has(flag)) {
+    if (!flagReads.has(flag) && !ENGINE_FLAGS.has(flag)) {
       warn('死 flag（写无读）', `${flag} 被 ${writers.join('、')} 写入，但无任何读取方`);
     }
   }
@@ -393,7 +434,15 @@ function main(): void {  const content = BUNDLE as ContentBundle & Tables;
     console.log(`多选项事件（≥2）: ${multiChoice}`);
     console.log(`事件池分布: ${[...byCategory.entries()].map(([k, v]) => `${k} ${v}`).join(' / ')}`);
     console.log(`覆盖事件: ${content.events.length - unreachable.length}/${content.events.length}`);
-    if (content.arts?.length) console.log(`功法: ${content.arts.length}`);
+    if (content.arts?.length) {
+      const perSchool = new Map<string, number>();
+      for (const a of content.arts) perSchool.set(a.school, (perSchool.get(a.school) ?? 0) + 1);
+      console.log(`功法: ${content.arts.length}（${[...perSchool.entries()].map(([k, v]) => `${k} ${v}`).join(' / ')}）`);
+      const granting = content.events.filter((ev) =>
+        ev.choices.some((ch) => ch.outcomes.some((o) => o.effects.some((e) => e.op === 'grantArt'))),
+      ).length;
+      console.log(`发放功法的事件: ${granting}`);
+    }
     console.log('');
   }
 

@@ -357,6 +357,69 @@ export const FATE_ATTR_NAMES: Record<string, string> = {
 
 export const PITY_POINTS: readonly number[] = [0, 5, 4, 3, 2, 1];
 
+// ── Phase 3：六乘区（数值预算表见 doc/product/04-arts-build.md） ──
+export const ZONE_CAPS: Readonly<Record<'z1' | 'z2' | 'z3' | 'z4' | 'z5' | 'z6', number>> = {
+  z1: 3.0,
+  z2: 2.2,
+  z3: 3.5,
+  z4: 2.5,
+  z5: 2.0,
+  z6: 1.8,
+};
+export const SOFT_CAP_KNEE = 25;
+export const SOFT_CAP_SLOPE = 0.5;
+/** 软封顶后乘积的硬上限（验收 3.3：满乘区 ≤ 40） */
+export const POWER_PRODUCT_MAX = 40;
+/** Z3 = 1 + Z3_LOG_COEF × log10(1 + 法宝之力)，系数按预算表标定 */
+export const Z3_LOG_COEF = 0.25;
+/** 炼宝诀：法宝之力按 1.5 倍计入 Z3 */
+export const Z3_TREASURE_MULT = 1.5;
+export const TREASURE_RATIO = 0.5;
+/** Z2 天赋灵根：tier ≥ 6 起每档 +1% */
+export const Z2_TIER_BASE = 6;
+export const Z2_TIER_STEP = 0.01;
+export const Z6_LUCK_DIV = 2000;
+export const Z6_FATE_COEF = 0.02;
+export const Z5_TOX_DIV = 250;
+export const Z5_TOX_PENALTY_MAX = 0.4;
+export const Z5_POISON_BODY_DIV = 100;
+export const POISON_BODY_TOX_MIN = 50;
+
+// ── Phase 3：功法与悟性经济 ──
+export const ART_LEVEL_MAX = 10;
+/** 入道起手功法的起始等级（开局三选一） */
+export const STARTER_ART_LEVEL = 2;
+export const ART_INSIGHT_BASE = 3;
+export const ART_INSIGHT_GROWTH = 1.35;
+export const ART_SLOTS_TOTAL = 6;
+export const ART_SLOTS_INITIAL = 3;
+/** 悟道室（洞府，Phase 6）解锁槽 4 / 槽 5-6；Phase 3 由道台事件补槽 4 */
+export const ART_SLOTS_CAVE_L2 = 4;
+export const ART_SLOTS_CAVE_L4 = 5;
+export const CAVE_ROOM_STUDY = '悟道室';
+export const DAO_SEAT_SLOT = 4;
+
+// ── Phase 3：流派共鸣（区后乘子） ──
+export const RESONANCE_MONO6 = 1.6;
+export const RESONANCE_MONO4 = 1.35;
+export const RESONANCE_MONO2 = 1.15;
+export const RESONANCE_THREE2 = 1.4;
+export const RESONANCE_TWO3 = 1.45;
+export const SYNERGY_SCHOOLS = 4;
+export const MIXED_SCHOOLS_EACH = 3;
+
+// ── Phase 3：协同 ──
+export const SWORD_HEART_LUCK = 80;
+export const SWORD_HEART_BASE = 0.25;
+export const SWORD_HEART_PER_LUCK = 0.0025;
+/** 机缘区间收窄硬上限 50%（G3 红线，任何协同不得突破） */
+export const SWORD_HEART_NARROW_MAX = 0.5;
+export const TOXICITY_DECAY_MULT = 2;
+export const TOXICITY_GAIN_MULT = 0.5;
+export const THUNDER_LUCKY_MULT = 1.5;
+export const THUNDER_FAIL_LOSS = 0.01;
+export const PLUNDER_SIM_PER_YEAR = 0.5;
+
 export const PLAYER_LEVEL_EXP_STEP = 50;
 export const SETTLE_EXP_NORMAL = 0.5;
 export const SETTLE_EXP_VOLUNTARY = 0.1;

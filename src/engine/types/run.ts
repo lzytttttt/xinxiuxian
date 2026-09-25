@@ -75,6 +75,14 @@ export interface DecisionRecord {
   choiceId: string;
 }
 
+/** 战力构成的「最近变化」：记录引起变化的动作与幅度（面板页脚消费） */
+export interface PowerTrail {
+  label: string;
+  /** 相对变化百分比（+18 表示 +18%） */
+  pct: number;
+  year: number;
+}
+
 export type BattlePolicy = 'manual' | 'yes' | 'no' | 'smart' | 'random';
 
 export interface AutopilotConfig {
@@ -150,6 +158,7 @@ export interface RunState {
   scheduled: ScheduledEvent[];
   chainDepth: number;
   decisionLog: DecisionRecord[];
+  powerTrail: PowerTrail | null;
 
   battlePolicy: BattlePolicy;
   smartX: number;
