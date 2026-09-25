@@ -3,7 +3,7 @@ import type { DeferredEntry, RunState } from '../engine/types/run';
 
 export const SAVE_KEY = 'xiuxian.save';
 export const SETTINGS_KEY = 'xiuxian.settings';
-export const CURRENT_VERSION = 3;
+export const CURRENT_VERSION = 4;
 
 export interface SaveEnvelope {
   v: number;
@@ -84,6 +84,25 @@ export const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
     const run = old.run as RunState & { powerTrail?: RunState['powerTrail'] };
     const migrated: RunState = { ...run, powerTrail: run.powerTrail ?? null };
     return { ...old, v: 3, run: migrated, checksum: checksumOf(old.meta, migrated) };
+  },
+  // v3 → v4：Phase 4 新增丹药状态；herbs/recipes/pills/toxicity 字段 Phase 1 起即存在
+  3: (env) => {
+    const old = env as SaveEnvelope;
+    if (!old.run) return { ...old, v: 4 };
+    const run = old.run as RunState & {
+      pillBuffs?: RunState['pillBuffs'];
+      pillBreakMult?: number;
+      pillGuardMult?: number;
+      pillCooldown?: RunState['pillCooldown'];
+    };
+    const migrated: RunState = {
+      ...run,
+      pillBuffs: run.pillBuffs ?? [],
+      pillBreakMult: run.pillBreakMult ?? 1,
+      pillGuardMult: run.pillGuardMult ?? 1,
+      pillCooldown: run.pillCooldown ?? {},
+    };
+    return { ...old, v: 4, run: migrated, checksum: checksumOf(old.meta, migrated) };
   },
 };
 

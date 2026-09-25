@@ -9,6 +9,9 @@ import type {
   ContentBundle,
   Effect,
   EventDef,
+  Herb,
+  PillDef,
+  Recipe,
 } from '../src/engine/types/effects';
 import type { RunState } from '../src/engine/types/run';
 
@@ -53,9 +56,9 @@ const TARGET_KINDS = new Set([
 
 interface Tables {
   arts?: ArtDef[];
-  pills?: { id: string }[];
-  herbs?: { id: string }[];
-  recipes?: { id: string }[];
+  pills?: PillDef[];
+  herbs?: Herb[];
+  recipes?: Recipe[];
 }
 
 /** 引擎侧消费的 flag（不在内容里读，拦截「死 flag」误报） */
@@ -63,6 +66,10 @@ const ENGINE_FLAGS = new Set(['dao_seat']);
 
 const SCHOOL_SET = new Set(['剑修', '丹修', '体修', '毒修', '雷修', '魔修']);
 const ZONE_SET = new Set(['z1', 'z2', 'z3', 'z4', 'z6']);
+const PILL_TYPE_SET = new Set(['聚气', '洗髓', '天机', '炼宝', '破境', '护劫', '疗毒']);
+const HERB_TAG_SET = new Set(['火', '寒', '毒', '木', '金', '血', '雷', '魂']);
+const HERB_NATURE_SET = new Set(['阳', '阴', '平']);
+const CURVE_SET = new Set(['flat', 'rise', 'fall', 'pulse']);
 
 function checkArts(arts: ArtDef[] | undefined): void {
   if (!arts) return;
@@ -93,6 +100,97 @@ function checkArts(arts: ArtDef[] | undefined): void {
   for (const [school, n] of perSchool) {
     if (n < 4) warn('流派功法数', `${school} 只有 ${n} 门（<4，凑不齐一条共鸣线）`);
   }
+}
+
+function checkHerbs(herbs: Herb[] | undefined): void {
+  if (!herbs) return;
+  const ids = new Set<string>();
+  const perTier = new Map<number, number>();
+  for (const herb of herbs) {
+    if (ids.has(herb.id)) error('药材 id 唯一', `${herb.id} 重复`);
+    ids.add(herb.id);
+    if (!(herb.tier >= 1 && herb.tier <= 10)) error('药材阶位 1-10', `${herb.id}: tier=${herb.tier}`);
+    if (!HERB_NATURE_SET.has(herb.nature)) error('药材药性合法', `${herb.id}: ${herb.nature}`);
+    if (!(herb.potency > 0)) error('药力为正', `${herb.id}: potency=${herb.potency}`);
+    if (herb.tags.length === 0) warn('药材至少一个标签', `${herb.id}: tags 为空`);
+    for (const tag of herb.tags) {
+      if (!HERB_TAG_SET.has(tag)) error('药材标签合法', `${herb.id}: 未知标签 ${tag}`);
+    }
+    perTier.set(herb.tier, (perTier.get(herb.tier) ?? 0) + 1);
+  }
+  for (const tier of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    const n = perTier.get(tier) ?? 0;
+    if (n === 0) error('每阶都有药材', `${tier} 阶无药材（丹方会缺料）`);
+    else if (n < 4) warn('每阶药材数', `${tier} 阶只有 ${n} 味（<4，搭配空间小）`);
+  }
+}
+
+function checkPills(pills: PillDef[] | undefined): void {
+  if (!pills) return;
+  const ids = new Set<string>();
+  const perType = new Map<string, number>();
+  for (const pill of pills) {
+    if (ids.has(pill.id)) error('丹药 id 唯一', `${pill.id} 重复`);
+    ids.add(pill.id);
+    if (!PILL_TYPE_SET.has(pill.type)) error('丹药类型合法', `${pill.id}: ${pill.type}`);
+    if (!(pill.tier >= 1 && pill.tier <= 10)) error('丹药阶位 1-10', `${pill.id}: tier=${pill.tier}`);
+    if (!(pill.base > 0)) error('丹药基准效果为正', `${pill.id}: base=${pill.base}`);
+    if (!(pill.zoneBase > 0)) error('丹药药力为正', `${pill.id}: zoneBase=${pill.zoneBase}`);
+    if (pill.zoneBase > 0.5) warn('丹药药力量级', `${pill.id}: zoneBase=${pill.zoneBase}（>0.5，Z5 易触顶）`);
+    perType.set(pill.type, (perType.get(pill.type) ?? 0) + 1);
+  }
+  for (const type of PILL_TYPE_SET) {
+    if ((perType.get(type) ?? 0) === 0) error('七类丹药齐备', `缺少「${type}」类丹药`);
+  }
+}
+
+function checkRecipes(recipes: Recipe[] | undefined, tables: Tables): void {
+  if (!recipes) return;
+  const ids = new Set<string>();
+  const pillIds = new Set((tables.pills ?? []).map((p) => p.id));
+  const herbTiers = new Map((tables.herbs ?? []).map((h) => [h.id, h.tier]));
+  for (const recipe of recipes) {
+    if (ids.has(recipe.id)) error('丹方 id 唯一', `${recipe.id} 重复`);
+    ids.add(recipe.id);
+    if (!(recipe.tier >= 1 && recipe.tier <= 10)) error('丹方阶位 1-10', `${recipe.id}: tier=${recipe.tier}`);
+    if (!PILL_TYPE_SET.has(recipe.type) || recipe.type !== (tables.pills ?? []).find((p) => p.id === recipe.pill)?.type) {
+      error('丹方类型与产出丹药一致', `${recipe.id}: type=${recipe.type} pill=${recipe.pill}`);
+    }
+    if (!pillIds.has(recipe.pill)) error('丹方产出可解析', `${recipe.id}: pill ${recipe.pill} 不存在`);
+    if (recipe.school && !SCHOOL_SET.has(recipe.school)) error('丹方流派合法', `${recipe.id}: ${recipe.school}`);
+    if (recipe.inputs.length === 0) error('丹方需材料', `${recipe.id}: inputs 为空`);
+    for (const input of recipe.inputs) {
+      const tier = herbTiers.get(input.herb);
+      if (tier === undefined) error('丹方材料可解析', `${recipe.id}: herb ${input.herb} 不存在`);
+      if (!(input.count > 0)) error('材料数量为正', `${recipe.id}.${input.herb} = ${input.count}`);
+      if (tier !== undefined && Math.abs(tier - recipe.tier) > 1) {
+        warn('材料阶位贴近丹方', `${recipe.id}(${recipe.tier} 阶) 用 ${tier} 阶药材 ${input.herb}`);
+      }
+    }
+    const f = recipe.furnace;
+    if (!CURVE_SET.has(f.curve)) error('火候曲线合法', `${recipe.id}: ${f.curve}`);
+    if (!(f.steps >= 4 && f.steps <= 20)) error('火候步数 4-20', `${recipe.id}: steps=${f.steps}`);
+    if (!(f.noise >= 0 && f.noise <= 0.5)) error('噪声范围', `${recipe.id}: noise=${f.noise}`);
+    if (!(f.tolerance > 0 && f.tolerance <= 20)) error('容差范围', `${recipe.id}: tolerance=${f.tolerance}`);
+    if (!(f.targetTemp >= 20 && f.targetTemp <= 100)) error('目标温度 20-100', `${recipe.id}: ${f.targetTemp}`);
+    if (!(recipe.baseGrade >= 1 && recipe.baseGrade <= 6)) error('品质基准 1-6', `${recipe.id}: ${recipe.baseGrade}`);
+    walkCondition(recipe.unlock, (x) => {
+      if (x.op === 'chance' || x.op === 'roll') {
+        error('丹方 unlock 必须确定性', `${recipe.id}: unlock 不得含 ${x.op} 节点`);
+      }
+    });
+  }
+  const perTierBand = { low: 0, mid: 0, high: 0, top: 0 };
+  for (const r of recipes) {
+    if (r.tier <= 3) perTierBand.low += 1;
+    else if (r.tier <= 6) perTierBand.mid += 1;
+    else if (r.tier <= 9) perTierBand.high += 1;
+    else perTierBand.top += 1;
+  }
+  if (perTierBand.low < 8) warn('丹方阶位分布', `1-3 阶只有 ${perTierBand.low} 张`);
+  if (perTierBand.mid < 8) warn('丹方阶位分布', `4-6 阶只有 ${perTierBand.mid} 张`);
+  if (perTierBand.high < 6) warn('丹方阶位分布', `7-9 阶只有 ${perTierBand.high} 张`);
+  if (perTierBand.top < 2) warn('丹方阶位分布', `10 阶只有 ${perTierBand.top} 张`);
 }
 
 function walkCondition(c: Condition, visit: (x: Condition) => void): void {
@@ -349,6 +447,9 @@ function main(): void {
   const skipReach = process.argv.includes('--no-reach');
 
   checkArts(content.arts);
+  checkHerbs(content.herbs);
+  checkPills(content.pills);
+  checkRecipes(content.recipes, content);
 
   const ids = new Set<string>();
   const flagWrites = new Map<string, string[]>();
@@ -391,6 +492,13 @@ function main(): void {
       }
     }
     if (ev.chain?.consumesFlag) add(flagReads, ev.chain.consumesFlag, ev.id);
+  }
+
+  // 丹方 unlock 也读 flag（如 10 阶丹方要求 dan_hall）
+  for (const recipe of content.recipes ?? []) {
+    walkCondition(recipe.unlock, (x) => {
+      if (x.op === 'flag') add(flagReads, x.id, recipe.id);
+    });
   }
 
   for (const [flag, readers] of flagReads) {
@@ -442,6 +550,38 @@ function main(): void {
         ev.choices.some((ch) => ch.outcomes.some((o) => o.effects.some((e) => e.op === 'grantArt'))),
       ).length;
       console.log(`发放功法的事件: ${granting}`);
+    }
+    if (content.herbs?.length) {
+      const perTier = new Map<number, number>();
+      for (const h of content.herbs) perTier.set(h.tier, (perTier.get(h.tier) ?? 0) + 1);
+      console.log(
+        `药材: ${content.herbs.length}（各阶 ${Array.from({ length: 10 }, (_, i) => perTier.get(i + 1) ?? 0).join('/')}）`,
+      );
+      const herbGranting = content.events.filter((ev) =>
+        ev.choices.some((ch) => ch.outcomes.some((o) => o.effects.some((e) => e.op === 'grantHerb'))),
+      ).length;
+      console.log(`发放药材的事件: ${herbGranting}`);
+    }
+    if (content.pills?.length) {
+      const perType = new Map<string, number>();
+      for (const p of content.pills) perType.set(p.type, (perType.get(p.type) ?? 0) + 1);
+      console.log(`丹药: ${content.pills.length}（${[...perType.entries()].map(([k, v]) => `${k} ${v}`).join(' / ')}）`);
+    }
+    if (content.recipes?.length) {
+      const bands = { 低阶: 0, 中阶: 0, 高阶: 0, 顶阶: 0 };
+      for (const r of content.recipes) {
+        if (r.tier <= 3) bands.低阶 += 1;
+        else if (r.tier <= 6) bands.中阶 += 1;
+        else if (r.tier <= 9) bands.高阶 += 1;
+        else bands.顶阶 += 1;
+      }
+      console.log(
+        `丹方: ${content.recipes.length}（1-3 阶 ${bands.低阶} / 4-6 阶 ${bands.中阶} / 7-9 阶 ${bands.高阶} / 10 阶 ${bands.顶阶}）`,
+      );
+      const learn = content.events.filter((ev) =>
+        ev.choices.some((ch) => ch.outcomes.some((o) => o.effects.some((e) => e.op === 'learnRecipe'))),
+      ).length;
+      console.log(`授予丹方的事件: ${learn}`);
     }
     console.log('');
   }

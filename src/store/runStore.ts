@@ -1,14 +1,31 @@
 import { create } from 'zustand';
 import { BUNDLE, STARTER_ART_IDS } from '../content';
 import { artById, equipArt, grantArt, unequipArt, upgradeArt } from '../engine/arts';
+import {
+  autoFireAndCommit,
+  batchRefine,
+  canAutoFire,
+  buyHerb,
+  canUsePill,
+  parsePillKey,
+  pillById,
+  recipeById,
+  resolveBatch,
+  startBatch,
+  stepBatch,
+  usePill,
+  type BatchAction,
+  type CraftResult,
+} from '../engine/alchemy';
 import { applyChoice, rollYear } from '../engine/tick';
 import { createRun, drawCards, type CharCard } from '../engine/newRun';
 import { makeRngBag } from '../engine/rng';
 import { recordPowerTrail, zones, type ZoneBreakdown } from '../engine/selectors';
+import { LOG_LIMIT } from '../engine/constants';
 import type { ArtDef, ContentBundle, Decision } from '../engine/types/effects';
 import type { MetaState } from '../engine/types/meta';
 import type { RngBag } from '../engine/types/rng';
-import type { RunState } from '../engine/types/run';
+import type { BatchState, RunState } from '../engine/types/run';
 import { createSaver, defaultMeta, loadEnvelope, shouldPersistYear } from './persistence';
 
 export interface RunStoreState {
@@ -36,6 +53,18 @@ export interface RunStoreState {
   setRunning: (running: boolean) => void;
   choose: (choiceId: string) => void;
   abandon: () => void;
+  /** 炼丹：当前炉（UI 本地状态，不落盘；中途弃炉视为报废） */
+  batch: BatchState | null;
+  batchRecipeId: string | null;
+  batchResult: CraftResult | null;
+  startCraft: (recipeId: string) => void;
+  stepCraft: (action: BatchAction) => void;
+  finishCraft: () => void;
+  discardCraft: () => void;
+  autoCraft: (recipeId: string) => void;
+  refine: (recipeId: string) => void;
+  takePill: (key: string) => void;
+  buy: (herbId: string, count: number) => void;
 }
 
 let rng: RngBag = makeRngBag('boot');
@@ -57,15 +86,20 @@ function stopTimer(): void {
 }
 
 export const useRunStore = create<RunStoreState>((set, get) => {
+  const log = (run: RunState, text: string, cls: 'ev1' | 'gold' | 'red' = 'ev1'): void => {
+    run.log.push({ cls, text });
+    if (run.log.length > LOG_LIMIT) run.log.splice(0, run.log.length - LOG_LIMIT);
+  };
+
   const loop = (): void => {
     const state = get();
-    if (!state.running || state.pending || state.ended) {
+    if (!state.running || state.pending || state.ended || state.batch) {
       stopTimer();
       return;
     }
     const nextTimer = setTimeout(() => {
       const current = get();
-      if (!current.running || current.pending || current.ended) {
+      if (!current.running || current.pending || current.ended || current.batch) {
         stopTimer();
         return;
       }
@@ -244,7 +278,127 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       stopTimer();
       slot.run = null;
       saver.flush();
-      set({ run: null, pending: null, ended: null, running: false, version: get().version + 1 });
+      set({
+        run: null,
+        pending: null,
+        ended: null,
+        running: false,
+        batch: null,
+        batchRecipeId: null,
+        batchResult: null,
+        version: get().version + 1,
+      });
+    },
+
+    batch: null,
+    batchRecipeId: null,
+    batchResult: null,
+
+    startCraft: (recipeId) => {
+      const run = get().run;
+      if (!run || run.dead || get().batch) return;
+      const recipe = recipeById(BUNDLE, recipeId);
+      if (!recipe) return;
+      stopTimer();
+      const batch = startBatch(run, recipe);
+      if (!batch) return;
+      set({ batch, batchRecipeId: recipeId, batchResult: null, running: false, version: get().version + 1 });
+      saver.flush();
+    },
+
+    stepCraft: (action) => {
+      const { batch, run } = get();
+      if (!batch || !run) return;
+      stepBatch(batch, action, rng.alchemy);
+      if (batch.done || batch.exploded) {
+        const recipe = recipeById(BUNDLE, get().batchRecipeId ?? '');
+        if (!recipe) return;
+        const powerBefore = zones(run, BUNDLE).finalPower;
+        const result = resolveBatch(run, recipe, batch, BUNDLE);
+        recordPowerTrail(run, BUNDLE, `炼丹「${recipe.name}」`, powerBefore);
+        set({ batchResult: result, version: get().version + 1 });
+        saver.flush();
+        return;
+      }
+      set({ version: get().version + 1 });
+    },
+
+    finishCraft: () => {
+      set({ batch: null, batchRecipeId: null, running: false, version: get().version + 1 });
+    },
+
+    discardCraft: () => {
+      set({
+        batch: null,
+        batchRecipeId: null,
+        batchResult: null,
+        running: false,
+        version: get().version + 1,
+      });
+    },
+
+    autoCraft: (recipeId) => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      const recipe = recipeById(BUNDLE, recipeId);
+      const mastery = run.recipes[recipeId]?.mastery ?? 0;
+      if (!recipe || !canAutoFire(mastery)) return;
+      const powerBefore = zones(run, BUNDLE).finalPower;
+      const result = autoFireAndCommit(run, recipe, BUNDLE);
+      if (!result) return;
+      recordPowerTrail(run, BUNDLE, `炼丹「${recipe.name}」`, powerBefore);
+      set({
+        batch: null,
+        batchRecipeId: null,
+        batchResult: result,
+        running: false,
+        version: get().version + 1,
+      });
+      saver.flush();
+    },
+
+    refine: (recipeId) => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      const recipe = recipeById(BUNDLE, recipeId);
+      const mastery = run.recipes[recipeId]?.mastery ?? 0;
+      if (!recipe || !canAutoFire(mastery)) return;
+      const powerBefore = zones(run, BUNDLE).finalPower;
+      const result = batchRefine(run, recipe, BUNDLE);
+      if (!result) return;
+      recordPowerTrail(run, BUNDLE, `批量炼丹「${recipe.name}」`, powerBefore);
+      set({
+        batch: null,
+        batchRecipeId: null,
+        batchResult: result,
+        running: false,
+        version: get().version + 1,
+      });
+      saver.flush();
+    },
+
+    buy: (herbId, count) => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      if (!buyHerb(run, BUNDLE, herbId, count)) return;
+      set({ version: get().version + 1 });
+      saver.flush();
+    },
+
+    takePill: (key) => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      const check = canUsePill(run, key, BUNDLE);
+      if (!check.ok) return;
+      const powerBefore = zones(run, BUNDLE).finalPower;
+      const { pillId } = parsePillKey(key);
+      const name = pillById(BUNDLE, pillId)?.name ?? pillId;
+      const res = usePill(run, key, BUNDLE);
+      if (!res.ok) return;
+      log(run, `【丹药】${name} · ${res.text}`, 'gold');
+      recordPowerTrail(run, BUNDLE, `服丹「${name}」`, powerBefore);
+      set({ version: get().version + 1 });
+      saver.flush();
     },
   };
 });

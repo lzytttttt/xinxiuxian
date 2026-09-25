@@ -19,6 +19,60 @@ export interface ArtDef {
 
 export type BondType = '道侣' | '师徒' | '挚友' | '宿敌' | '同门';
 
+// ── Phase 4：药材 / 丹药 / 丹方 ──
+export type HerbTag = '火' | '寒' | '毒' | '木' | '金' | '血' | '雷' | '魂';
+export type HerbNature = '阳' | '阴' | '平';
+
+export interface Herb {
+  id: string;
+  name: string;
+  tier: number;
+  nature: HerbNature;
+  /** 药力：不足则成品品质封顶（见 engine/alchemy.ts::potencyCap） */
+  potency: number;
+  tags: HerbTag[];
+}
+
+export type PillType = '聚气' | '洗髓' | '天机' | '炼宝' | '破境' | '护劫' | '疗毒';
+
+export interface PillDef {
+  id: string;
+  name: string;
+  type: PillType;
+  tier: number;
+  /** 中品（quality = 3）基准效果；实际 = base × 品质倍率 */
+  base: number;
+  /** 服后进入乘区 `zone` 的药力（中品基准），持续 PILL_BUFF_YEARS 年 */
+  zoneBase: number;
+  /** 药力落点：聚气/破境/护劫/疗毒 → z5；洗髓 → z2；炼宝 → z3；天机 → z6（对齐 04-arts-build 面板口径） */
+  zone: 'z2' | 'z3' | 'z5' | 'z6';
+  text: string;
+}
+
+export type TempCurve = 'flat' | 'rise' | 'fall' | 'pulse';
+
+export interface Recipe {
+  id: string;
+  name: string;
+  tier: number;
+  type: PillType;
+  inputs: { herb: string; count: number }[];
+  furnace: {
+    targetTemp: number;
+    curve: TempCurve;
+    steps: number;
+    noise: number;
+    tolerance: number;
+  };
+  /** 产出的丹药 id（同一种丹药可由多张丹方炼出） */
+  pill: string;
+  /** 流派专属丹方（解锁条件之外再要求对应流派功法数） */
+  school?: SchoolId;
+  /** 确定性解锁条件；禁 chance/roll（校验器强制） */
+  unlock: Condition;
+  baseGrade: number;
+}
+
 export type FateAttr = 'root' | 'luck' | 'xianqi' | 'artifact' | 'brk' | 'trib';
 
 export type FateColor = 'green' | 'blue' | 'purple' | 'gold';
@@ -175,6 +229,10 @@ export interface ContentBundle {
   rollTables: RollTable[];
   /** Phase 3：功法表；缺省为空（引擎测试可用不带动功法的 fixture bundle） */
   arts?: ArtDef[];
+  /** Phase 4：药材 / 丹药 / 丹方；缺省为空 */
+  herbs?: Herb[];
+  pills?: PillDef[];
+  recipes?: Recipe[];
   names?: NameTables;
 }
 

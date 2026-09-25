@@ -424,3 +424,64 @@ export const PLAYER_LEVEL_EXP_STEP = 50;
 export const SETTLE_EXP_NORMAL = 0.5;
 export const SETTLE_EXP_VOLUNTARY = 0.1;
 
+// ── Phase 4：炼丹（控火小游戏） ──
+/** 添柴：升温与燃料代价 */
+export const ALCHEMY_HEAT_GAIN = 2;
+export const ALCHEMY_HEAT_COST = 2;
+/** 撤火：降温 */
+export const ALCHEMY_COOL_LOSS = 3;
+/** 扇风：下一步额外升温，但抬噪声 */
+export const ALCHEMY_FAN_GAIN = 7;
+export const ALCHEMY_FAN_NOISE = 0.06;
+/** 稳火：向目标微调（收拢比例）并降噪声，但耗稳定度 */
+export const ALCHEMY_CALM_PULL = 0.3;
+export const ALCHEMY_CALM_NOISE = 0.05;
+export const ALCHEMY_CALM_STABILITY = 3;
+/** 每步被动漂移：temp += (target − temp) × DRIFT + gauss(0, noise) × NOISE_SCALE */
+export const ALCHEMY_DRIFT = 0.08;
+export const ALCHEMY_NOISE_SCALE = 14;
+/** 曲线摆幅（rise/fall 全幅 = 2×SWING；pulse 幅值 = SWING） */
+export const ALCHEMY_CURVE_SWING = 5;
+/** 初始燃料 = ceil(steps × FUEL_PER_STEP)；初始稳定度 = steps × STABILITY_PER_STEP */
+export const ALCHEMY_FUEL_PER_STEP = 1;
+export const ALCHEMY_STABILITY_PER_STEP = 1;
+/** 精通：每丹方独立 0-5，每炼一炉 +1 */
+export const ALCHEMY_MASTERY_MAX = 5;
+export const ALCHEMY_MASTERY_BONUS_PER = 0.1;
+export const ALCHEMY_MASTERY_BONUS_CAP = 0.4;
+/** 自动控火解锁门槛（精通） */
+export const ALCHEMY_AUTO_MASTERY = 3;
+/** 批量炼制：一次消耗份数 */
+export const ALCHEMY_BATCH_COUNT = 5;
+/** 流派加成：丹修任意 +0.3；万法归一 +0.2（可叠） */
+export const ALCHEMY_SCHOOL_BONUS = 0.3;
+export const ALCHEMY_MIXED_BONUS = 0.2;
+/** 仙品门槛：qualityScore ≥ 此值且未炸炉才可到 6 档 */
+export const ALCHEMY_XIAN_SCORE = 0.9;
+
+/** 品质倍率与名称（下标 = 品质 1-6） */
+export const QUALITY_MULTS: readonly number[] = [0, 0.5, 0.75, 1.0, 1.3, 1.7, 2.2];
+export const QUALITY_NAMES: readonly string[] = ['', '凡品', '下品', '中品', '上品', '极品', '仙品'];
+
+// ── Phase 4：丹毒与丹药 ──
+/** 每颗丹毒 = tier × (7 − quality) × 此系数（再乘丹火不侵 0.5） */
+export const PILL_TOX_RATE = 0.6;
+/** 药力封顶：投入药材平均药力每 16 点支撑 1 档品质（cap = 1 + round(avg/16)） */
+export const PILL_POTENCY_PER_GRADE = 16;
+/** 药市：每株药材的悟性价格 = ceil(阶位 × 此系数 / 2)（悟性是 Phase 3 起的主稀缺资源，用它定价不扭曲寿元算术） */
+export const HERB_MARKET_INSIGHT_PER_TIER = 1;
+/** 药市每年限购株数（防止后期悟性充裕时无限囤药，也防无头策略把悟性全换成药材） */
+export const HERB_MARKET_YEARLY_STOCK = 8;
+/** 药力持续年数（丹药按境界档发放，8 年保证低供给下 Z5 不断档） */
+export const PILL_BUFF_YEARS = 8;
+/** 常规丹药冷却年数 */
+export const PILL_COOLDOWN_YEARS = 3;
+/** 破境丹：本年突破概率倍率 */
+export const PILL_BREAK_MULT = 1.25;
+/** 护劫丹：渡劫要求倍率（−12%） */
+export const PILL_GUARD_MULT = 0.88;
+/** 疗毒丹：中品解毒量 */
+export const PILL_CURE_TOX = 30;
+/** 阴阳互济（Phase 3 共鸣）：丹毒衰减 ×1.5 */
+export const TOXICITY_TWO3_DECAY_MULT = 1.5;
+

@@ -19,6 +19,7 @@ import {
   TOXICITY_DECAY_RATE,
 } from './constants';
 import { plunderDrain, swordNarrow, toxicityDecayMult } from './arts';
+import { tickPillBuffs } from './alchemy';
 import { evalCondition, makeEvalCtx } from './conditions';
 import { buildEncounter, encounterDecision, resolveEncounter, type EncounterPayload } from './encounter';
 import { resolveArtifact } from './artifact';
@@ -334,6 +335,9 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   s.brokeThisYear = false;
   s.pinnacleThisYear = false;
   s.chainDepth = 0;
+  // 丹药本年状态归零：破境丹的倍率与护劫丹的要求只在服用当年有效
+  s.pillBreakMult = 1;
+  s.pillGuardMult = 1;
   push(s, logs, {
     cls: 'year',
     text: `第 ${s.year} 年 · ${s.age} 岁 · ${realmName(s.realm.level)}`,
@@ -344,6 +348,7 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
 
   rootShiftTick(s, rng, logs);
   toxicityTick(s, c);
+  tickPillBuffs(s);
   s.insight += insightPerYear(s);
   const drain = plunderDrain(s, c);
   if (drain > 0) s.simPoints = Math.max(0, s.simPoints - drain);

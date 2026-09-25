@@ -18,6 +18,8 @@ import {
   REALM_MAX_MORTAL,
   STAGE_ENTER,
   STAGE_PEAK,
+  TOXICITY_BREAK_PENALTY,
+  Z5_TOX_PENALTY_MAX,
 } from './constants';
 import {
   ageCoef,
@@ -112,10 +114,13 @@ export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLin
   const age = ageCoef(s);
   const talent = talentMult(s.root);
   const thunder = thunderBreakMult(s, c);
+  // 丹毒惩罚：×(1 − 丹毒/250)，与 Z5 同底（丹毒 100 → ×0.6）；破境丹为当年一次性倍率
+  const toxin = Math.max(1 - Z5_TOX_PENALTY_MAX, 1 - s.toxicity / TOXICITY_BREAK_PENALTY);
+  const pill = s.pillBreakMult;
 
   if (s.realm.level < max && s.realm.level % 10 !== 0) {
     const table = breakChance(tier, localLevel(s), s.realm.arc);
-    const base = table / 100 * age * gate * talent * s.breakthroughMult * thunder;
+    const base = (table / 100) * age * gate * talent * s.breakthroughMult * thunder * toxin * pill;
     if (base <= 0.25) {
       if (rng.break.chance(base)) levelUp(s, rng, logs, false);
     } else {
@@ -129,6 +134,8 @@ export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLin
           talent *
           s.breakthroughMult *
           thunder *
+          toxin *
+          pill *
           Math.pow(CHAIN_MULT, step) *
           chainMult;
         if (p <= 0.25 || s.realm.level >= max || s.realm.level % 10 === 0) break;

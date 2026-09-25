@@ -1,4 +1,4 @@
-import type { BondType, Decision, DecisionKind, Fate } from './effects';
+import type { BondType, Decision, DecisionKind, Fate, PillType, TempCurve } from './effects';
 import type { LogLine } from './log';
 
 export type Arc = 'mortal' | 'immortal';
@@ -46,6 +46,38 @@ export interface ArtState {
 export interface RecipeState {
   known: boolean;
   mastery: number;
+}
+
+/** 服丹后留在体内的药力（Z5 来源，逐年递减） */
+export interface PillBuff {
+  pillId: string;
+  type: PillType;
+  /** 药力落点乘区 */
+  zone: 'z2' | 'z3' | 'z5' | 'z6';
+  /** 已计入乘区的药力（= zoneBase × 品质倍率） */
+  power: number;
+  years: number;
+}
+
+/** 控火小游戏的一炉状态。**不落盘**：中途退出视为报废（见 v0.1.0-05 §六） */
+export interface BatchState {
+  recipeId: string;
+  /** 已完成步数 */
+  t: number;
+  steps: number;
+  temp: number;
+  fuel: number;
+  base: number;
+  target: number;
+  curve: TempCurve;
+  noise: number;
+  tolerance: number;
+  stability: number;
+  trackError: number;
+  /** 扇风的"下一步 +N"待生效值 */
+  fanBonus: number;
+  exploded: boolean;
+  done: boolean;
 }
 
 export interface SectState {
@@ -145,6 +177,14 @@ export interface RunState {
   recipes: Record<string, RecipeState>;
   pills: Record<string, number>;
   toxicity: number;
+  /** 活跃药力（Z5 来源，含年限） */
+  pillBuffs: PillBuff[];
+  /** 破境丹：本年突破概率倍率（年初重置为 1） */
+  pillBreakMult: number;
+  /** 护劫丹：渡劫要求倍率（本次天劫内生效，年初重置为 1） */
+  pillGuardMult: number;
+  /** 丹药冷却：`pill:<id>` → 可再次服用的年份 */
+  pillCooldown: Record<string, number>;
 
   sect: SectState;
 

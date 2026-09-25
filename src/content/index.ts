@@ -2,6 +2,10 @@ import { bundle } from '../engine/registry';
 import type { NameTables } from '../engine/types/effects';
 import { ARTS } from './arts/index';
 import { FATES } from './fates';
+import { HERBS } from './herbs';
+import { PILLS } from './pills';
+import { RECIPES } from './recipes';
+import { ALCHEMY_EVENTS } from './events/alchemy/index';
 import { ART_EVENTS } from './events/arts/index';
 import { MORTAL_EARLY } from './events/mortal/early';
 import { MORTAL_MID } from './events/mortal/mid';
@@ -18,16 +22,24 @@ export const BUNDLE = bundle({
     ...IMMORTAL_LOWER,
     ...IMMORTAL_UPPER,
     ...ART_EVENTS,
+    ...ALCHEMY_EVENTS,
   ],
   fates: FATES,
   arts: ARTS,
+  herbs: HERBS,
+  pills: PILLS,
+  recipes: RECIPES,
   names: namesJson as NameTables,
 });
 
 export {
   ARTS,
   ART_EVENTS,
+  ALCHEMY_EVENTS,
   FATES,
+  HERBS,
+  PILLS,
+  RECIPES,
   MORTAL_EARLY,
   MORTAL_MID,
   MORTAL_LATE,

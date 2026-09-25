@@ -1,4 +1,13 @@
-import { artBonusOf, artById, artifactZoneMult, equippedIds, poisonBodyBonus, resonanceOf } from './arts';
+import {
+  artBonusOf,
+  artById,
+  artifactZoneMult,
+  equippedIds,
+  poisonArtScale,
+  poisonBodyBonus,
+  resonanceOf,
+} from './arts';
+import { pillBuffPower } from './alchemy';
 import {
   AGE_COEF_LATE,
   AGE_COEF_TEEN,
@@ -185,12 +194,19 @@ function artSources(
   zone: 'z1' | 'z2' | 'z3' | 'z4' | 'z6',
 ): ZoneSource[] {
   const out: ZoneSource[] = [];
+  const poisonScale = poisonArtScale(s, c);
   for (const id of equippedIds(s)) {
     const def = artById(c, id);
     const st = s.arts[id];
     if (!def || !st || st.level <= 0) continue;
-    const delta = artBonusOf(def, st.level, zone);
-    if (delta > 0) out.push({ label: `${def.name} L${st.level}`, delta, kind: 'art' });
+    const base = artBonusOf(def, st.level, zone);
+    if (base <= 0) continue;
+    const scaled = def.school === '毒修' ? base * poisonScale : base;
+    const label =
+      def.school === '毒修' && poisonScale > 1
+        ? `${def.name} L${st.level}（毒体 ×${poisonScale.toFixed(2)}）`
+        : `${def.name} L${st.level}`;
+    out.push({ label, delta: scaled, kind: 'art' });
   }
   return out;
 }
@@ -204,6 +220,12 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
 
   const z1 = zoneOf('z1', artSources(s, c, 'z1'));
 
+  const pillSrc = (zone: 'z2' | 'z3' | 'z5' | 'z6', label: string): ZoneSource[] => {
+    const power = pillBuffPower(s, zone);
+    if (power <= 0) return [];
+    const kinds = new Set(s.pillBuffs.filter((b) => b.zone === zone).map((b) => b.type));
+    return [{ label: `${label}·${[...kinds].join('/')}`, delta: power, kind: 'pill' }];
+  };
   const z2Sources: ZoneSource[] = [
     {
       label: '天赋灵根',
@@ -211,6 +233,7 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
       kind: 'base',
     },
     ...artSources(s, c, 'z2'),
+    ...pillSrc('z2', '丹药药力'),
   ];
   const z2 = zoneOf('z2', z2Sources);
 
@@ -222,7 +245,7 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
   if (artDelta > artBaseDelta) {
     z3Sources.push({ label: '炼宝诀', delta: artDelta - artBaseDelta, kind: 'synergy' });
   }
-  z3Sources.push(...artSources(s, c, 'z3'));
+  z3Sources.push(...artSources(s, c, 'z3'), ...pillSrc('z3', '丹药药力'));
   const z3 = zoneOf('z3', z3Sources);
 
   const resonance = resonanceOf(s, c);
@@ -231,6 +254,12 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
   });
 
   const z5Sources: ZoneSource[] = [];
+  const buffPower = pillBuffPower(s);
+  if (buffPower > 0) {
+    const label =
+      s.pillBuffs.length === 1 ? `丹药·${s.pillBuffs[0]?.type ?? ''}` : `丹药药力 ×${s.pillBuffs.length}`;
+    z5Sources.push({ label, delta: buffPower, kind: 'pill' });
+  }
   if (s.toxicity > 0) {
     z5Sources.push({
       label: '丹毒',
@@ -247,7 +276,7 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
     const delta = f.value * Z6_FATE_COEF;
     if (delta > 0) z6Sources.push({ label: `命格·${f.name}`, delta, kind: 'fate' });
   }
-  z6Sources.push(...artSources(s, c, 'z6'));
+  z6Sources.push(...artSources(s, c, 'z6'), ...pillSrc('z6', '丹药药力'));
   const z6 = zoneOf('z6', z6Sources);
 
   const rawProduct = z1.mult * z2.mult * z3.mult * z4.mult * z5.mult * z6.mult;
@@ -366,8 +395,15 @@ export function readTarget(s: RunState, t: Target): number {
       return s.toxicity;
     case 'herb':
       return s.herbs[t.id] ?? 0;
-    case 'pill':
-      return s.pills[t.id] ?? 0;
+    case 'pill': {
+      // 丹药按品质分栈存（`id` / `id#qN`），条件与代价读取时按 id 求和
+      const prefix = `${t.id}#q`;
+      let total = 0;
+      for (const [k, v] of Object.entries(s.pills)) {
+        if (k === t.id || k.startsWith(prefix)) total += v;
+      }
+      return total;
+    }
     case 'artLevel':
       return s.arts[t.id]?.level ?? 0;
     case 'artInsight':

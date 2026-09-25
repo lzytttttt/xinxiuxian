@@ -15,6 +15,8 @@ export interface RunOptions {
   battlePolicy?: RunState['battlePolicy'];
   /** 开局三选一的结果：入道即得的功法 id（由调用方决定，引擎只落地） */
   startArts?: string[];
+  /** 开局 flag（如洞府解锁的 `dao_seat`）；平衡对照用 */
+  startFlags?: Record<string, number>;
   /**
    * 纯观察钩子：每年结算（含决策应答）完成后回调一次。
    * 不得在其中修改状态或消费 RNG——只供平衡工具按等级采样。
@@ -48,6 +50,7 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
     battlePolicy: opts.battlePolicy ?? 'manual',
   });
   for (const id of opts.startArts ?? []) grantStarterArt(s, id, content);
+  for (const [id, value] of Object.entries(opts.startFlags ?? {})) s.flags[id] = value;
   const logs: LogLine[] = [];
   let ended: string | null = null;
 

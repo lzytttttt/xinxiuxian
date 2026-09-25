@@ -22,6 +22,7 @@ import {
   THUNDER_LUCKY_MULT,
   TOXICITY_DECAY_MULT,
   TOXICITY_GAIN_MULT,
+  TOXICITY_TWO3_DECAY_MULT,
   TREASURE_RATIO,
   Z3_TREASURE_MULT,
 } from './constants';
@@ -221,9 +222,11 @@ export function toxicityGain(s: RunState, c: ContentBundle, value: number): numb
   return hasSynergy(s, c, 'fireImmunity') ? value * TOXICITY_GAIN_MULT : value;
 }
 
-/** 丹火不侵：丹毒衰减 ×2 */
+/** 丹火不侵：丹毒衰减 ×2；阴阳互济（Phase 3 共鸣文案）：再 ×1.5 */
 export function toxicityDecayMult(s: RunState, c: ContentBundle): number {
-  return hasSynergy(s, c, 'fireImmunity') ? TOXICITY_DECAY_MULT : 1;
+  let mult = hasSynergy(s, c, 'fireImmunity') ? TOXICITY_DECAY_MULT : 1;
+  if (resonanceOf(s, c).id === 'two3') mult *= TOXICITY_TWO3_DECAY_MULT;
+  return mult;
 }
 
 /** 雷罚加身：天劫侥幸概率 ×1.5 */
@@ -236,6 +239,15 @@ export function poisonBodyBonus(s: RunState, c: ContentBundle): number {
   if (!hasSynergy(s, c, 'poisonBody')) return 0;
   if (s.toxicity <= POISON_BODY_TOX_MIN) return 0;
   return s.toxicity / 100;
+}
+
+/**
+ * 毒体第二效果「毒修功法威力以丹毒为缩放」：毒体激活时，毒修功法被动 ×(1 + 丹毒/100)。
+ * 丹毒 100 → 毒修被动翻倍；其他流派不受影响。
+ */
+export function poisonArtScale(s: RunState, c: ContentBundle): number {
+  if (!hasSynergy(s, c, 'poisonBody')) return 1;
+  return 1 + s.toxicity / 100;
 }
 
 /** 炼宝诀：Z3 中法宝之力的计入倍率 */
