@@ -380,23 +380,59 @@ export const IMMORTAL_UPPER = [
     body: '某夜你坐在云上，忽然什么也不想做。天地在你身外安静运转，像一件穿旧了的衣服。',
     choices: [
       {
-        id: 'resolve',
+        id: 'sit',
         label: '坐着',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
-            weight: 65,
             text: '你什么都没做。那一夜过去，道行却深了一层。',
+            tone: 'ev1',
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 12 },
               { op: 'gainInsight', value: 6 },
             ],
           },
+        ],
+      },
+      {
+        id: 'gaze',
+        label: '看了一夜',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
           {
-            weight: 35,
             text: '那一夜里，你第一次看清自己这条路的形状。',
+            tone: 'ev2',
             effects: [
               { op: 'gainInsight', value: 10 },
               { op: 'add', target: { k: 'luck' }, value: 10 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'spread',
+        label: '布云为席',
+        enable: { op: 'cmp', target: { k: 'xianqi' }, cmp: '>=', value: 1 },
+        disabledReason: '需仙灵气×1',
+        cost: [{ op: 'sub', target: { k: 'xianqi' }, value: 1 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '云被仙灵气引着铺开，托住你散漫的一夜。天亮时，定境比预想的深。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 14 },
+              { op: 'gainInsight', value: 7 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '云台散了，你从半空落回山石上。剩下的半夜，怎么坐都不对。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 6 },
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
             ],
           },
         ],
@@ -555,23 +591,59 @@ export const IMMORTAL_UPPER = [
     body: '储物袋最深处翻出一件凡界旧物，粗劣，无用，你却摸了很久。',
     choices: [
       {
-        id: 'resolve',
+        id: 'keep',
         label: '收好它',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
-            weight: 65,
             text: '你把它放回原处，动作轻得像替谁盖好了被子。',
+            tone: 'ev1',
             effects: [
               { op: 'gainInsight', value: 6 },
               { op: 'add', target: { k: 'luck' }, value: 10 },
             ],
           },
+        ],
+      },
+      {
+        id: 'gaze',
+        label: '看到天亮',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
           {
-            weight: 35,
             text: '你看着它，忽然记起那个还没有名字的自己。',
+            tone: 'ev1',
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 8 },
               { op: 'gainInsight', value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'burn',
+        label: '焚入道基',
+        enable: { op: 'cmp', target: { k: 'xianqi' }, cmp: '>=', value: 1 },
+        disabledReason: '需仙灵气×1',
+        cost: [{ op: 'sub', target: { k: 'xianqi' }, value: 1 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你以仙灵气引火，把它烧成一小捧灰。灰落进道基，是温的。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 10 },
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '火灭了，灰是冷的。你忽然想不起自己为什么要点这把火。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 7 },
+              { op: 'addToxicity', value: 5 },
             ],
           },
         ],
@@ -632,21 +704,60 @@ export const IMMORTAL_UPPER = [
     body: '这一年什么也没有发生。云照旧过山，山照旧在。你在山中坐了一年。',
     choices: [
       {
-        id: 'resolve',
+        id: 'sit',
         label: '继续坐着',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
-            weight: 60,
             text: '一年像一日。等你睁眼，境界已悄悄往前挪了一线。',
+            tone: 'ev1',
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 9 },
               { op: 'gainInsight', value: 5 },
             ],
           },
+        ],
+      },
+      {
+        id: 'think',
+        label: '想一件事',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
           {
-            weight: 40,
             text: '你把这一年都用来想一件事。想到最后，那件事已经不在了。',
-            effects: [{ op: 'gainInsight', value: 10 }],
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 10 },
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'stoke',
+        label: '以年添炉',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你截下一段闲年添进炉里。火不旺，却稳稳烧了一整年，法宝上多了一层包浆似的亮。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 7 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '年光散得比预想快，炉里只剩一层薄光。你坐着，把这件事想了一遍。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 9 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+            ],
           },
         ],
       },

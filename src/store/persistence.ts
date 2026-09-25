@@ -1,9 +1,9 @@
 import type { MetaState } from '../engine/types/meta';
-import type { RunState } from '../engine/types/run';
+import type { DeferredEntry, RunState } from '../engine/types/run';
 
 export const SAVE_KEY = 'xiuxian.save';
 export const SETTINGS_KEY = 'xiuxian.settings';
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 export interface SaveEnvelope {
   v: number;
@@ -61,7 +61,23 @@ export function verifyChecksum(env: SaveEnvelope): void {
   }
 }
 
-const MIGRATIONS: Record<number, (env: unknown) => unknown> = {};
+const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
+  // v1 → v2：Phase 2 把 deferredQueue 由 string[] 改为 DeferredEntry[]，并新增 decisionLog。
+  1: (env) => {
+    const old = env as SaveEnvelope;
+    if (!old.run) return { ...old, v: 2 };
+    const run = old.run as RunState & { deferredQueue?: unknown[]; decisionLog?: unknown[] };
+    const migrated: RunState = {
+      ...run,
+      // year: 0 让旧条目在下一次 rollYear 被重试一次（仲裁重试条件是 entry.year < s.year）
+      deferredQueue: (run.deferredQueue ?? []).map((entry) =>
+        typeof entry === 'string' ? ({ eventId: entry, year: 0 } satisfies DeferredEntry) : (entry as DeferredEntry),
+      ),
+      decisionLog: (run.decisionLog ?? []) as RunState['decisionLog'],
+    };
+    return { ...old, v: 2, run: migrated, checksum: checksumOf(old.meta, migrated) };
+  },
+};
 
 export function migrate(env: unknown): SaveEnvelope {
   let cur = env as SaveEnvelope;

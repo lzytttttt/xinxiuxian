@@ -67,6 +67,7 @@ export function buildEncounter(s: RunState, rng: RngBag, c: ContentBundle): Enco
 
 export function encounterDecision(payload: EncounterPayload): Decision {
   return {
+    source: 'system',
     kind: 'encounter',
     eventId: `enc_tier${payload.tier}`,
     title: '机缘',

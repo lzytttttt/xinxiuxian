@@ -150,7 +150,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       const { run, pending } = get();
       if (!run || !pending) return;
       const result = applyChoice(run, pending, choiceId, rng, BUNDLE);
-      afterTick(run, { pending: null, ended: result.ended });
+      afterTick(run, { pending: result.pending, ended: result.ended });
       const state = get();
       if (!state.ended && !state.pending) {
         set({ running: true });

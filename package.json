@@ -20,9 +20,13 @@
     "sim:golden:write": "tsx tools/sim.ts --golden --write",
     "sim:calibrate": "tsx tools/sim.ts --calibrate",
     "sim:calibrate:write": "tsx tools/sim.ts --calibrate --write",
+    "sim:pacing": "tsx tools/sim.ts --pacing",
+    "sim:replay": "tsx tools/sim.ts --replay",
     "content:names": "tsx tools/gen-names.ts",
     "content:names:check": "tsx tools/gen-names.ts --check",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run sim:golden"
+    "content:validate": "tsx tools/validate-content.ts",
+    "content:stats": "tsx tools/validate-content.ts --stats",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run content:validate && npm run sim:golden"
   },
   "dependencies": {
     "immer": "^11.1.18",

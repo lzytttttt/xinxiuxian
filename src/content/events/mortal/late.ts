@@ -20,8 +20,9 @@ export const MORTAL_LATE = [
     body: '你封了洞府的石门，只留一线天光。山外的消息隔着石壁渗进来，渐渐听不清了。',
     choices: [
       {
-        id: 'resolve',
+        id: 'deep',
         label: '把这一关坐穿',
+        hint: { risk: 1, reward: 2 },
         outcomes: [
           {
             weight: 50,
@@ -51,6 +52,55 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'walk',
+        label: '提前出关',
+        hint: { risk: 0, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你推门下山，在最近的镇子上住了一月。人间烟火养人，气海里那点滞涩竟自己松了。',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '出关不过半月，你替邻山解了一桩旧怨。事办得干净，心里攒下的闷气也散尽了。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'burn',
+        label: '燃悟性硬坐',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 3 },
+        disabledReason: '需悟性≥3',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 3 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把这些年攒下的悟处一寸寸烧进坐里，石门内的黑被你坐得发白。',
+            tone: 'year',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '烧到后来已分不清是悟还是执。你出关时话少了，境界却实实在在涨了一截。',
+            effects: [{ op: 'pct', target: { k: 'cultivation' }, value: 6 }],
+          },
+        ],
+      },
     ],
   }),
 
@@ -68,11 +118,12 @@ export const MORTAL_LATE = [
     body: '山门外的名帖堆到了台阶上，有请你去镇一方的，有请你出面说和的，也有只求见你一面的。',
     choices: [
       {
-        id: 'resolve',
-        label: '一一拆看',
+        id: 'answer',
+        label: '择几家应答',
+        hint: { risk: 1, reward: 2 },
         outcomes: [
           {
-            weight: 45,
+            weight: 55,
             text: '你择了几家应答，未出山门，事便平了——世间已习惯给你这个面子。',
             tone: 'gold',
             effects: [
@@ -81,20 +132,60 @@ export const MORTAL_LATE = [
             ],
           },
           {
-            weight: 35,
+            weight: 45,
             text: '你把帖子都收了，往来应酬半年，人情账厚了一叠，修行却落下了些。',
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: 6 },
               { op: 'add', target: { k: 'luck' }, value: 3 },
             ],
           },
+        ],
+      },
+      {
+        id: 'burn',
+        label: '投帖入炉',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
           {
-            weight: 20,
+            weight: 70,
             text: '拆到一半，你把剩下的都投进了炉火。虚名烧起来，味道并不好闻，却让你想通了一件事。',
             tone: 'ev1',
+            effects: [{ op: 'gainInsight', value: 4 }],
+          },
+          {
+            weight: 30,
+            text: '你只留了一封没烧，是当年第一个上门求你的人的。夜里读了又读，读出一层旧道理。',
             effects: [
-              { op: 'gainInsight', value: 4 },
-              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'gainInsight', value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'claim',
+        label: '借势立威',
+        hint: { risk: 3, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你挑了一家最难的应下，事了之后名帖反而更厚。声望这东西，压得住就是资粮。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'add', target: { k: 'simPoints' }, value: 6 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你把话说得太满，事情终究没办成。山门外的名帖一夜薄了大半，你也清静了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
             ],
           },
         ],
@@ -116,8 +207,9 @@ export const MORTAL_LATE = [
     body: '一只旧纸鹤落在窗上，展开只有一行字：某年某月，某人去了。你认得那字迹，歪歪扭扭，写的人当年总说字丑不妨事。',
     choices: [
       {
-        id: 'resolve',
+        id: 'wine',
         label: '把酒送去',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
             weight: 45,
@@ -140,6 +232,57 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'vigil',
+        label: '守坟三年',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 1, reward: 3 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你在坟旁搭了个草棚，一守三年。旧事在夜里一件件浮上来，你不再躲它们了。',
+            tone: 'ev1',
+            effects: [
+              { op: 'gainInsight', value: 6 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '守到第二年，山下来人劝你回去。你只把碑上的字描了一遍，又坐回原处。',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'burn',
+        label: '焚了讣闻',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把纸鹤凑到灯上，看它卷成一小团灰。断掉的念想化进坐里，气机反倒顺了。',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '灰落在桌上，你伸手去拂，忽然想起他当年替你挡的那一刀。这一夜你没能入定。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -157,8 +300,9 @@ export const MORTAL_LATE = [
     body: '你路过一座小城，城门还是旧名字，街上的铺子却换过三代人了。有孩童指着你的衣袂，说书先生正在讲你的故事。',
     choices: [
       {
-        id: 'resolve',
+        id: 'stay',
         label: '在城里住一晚',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
             weight: 40,
@@ -181,6 +325,54 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'listen',
+        label: '听书到散场',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 2 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你坐到散场，又替说书人补了后文。他愣在那里，满堂的人都在等你开口。',
+            effects: [{ op: 'gainInsight', value: 5 }],
+          },
+          {
+            weight: 30,
+            text: '你没有纠正他，只在临走时给茶楼留了一锭银子。往后你的故事会越讲越离谱，你竟有些期待。',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'claim',
+        label: '认下旧事',
+        hint: { risk: 3, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你请说书人喝了酒，把讲错的三处轻轻拨正。半月后，城里人讲的你已是另一个更靠谱的版本。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 7 },
+              { op: 'add', target: { k: 'simPoints' }, value: 3 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '有人认出你，跪下来求你主持公道。你应了，却被卷进一桩烂账，脱身时已过了半年。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -198,8 +390,9 @@ export const MORTAL_LATE = [
     body: '最小的弟子捧着一柄木剑站在阶下，问出的却是你当年也问过、至今没有答案的那句话。',
     choices: [
       {
-        id: 'resolve',
+        id: 'answer',
         label: '答他',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
             weight: 45,
@@ -225,6 +418,57 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'drill',
+        label: '陪他拆三日招',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 4 },
+        disabledReason: '需悟性≥4',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 4 }],
+        hint: { risk: 1, reward: 3 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你在阶下陪他拆了三日的招，拆到自己手腕发酸。第三日黄昏，你忽然懂了当年师父没说出口的那半句。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '你只顾着教，忘了自己也在走。三日下来，弟子的剑稳了，你的气海也厚了一层。',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'send',
+        label: '遣他下山',
+        hint: { risk: 2, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你给他指了条远路，让他自己去碰。他走时不服气，你看着那背影笑了——你当年也是这样。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '他下山半月就闯了祸，回来时鼻青脸肿。你替他收拾残局，心里却也替他高兴：这一课他记住了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -242,8 +486,9 @@ export const MORTAL_LATE = [
     body: '陪了你许多年的那件旧器，近来嗡鸣渐弱。你把它取出来，放在膝上以气机慢慢喂它。',
     choices: [
       {
-        id: 'resolve',
+        id: 'feed',
         label: '以此气养它',
+        hint: { risk: 1, reward: 2 },
         outcomes: [
           {
             weight: 50,
@@ -270,6 +515,45 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'blood',
+        label: '割腕喂精血',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你割腕以精血喂器，血渗进器身的那一刻，它烫得像刚出炉。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 7 },
+              { op: 'pct', target: { k: 'artifactPower' }, value: 3 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '它吞了你的血，却只亮了一瞬。你按住伤口，觉得这笔账花得不值。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'seal',
+        label: '封器入匣',
+        hint: { risk: 0, reward: 1 },
+        outcomes: [
+          {
+            text: '你把它仔细封进匣里，垫了三层软布。老伙计该歇了，往后这段路你打算靠自己走。',
+            effects: [{ op: 'add', target: { k: 'luck' }, value: 4 }],
+          },
+        ],
+      },
     ],
   }),
 
@@ -287,8 +571,9 @@ export const MORTAL_LATE = [
     body: '一个不足百岁的年轻人立在山门前，剑意张扬，说要试试传说里的你究竟有几分真。',
     choices: [
       {
-        id: 'resolve',
+        id: 'stand',
         label: '让他试',
+        hint: { risk: 1, reward: 1 },
         outcomes: [
           {
             weight: 50,
@@ -310,6 +595,58 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'sub', target: { k: 'simPoints' }, value: 3 },
               { op: 'gainInsight', value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'crush',
+        label: '以势压他',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你没有下场，只把气势放开一线。他脸色一白，剑便垂了下去。围观的弟子记了很多年。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你把气势放得太满，反被他借了去。他大笑着下山，你站在原地，衣袖无风自动。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'teach',
+        label: '留他三日',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 3 },
+        disabledReason: '需悟性≥3',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你留他住了三日，把当年缺的那一课先讲给他。他走时剑意收了，你的心里也补上一块。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '他听不进去，反倒与你辩了一夜。辩到天亮，你说不过他，却觉得痛快。',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
             ],
           },
         ],
@@ -376,11 +713,12 @@ export const MORTAL_LATE = [
     body: '一个衣衫单薄的少年跪在山门外三天。你看着他，像看见很多年前的自己，也知道自己不会再有下一个徒弟了。',
     choices: [
       {
-        id: 'resolve',
+        id: 'open',
         label: '开门收徒',
+        hint: { risk: 1, reward: 3 },
         outcomes: [
           {
-            weight: 45,
+            weight: 55,
             text: '你把能教的都教了。少年学得慢，学得稳，走的时候背着你给的行囊，一步没回头。',
             tone: 'gold',
             effects: [
@@ -389,15 +727,48 @@ export const MORTAL_LATE = [
             ],
           },
           {
-            weight: 35,
+            weight: 45,
             text: '你收下了他，也把自己最后一段路分了一半给他。弟子的路亮起来，你的路却短了一些。',
             effects: [
               { op: 'gainInsight', value: 6 },
               { op: 'sub', target: { k: 'luck' }, value: 3 },
             ],
           },
+        ],
+      },
+      {
+        id: 'three_years',
+        label: '只教三年',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
           {
-            weight: 20,
+            weight: 70,
+            text: '你只留他三年，把最要紧的几句先教了。他走时你送到山门，头一次觉得三年也可以很长。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 7 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '三年里他学得辛苦，你也守得辛苦。送他走后，你在阶上坐了一夜，心里空出一块，又踏实了一块。',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'close',
+        label: '闭门不纳',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
+          {
             text: '你终究没有开门。三日后少年走了，你在门后站了很久，忽然明白断念也是一种成全。',
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 6 },
@@ -423,8 +794,9 @@ export const MORTAL_LATE = [
     body: '在一条不该有人的荒道上，你遇见了那位与你纠缠了半生的对手。他鬓角也白了，站在那里，像一块等你很久的石头。',
     choices: [
       {
-        id: 'resolve',
+        id: 'drink',
         label: '走上前去',
+        hint: { risk: 1, reward: 2 },
         outcomes: [
           {
             weight: 45,
@@ -454,6 +826,33 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'strike',
+        label: '先出手',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 3 },
+        disabledReason: '需气运≥3',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 3 }],
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你没有给他开口的机会。一记打散了他半生攒下的势，你自己也喘了很久。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 9 },
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你抢了先手，却被他卸去大半。分开时你们各退十步，谁都知道这一场没有赢家。',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -471,8 +870,9 @@ export const MORTAL_LATE = [
     body: '你静坐时，山巅自起一层薄雾，草木朝你的方向倾倒。门人不敢靠近，只觉得师祖身上有一种不属于此世的静。',
     choices: [
       {
-        id: 'resolve',
-        label: '任它自行流转',
+        id: 'let',
+        label: '任它流转',
+        hint: { risk: 1, reward: 3 },
         outcomes: [
           {
             weight: 50,
@@ -497,6 +897,57 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'gainInsight', value: 5 },
               { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'hide',
+        label: '收气象入体',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你把那层薄雾一寸寸收进气海，草木也直起了腰。山中再无神异，只有你日厚一日的底子。',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '收得住气象，收不住门人的目光。你索性闭了山门，一坐十年，外面的事全断了。',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fan',
+        label: '借势冲关',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把气象往外推到极处，借那股盛势硬撞旧关。撞开的一瞬，山巅的雾炸成一片白。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 10 },
+              { op: 'addToxicity', value: 8 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '势推得太急，气机在关前撞碎了。你收了三年，才把这口气重新理顺。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
             ],
           },
         ],
@@ -563,11 +1014,12 @@ export const MORTAL_LATE = [
     body: '一个早已荒废的家族找上门来，说当年你从他们祖上取走了一样东西。你记得那件事，也记得自己当时并不觉得有错。',
     choices: [
       {
-        id: 'resolve',
+        id: 'pay',
         label: '把账清了',
+        hint: { risk: 0, reward: 2 },
         outcomes: [
           {
-            weight: 45,
+            weight: 60,
             text: '你加倍赔还，又替他们料理了一桩难事。离去时，缠在你气机上的那根细刺不见了。',
             tone: 'gold',
             effects: [
@@ -576,20 +1028,62 @@ export const MORTAL_LATE = [
             ],
           },
           {
-            weight: 30,
+            weight: 40,
             text: '你以一段修为抵了这笔债。气海空了一角，可抬手时，天地对你似乎松了些。',
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: -4 },
               { op: 'add', target: { k: 'luck' }, value: 8 },
             ],
           },
+        ],
+      },
+      {
+        id: 'defer',
+        label: '拖到劫后',
+        hint: { risk: 3, reward: 1 },
+        outcomes: [
           {
-            weight: 25,
-            text: '你没有理会。夜里那道旧影又立在窗外，你看了一夜，明白有些东西是要跟着你过劫的。',
+            weight: 55,
+            text: '你把这事记在心上，打算等渡劫之后再来料理。心里存着一笔未清的账，走起路来反而更稳。',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你拖着不办，夜里那道旧影便夜夜立在窗外。看得久了，它像长在你气机里的一根刺。',
             tone: 'red',
             effects: [
-              { op: 'sub', target: { k: 'luck' }, value: 4 },
-              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 5 },
+              { op: 'addToxicity', value: 10 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'untie',
+        label: '拆这道因果',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 4 },
+        disabledReason: '需悟性≥4',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 4 }],
+        hint: { risk: 1, reward: 3 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你把这道因果拆开看了三日，看到最后连债主是谁都淡了。抬手一挥，那根刺自己落了下来。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 9 },
+              { op: 'pct', target: { k: 'cultivation' }, value: -3 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '拆到一半你停了手：有些因果不能算得太清，算清了就没有余地。你把它重新系好，只打了个松结。',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
             ],
           },
         ],
@@ -659,8 +1153,9 @@ export const MORTAL_LATE = [
     body: '雷雨将至，云里翻着紫白的光。你解开外袍走到山巅，想在那位"老朋友"落下来之前，先称一称它的分量。',
     choices: [
       {
-        id: 'resolve',
+        id: 'face',
         label: '迎上去',
+        hint: { risk: 2, reward: 3 },
         outcomes: [
           {
             weight: 45,
@@ -686,6 +1181,74 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'gainInsight', value: 5 },
               { op: 'addToxicity', value: 6 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'watch',
+        label: '只在檐下看',
+        hint: { risk: 0, reward: 1 },
+        outcomes: [
+          {
+            text: '你站在檐下看了一夜，看雷怎么起，怎么落。你没有受伤，也没有捞到那点淬体的好处。',
+            effects: [
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'array',
+        label: '先布阵再接',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 75,
+            text: '你布好阵再上，雷火被阵纹分了力道。受得住，也淬得着，只是阵材烧了大半。',
+            tone: 'ev2',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+              { op: 'addToxicity', value: 4 },
+            ],
+          },
+          {
+            weight: 25,
+            text: '阵纹先崩了，雷直直落在你肩上。你比平时多躺了三个月。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'clean',
+        label: '先清丹毒',
+        enable: { op: 'cmp', target: { k: 'toxicity' }, cmp: '<=', value: 40 },
+        disabledReason: '需丹毒≤40',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 70,
+            text: '你先静坐七日，把积在经脉里的浊气逼出大半，才走上山巅。这一雷受得干净，连旧伤都松了。',
+            tone: 'ev2',
+            effects: [
+              { op: 'clamp', target: { k: 'toxicity' }, hi: 25 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '浊气没清干净，雷一入体便与它缠在一处。你花了很多年才把这两样东西分开。',
+            effects: [
+              { op: 'addToxicity', value: 6 },
+              { op: 'gainInsight', value: 4 },
             ],
           },
         ],

@@ -17,11 +17,11 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 10,
     choices: [
       {
-        id: 'resolve',
-        label: '按旧法调息，把这一口咽下去',
+        id: 'endure',
+        label: '按旧法咽下',
         outcomes: [
           {
-            weight: 55,
+            weight: 50,
             text: '经脉被冲得生疼，可那口仙气到底在丹田里落了脚。',
             tone: 'ev1',
             effects: [
@@ -39,7 +39,7 @@ export const IMMORTAL_LOWER = [
             ],
           },
           {
-            weight: 15,
+            weight: 20,
             text: '你硬撑到云阶天亮，仙气凝在喉间不肯散，呼吸里全是腥气。',
             tone: 'red',
             effects: [
@@ -48,6 +48,40 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'ease',
+        label: '屏息，缓缓吐尽',
+        outcomes: [
+          {
+            text: '你把那口仙气原样吐尽，肺腑空落落的，空处却摸到旧日周天的一点边。',
+            tone: 'ev1',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 1 },
+      },
+      {
+        id: 'borrow',
+        label: '借气运镇喉',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 6 },
+        disabledReason: '需气运≥6',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 6 }],
+        outcomes: [
+          {
+            text: '你押上一段气运，向云栈换了一枚镇喉的旧玉。仙气顺了，账却记在了别处。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'gainInsight', value: 5 },
+            ],
+          },
+        ],
+        hint: { risk: 1, reward: 2 },
       },
     ],
   }),
@@ -64,8 +98,8 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 12,
     choices: [
       {
-        id: 'resolve',
-        label: '盘膝坐下，听凭玉筹定价',
+        id: 'submit',
+        label: '听凭玉筹定价',
         outcomes: [
           {
             weight: 50,
@@ -95,6 +129,40 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'pay_qi',
+        label: '以仙灵气抵账',
+        enable: { op: 'cmp', target: { k: 'xianqi' }, cmp: '>=', value: 1 },
+        disabledReason: '需仙灵气×1',
+        cost: [{ op: 'sub', target: { k: 'xianqi' }, value: 1 }],
+        outcomes: [
+          {
+            text: '你把一缕仙灵气按在玉筹上。掌柜点头，帘子后一夜无声，醒来时神完气足。',
+            tone: 'ev1',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+              { op: 'add', target: { k: 'luck' }, value: 10 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 2 },
+      },
+      {
+        id: 'outside',
+        label: '只在檐下坐一夜',
+        outcomes: [
+          {
+            text: '檐下风冷，你把一夜坐成了一段静功。气运未损，识海里多出半句旧偈。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 7 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 1 },
       },
     ],
   }),
@@ -111,7 +179,7 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 11,
     choices: [
       {
-        id: 'resolve',
+        id: 'sit',
         label: '不争座次，就地落座',
         outcomes: [
           {
@@ -142,6 +210,60 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 1, reward: 2 },
+      },
+      {
+        id: 'speak',
+        label: '起身论道',
+        outcomes: [
+          {
+            weight: 45,
+            text: '你把话讲到一半，末座那几位抬了眼。主事者抬手一让，蒲团挪回了原位。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 8 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '你说到要紧处被打断。有人笑了一声，你坐下时耳根发热。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'addToxicity', value: 6 },
+            ],
+          },
+          {
+            weight: 25,
+            text: '你讲错了半句，满台寂然。那半句你自己记了很久。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 12 },
+              { op: 'sub', target: { k: 'luck' }, value: 6 },
+            ],
+          },
+        ],
+        hint: { risk: 3, reward: 3 },
+      },
+      {
+        id: 'seek_seat',
+        label: '以仙灵气求座',
+        enable: { op: 'cmp', target: { k: 'xianqi' }, cmp: '>=', value: 1 },
+        disabledReason: '需仙灵气×1',
+        cost: [{ op: 'sub', target: { k: 'xianqi' }, value: 1 }],
+        outcomes: [
+          {
+            text: '你把一缕仙灵气递与执事。蒲团挪正半寸，你从头听到尾，所得比谁都多。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 8 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 3 },
       },
     ],
   }),
@@ -158,8 +280,8 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 9,
     choices: [
       {
-        id: 'resolve',
-        label: '隔着枯井对坐一夜',
+        id: 'sit_night',
+        label: '隔井对坐一夜',
         outcomes: [
           {
             weight: 45,
@@ -188,6 +310,40 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'gift',
+        label: '先奉一缕仙灵气',
+        enable: { op: 'cmp', target: { k: 'xianqi' }, cmp: '>=', value: 1 },
+        disabledReason: '需仙灵气×1',
+        cost: [{ op: 'sub', target: { k: 'xianqi' }, value: 1 }],
+        outcomes: [
+          {
+            text: '你把仙灵气搁在井沿，算是拜师礼。他看了你很久，把一段养根的旧法念给你听。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'root' }, value: 12 },
+              { op: 'gainInsight', value: 5 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 2 },
+      },
+      {
+        id: 'imitate',
+        label: '远处照做一夜',
+        outcomes: [
+          {
+            text: '你在十步外照他的样子对井吐纳。他没有回头，也没有赶你。天亮时你的气息匀了一分。',
+            tone: 'ev1',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 1 },
       },
     ],
   }),
@@ -204,8 +360,8 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 13,
     choices: [
       {
-        id: 'resolve',
-        label: '按下指印，先耕一年看看',
+        id: 'sign',
+        label: '按下指印，试耕一年',
         outcomes: [
           {
             weight: 50,
@@ -236,6 +392,41 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'read_first',
+        label: '先把小字读完',
+        outcomes: [
+          {
+            text: '你请管事把那行墨色新字念了三遍，改成一年一签。收成薄了，夜里却睡得踏实。',
+            tone: 'ev1',
+            effects: [
+              { op: 'add', target: { k: 'root' }, value: 7 },
+              { op: 'gainInsight', value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 1 },
+      },
+      {
+        id: 'buy_out',
+        label: '折气运买断',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 8 },
+        disabledReason: '需气运≥8',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 8 }],
+        outcomes: [
+          {
+            text: '你把攒下的气运折成价码，田契当场烧了。从此这一垄仙田只认你一个人的名字。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'root' }, value: 14 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+        ],
+        hint: { risk: 1, reward: 3 },
       },
     ],
   }),
@@ -252,8 +443,8 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 15,
     choices: [
       {
-        id: 'resolve',
-        label: '提笔，给这封信一个回音',
+        id: 'reply',
+        label: '提笔回信',
         outcomes: [
           {
             weight: 50,
@@ -282,6 +473,40 @@ export const IMMORTAL_LOWER = [
             ],
           },
         ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'repay',
+        label: '还这笔旧债',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 8 },
+        disabledReason: '需气运≥8',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 8 }],
+        outcomes: [
+          {
+            text: '你把这段年岁里最顺的一段气运折成旧年的数目，托云下的商队送去。信没有回音，梦里却干净了。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 8 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 2 },
+      },
+      {
+        id: 'deny',
+        label: '不认这笔债',
+        outcomes: [
+          {
+            text: '你把信凑到灯上。火里那行字亮了一下就没了。此后静坐时心口硬了一分，也钝了一分。',
+            tone: 'ev2',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'addToxicity', value: 10 },
+            ],
+          },
+        ],
+        hint: { risk: 1, reward: 2 },
       },
     ],
   }),
@@ -298,11 +523,10 @@ export const IMMORTAL_LOWER = [
     cooldownYears: 12,
     choices: [
       {
-        id: 'resolve',
-        label: '在镜前坐下，听他开价',
+        id: 'shard',
+        label: '舍半钱骨屑',
         outcomes: [
           {
-            weight: 45,
             text: '你只舍了半钱骨屑，换回一柄温热的旧刀，握上去掌心发麻。',
             tone: 'ev2',
             effects: [
@@ -310,8 +534,14 @@ export const IMMORTAL_LOWER = [
               { op: 'add', target: { k: 'artifactBonus' }, value: 7 },
             ],
           },
+        ],
+        hint: { risk: 1, reward: 1 },
+      },
+      {
+        id: 'whole_bone',
+        label: '舍一节仙骨',
+        outcomes: [
           {
-            weight: 35,
             text: '你舍了整整一节仙骨，换得一柄无铭的旧剑。剑身认了你的手，微微发烫。',
             tone: 'gold',
             effects: [
@@ -320,16 +550,42 @@ export const IMMORTAL_LOWER = [
               { op: 'pct', target: { k: 'artifactPower' }, value: 4 },
             ],
           },
+        ],
+        hint: { risk: 2, reward: 2 },
+      },
+      {
+        id: 'pay_chaos',
+        label: '以混沌气抵骨',
+        enable: { op: 'cmp', target: { k: 'chaosQi' }, cmp: '>=', value: 1 },
+        disabledReason: '需混沌气≥1',
+        cost: [{ op: 'sub', target: { k: 'chaosQi' }, value: 1 }],
+        outcomes: [
           {
-            weight: 20,
-            text: '摊主收了骨，却把铜镜扣在桌上。你们隔着一张摊桌对望半晌，他终究没交货。',
-            tone: 'red',
+            text: '你把一缕混沌气搁在镜前。摊主看了很久，把镜扣下，推来一柄无铭的旧剑——骨头他不要了。',
+            tone: 'xian',
             effects: [
-              { op: 'sub', target: { k: 'root' }, value: 6 },
-              { op: 'sub', target: { k: 'luck' }, value: 4 },
+              { op: 'add', target: { k: 'artifactBonus' }, value: 12 },
+              { op: 'pct', target: { k: 'artifactPower' }, value: 5 },
+              { op: 'gainInsight', value: 4 },
             ],
           },
         ],
+        hint: { risk: 0, reward: 3 },
+      },
+      {
+        id: 'refuse',
+        label: '推镜，不换',
+        outcomes: [
+          {
+            text: '你把铜镜推回去，朝摊主一揖。走出仙市时，背脊那节骨头安安静静。',
+            tone: 'ev1',
+            effects: [
+              { op: 'gainInsight', value: 6 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+        ],
+        hint: { risk: 0, reward: 1 },
       },
     ],
   }),

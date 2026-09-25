@@ -1,19 +1,18 @@
 import { TALENT_BASE } from '../src/engine/constants';
 import { drawFates } from '../src/engine/fate';
 import { makeRngBag } from '../src/engine/rng';
-import { applyChoice, rollYear } from '../src/engine/tick';
-import { createRun, drawCard, type CharCard } from '../src/engine/newRun';
-import type { ContentBundle, Fate } from '../src/engine/types/effects';
+import { runRun, type AnswerFn, type RunOptions } from '../src/engine/replay';
+import type { CharCard } from '../src/engine/newRun';
+import type { ContentBundle, Decision, Fate } from '../src/engine/types/effects';
 import type { LogLine } from '../src/engine/types/log';
 import type { RngBag } from '../src/engine/types/rng';
-import type { RunState } from '../src/engine/types/run';
+import type { DecisionRecord, RunState } from '../src/engine/types/run';
 
-export interface SimOptions {
-  seed: string;
-  life?: number;
+export type EventPolicy = 'first' | 'random';
+
+export interface SimOptions extends RunOptions {
   tier?: number;
-  maxYears?: number;
-  battlePolicy?: RunState['battlePolicy'];
+  policy?: EventPolicy;
 }
 
 export interface SimOutcome {
@@ -29,7 +28,22 @@ export interface SimOutcome {
   eventIds: string[];
   ended: string | null;
   log: LogLine[];
+  decisions: DecisionRecord[];
+  /** 决策次数（含开局抽卡） */
+  decisionCount: number;
+  /** 选项点总数：各决策展示的可见选项数之和（含开局抽卡的 3 张） */
+  optionPoints: number;
   state: RunState;
+}
+
+interface Tally {
+  decisions: number;
+  options: number;
+}
+
+function countDecision(tally: Tally, d: Decision): void {
+  tally.decisions += 1;
+  tally.options += d.choices.filter((c) => c.show).length;
 }
 
 export function cardForTier(tier: number, content: ContentBundle, rng: RngBag): CharCard {
@@ -45,51 +59,27 @@ export function cardForTier(tier: number, content: ContentBundle, rng: RngBag): 
   };
 }
 
-export function simulate(content: ContentBundle, opts: SimOptions): SimOutcome {
-  const maxYears = opts.maxYears ?? 200;
-  const rng = makeRngBag(opts.seed);
-  const card: CharCard =
-    opts.tier !== undefined
-      ? cardForTier(opts.tier, content, rng)
-      : drawCardFor(content, rng);
-  const s = createRun(opts.seed, 1, card, rng, {
-    runId: `${opts.seed}#1`,
-    createdAt: 0,
-    battlePolicy: opts.battlePolicy ?? 'manual',
-  });
-  const fullLog: LogLine[] = [...s.log];
-  let ended: string | null = null;
+/** 无头应答策略：事件取第一个可选项（或确定性随机），机缘争夺，天劫续命。 */
+function autoAnswer(policy: EventPolicy, seed: string, tally: Tally): AnswerFn {
+  const rng = makeRngBag(`${seed}:policy`);
+  return (d: Decision) => {
+    countDecision(tally, d);
+    if (d.source === 'system' && d.kind === 'encounter') return 'fight';
+    if (d.source === 'system' && d.kind === 'tribulation') return 'continue';
+    const playable = d.choices.filter((c) => c.show && c.enable);
+    if (playable.length === 0) return d.choices[0]?.id ?? 'resolve';
+    if (policy === 'random') return rng.misc.pick(playable).id;
+    return playable[0]!.id;
+  };
+}
 
-  for (let i = 0; i < maxYears; i++) {
-    if (s.dead) break;
-    const r = rollYear(s, rng, content);
-    fullLog.push(...r.logs);
-    if (r.ended) {
-      ended = r.ended;
-      if (!r.pending) break;
-    }
-    if (r.pending) {
-      const choiceId = r.pending.kind === 'tribulation' ? 'continue' : 'fight';
-      const applied = applyChoice(s, r.pending, choiceId, rng, content);
-      fullLog.push(...applied.logs);
-      if (applied.ended) {
-        ended = applied.ended;
-        break;
-      }
-    }
-    if (s.dead) {
-      ended = ended ?? (s.endedReason as string | null);
-      break;
-    }
-    if (s.endedReason) {
-      ended = s.endedReason;
-      break;
-    }
-  }
+const CARD_OPTIONS = 3;
 
+function toOutcome(opts: SimOptions, out: ReturnType<typeof runRun>, tally: Tally): SimOutcome {
+  const s = out.state;
   return {
     seed: opts.seed,
-    years: s.year,
+    years: out.years,
     level: s.realm.level,
     cultivation: Math.round(s.cultivation),
     root: s.root,
@@ -100,14 +90,76 @@ export function simulate(content: ContentBundle, opts: SimOptions): SimOutcome {
     fates: s.fates.map((f) => `${f.id}:${f.value}`),
     artifacts: s.fruits.length,
     eventIds: [...s.eventLog],
-    ended,
-    log: fullLog,
+    ended: out.ended,
+    log: out.logs,
+    decisions: out.decisions,
+    decisionCount: tally.decisions + 1,
+    optionPoints: tally.options + CARD_OPTIONS,
     state: s,
   };
 }
 
-function drawCardFor(content: ContentBundle, rng: RngBag): CharCard {
-  return drawCard(rng, content, {});
+function runOptions(
+  opts: SimOptions,
+  card: CharCard | ((rng: RngBag) => CharCard) | undefined,
+): RunOptions {
+  const out: RunOptions = { seed: opts.seed };
+  if (opts.maxYears !== undefined) out.maxYears = opts.maxYears;
+  if (opts.battlePolicy !== undefined) out.battlePolicy = opts.battlePolicy;
+  if (card) out.card = card;
+  return out;
+}
+
+export function simulate(content: ContentBundle, opts: SimOptions): SimOutcome {
+  const card =
+    opts.tier !== undefined ? (bag: RngBag) => cardForTier(opts.tier!, content, bag) : undefined;
+  const tally: Tally = { decisions: 0, options: 0 };
+  const out = runRun(
+    content,
+    runOptions(opts, card),
+    autoAnswer(opts.policy ?? 'first', opts.seed, tally),
+  );
+  return toOutcome(opts, out, tally);
+}
+
+/**
+ * 严格重放：按记录的 `(year, kind, eventId, choiceId)` 依次应答；
+ * 任一记录与实际 pending 不匹配即抛错（不静默继续）。
+ */
+export function replayRun(
+  content: ContentBundle,
+  opts: SimOptions,
+  decisions: DecisionRecord[],
+): SimOutcome {
+  const card =
+    opts.tier !== undefined ? (bag: RngBag) => cardForTier(opts.tier!, content, bag) : undefined;
+  const tally: Tally = { decisions: 0, options: 0 };
+  let cursor = 0;
+  const answer: AnswerFn = (d, s) => {
+    const rec = decisions[cursor];
+    if (!rec) {
+      throw new Error(
+        `重放中断：缺少第 ${cursor} 条记录（实际 pending 为 ${s.year} 年 ${d.kind} ${d.eventId}）`,
+      );
+    }
+    if (rec.year !== s.year || rec.kind !== d.kind || rec.eventId !== d.eventId) {
+      throw new Error(
+        `重放分歧：第 ${cursor} 条记录为 ${rec.year} 年 ${rec.kind} ${rec.eventId}，实际为 ${s.year} 年 ${d.kind} ${d.eventId}`,
+      );
+    }
+    cursor += 1;
+    countDecision(tally, d);
+    return rec.choiceId;
+  };
+  const out = runRun(content, runOptions(opts, card), answer);
+  if (cursor !== decisions.length) {
+    throw new Error(`重放分歧：有 ${decisions.length - cursor} 条记录未被消费`);
+  }
+  return toOutcome(opts, out, tally);
+}
+
+export function logDigest(log: LogLine[]): string {
+  return JSON.stringify(log);
 }
 
 export interface GoldenEntry {

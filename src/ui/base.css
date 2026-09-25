@@ -270,6 +270,33 @@ ul {
   cursor: not-allowed;
 }
 
+/* 决策选项：标签 + 代价 + 风险/收益档位 */
+.choice-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.25;
+}
+
+.choice-sub {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.choice-hint {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+
+.btn-soft:disabled {
+  opacity: 0.55;
+  transform: none;
+  cursor: not-allowed;
+}
+
 /* 次级按钮：柔和抬升，不用 3D */
 .btn-soft {
   display: inline-flex;

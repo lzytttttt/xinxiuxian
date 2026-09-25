@@ -1,12 +1,15 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { realmName } from './engine/selectors';
 import { useRunStore } from './store/runStore';
+import { DecisionModal } from './ui/components/DecisionModal';
 import { Cultivate } from './ui/screens/Cultivate';
 import { Home } from './ui/screens/Home';
+import { Self } from './ui/screens/Self';
 
 /* 外壳：左栏（品牌/境界）+ 主屏 + 右栏（由各屏自绘）+ 移动端底部导航。
-   决策弹层与结算弹层由 Cultivate 挂载。 */
+   决策弹层挂在外壳层：任何屏（修炼/吾身）下都必须能看到并结算。 */
 
+type Screen = '修炼' | '吾身';
 const NAV = ['修炼', '构筑', '洞天', '图鉴', '吾身'];
 
 function Ribbon({ children }: { children: ReactNode }) {
@@ -26,7 +29,13 @@ function Ribbon({ children }: { children: ReactNode }) {
 export default function App() {
   const run = useRunStore((s) => s.run);
   const version = useRunStore((s) => s.version);
+  const pending = useRunStore((s) => s.pending);
+  const ended = useRunStore((s) => s.ended);
+  const choose = useRunStore((s) => s.choose);
+  const [screen, setScreen] = useState<Screen>('修炼');
   void version;
+
+  const enabled = (item: string): boolean => item === '修炼' || item === '吾身';
 
   return (
     <>
@@ -57,22 +66,34 @@ export default function App() {
             <ul>
               {NAV.map((item) => (
                 <li key={item}>
-                  <button className="nav-item" aria-current={item === '修炼'} disabled={item !== '修炼'}>
+                  <button
+                    className="nav-item"
+                    aria-current={item === screen}
+                    disabled={!enabled(item)}
+                    onClick={() => setScreen(item as Screen)}
+                  >
                     {item}
                   </button>
                 </li>
               ))}
             </ul>
           </nav>
-          <p className="hint">Phase 1：核心循环已接通（抽卡 → 修行 → 机缘 → 天劫）。</p>
+          <p className="hint">Phase 2：决策闸门已上线（事件 2-4 选项 + 机缘 + 天劫）。</p>
         </aside>
 
-        {run ? <Cultivate /> : <Home />}
+        {!run ? <Home /> : screen === '吾身' ? <Self /> : <Cultivate />}
       </div>
+
+      {run && pending && !ended ? <DecisionModal decision={pending} onChoose={choose} /> : null}
 
       <nav className="tabbar" aria-label="底部导航">
         {NAV.map((item) => (
-          <button key={item} aria-current={item === '修炼'} disabled={item !== '修炼'}>
+          <button
+            key={item}
+            aria-current={item === screen}
+            disabled={!enabled(item)}
+            onClick={() => setScreen(item as Screen)}
+          >
             {item}
           </button>
         ))}

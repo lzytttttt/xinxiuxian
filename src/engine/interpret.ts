@@ -1,7 +1,18 @@
 import { CHAIN_DEPTH_MAX, TOXICITY_MAX } from './constants';
 import { evalCondition, makeEvalCtx, type EvalCtx } from './conditions';
 import { readTarget } from './selectors';
-import type { ContentBundle, Effect, EventDef, Outcome, Target } from './types/effects';
+import type {
+  Choice,
+  ContentBundle,
+  Decision,
+  DecisionChoice,
+  DecisionKind,
+  Effect,
+  EventCategory,
+  EventDef,
+  Outcome,
+  Target,
+} from './types/effects';
 import type { LogLine, LogTone, RunEndReason } from './types/log';
 import type { Rng } from './types/rng';
 import type { RunState } from './types/run';
@@ -9,6 +20,7 @@ import type { RunState } from './types/run';
 export interface ApplyCtx {
   content: ContentBundle;
   rng: Rng;
+  evalCtx?: EvalCtx;
 }
 
 export interface ResolveResult {
@@ -306,11 +318,16 @@ function commit(env: Env): void {
   env.overlay.clear();
 }
 
-export function canPayCost(s: RunState, cost: Effect[] | undefined, ctx: ApplyCtx): boolean {
+export function canPayCost(
+  s: RunState,
+  cost: Effect[] | undefined,
+  ctx: ApplyCtx,
+  evalCtx?: EvalCtx,
+): boolean {
   if (!cost || cost.length === 0) return true;
   const env: Env = {
     s,
-    ctx: makeEvalCtx(ctx.content, ctx.rng),
+    ctx: evalCtx ?? ctx.evalCtx ?? makeEvalCtx(ctx.content, ctx.rng),
     overlay: new Map(),
     snap: new Map(),
     logs: [],
@@ -352,12 +369,23 @@ export function interpolate(text: string, s: RunState, realm: string): string {
     .replaceAll('{age}', String(s.age));
 }
 
+export interface ResolveOptions {
+  /** `trust`：闸门已在决策生成时求值并固化，跳过重复求值（防 chance 节点双重消费） */
+  gates?: 'eval' | 'trust';
+}
+
+function applyChainFlags(s: RunState, event: EventDef): void {
+  if (event.chain?.consumesFlag) s.flags[event.chain.consumesFlag] = 0;
+  if (event.chain?.setsFlag) s.flags[event.chain.setsFlag] = 1;
+}
+
 export function resolveChoice(
   s: RunState,
   event: EventDef,
   choiceId: string,
   ctx: ApplyCtx,
   realmName: string,
+  opts: ResolveOptions = {},
 ): ResolveResult {
   const choice = event.choices.find((c) => c.id === choiceId);
   const empty: ResolveResult = {
@@ -369,14 +397,16 @@ export function resolveChoice(
     ended: null,
   };
   if (!choice) return empty;
-  const evalCtx = makeEvalCtx(ctx.content, ctx.rng);
-  if (choice.show && !evalCondition(s, choice.show, evalCtx, `${event.id}.${choiceId}.show`)) {
-    return empty;
+  const evalCtx = ctx.evalCtx ?? makeEvalCtx(ctx.content, ctx.rng);
+  if (opts.gates !== 'trust') {
+    if (choice.show && !evalCondition(s, choice.show, evalCtx, `${event.id}.${choiceId}.show`)) {
+      return empty;
+    }
+    if (choice.enable && !evalCondition(s, choice.enable, evalCtx, `${event.id}.${choiceId}.enable`)) {
+      return empty;
+    }
+    if (!canPayCost(s, choice.cost, ctx, evalCtx)) return empty;
   }
-  if (choice.enable && !evalCondition(s, choice.enable, evalCtx, `${event.id}.${choiceId}.enable`)) {
-    return empty;
-  }
-  if (!canPayCost(s, choice.cost, ctx)) return empty;
 
   const env: Env = {
     s,
@@ -392,7 +422,10 @@ export function resolveChoice(
   commit(env);
 
   const outcome = pickOutcome(s, choice.outcomes, evalCtx, ctx.rng, `${event.id}.${choiceId}`);
-  if (!outcome) return { ...empty, ok: true };
+  if (!outcome) {
+    applyChainFlags(s, event);
+    return { ...empty, ok: true };
+  }
 
   const pctTargets = new Map<string, Target>();
   collectPctTargets(outcome.effects, pctTargets);
@@ -417,6 +450,7 @@ export function resolveChoice(
     s.endedReason = env.ended;
     if (env.ended !== 'immortal' && env.ended !== 'zhengdao') s.dead = true;
   }
+  applyChainFlags(s, event);
 
   return {
     ok: true,
@@ -425,5 +459,92 @@ export function resolveChoice(
     chained: env.chained,
     scheduled: env.scheduled,
     ended: env.ended,
+  };
+}
+
+const TARGET_LABELS: Record<string, string> = {
+  cultivation: '修为',
+  simPoints: '模拟点',
+  root: '灵根',
+  luck: '气运',
+  artifactPower: '法宝之力',
+  artifactBonus: '法宝加成',
+  xianqi: '仙灵气',
+  chaosQi: '混沌气',
+  insight: '悟性',
+  toxicity: '丹毒',
+  herb: '药材',
+  pill: '丹药',
+  artLevel: '功法',
+  artInsight: '功法感悟',
+  sectContribution: '宗门贡献',
+  sectRank: '宗门职位',
+  bondLevel: '羁绊等级',
+  bondAffinity: '羁绊好感',
+  realmLevel: '境界',
+  yearsStayed: '滞留年数',
+};
+
+export function formatCost(cost: Effect[] | undefined): string | undefined {
+  if (!cost || cost.length === 0) return undefined;
+  const parts: string[] = [];
+  for (const e of cost) {
+    if (!('target' in e)) continue;
+    const label = TARGET_LABELS[e.target.k] ?? e.target.k;
+    const id = 'id' in e.target ? (e.target.id as string) : '';
+    if (e.op === 'sub' || e.op === 'add') {
+      parts.push(`${label}${id ? `·${id}` : ''}${e.op === 'sub' ? '−' : '+'}${e.value}`);
+    } else if (e.op === 'pct') {
+      parts.push(`${label}±${e.value}%`);
+    }
+  }
+  return parts.length > 0 ? parts.join('、') : undefined;
+}
+
+const KIND_BY_CATEGORY: Record<EventCategory, DecisionKind> = {
+  world: 'world',
+  encounter: 'encounter',
+  bond: 'bond',
+  sect: 'sect',
+  alchemy: 'alchemy',
+  chain: 'world',
+  tribulation: 'tribulation',
+  fate: 'world',
+};
+
+/**
+ * 决策生成时求值并**固化**每个选项的 show/enable 与代价可支付性。
+ * 结算走 `gates: 'trust'`，同一 chance 节点在一次事件内只消费一次 RNG。
+ */
+export function buildEventDecision(
+  s: RunState,
+  event: EventDef,
+  content: ContentBundle,
+  rng: Rng,
+  realmName: string,
+): Decision {
+  const evalCtx = makeEvalCtx(content, rng);
+  const ctx: ApplyCtx = { content, rng, evalCtx };
+  const choices: DecisionChoice[] = event.choices.map((c: Choice) => {
+    const shown =
+      c.show === undefined || evalCondition(s, c.show, evalCtx, `${event.id}.${c.id}.show`);
+    const affordable = shown && canPayCost(s, c.cost, ctx, evalCtx);
+    const enabled =
+      affordable &&
+      (c.enable === undefined || evalCondition(s, c.enable, evalCtx, `${event.id}.${c.id}.enable`));
+    const ch: DecisionChoice = { id: c.id, label: c.label, show: shown, enable: enabled };
+    if (!enabled && c.disabledReason) ch.disabledReason = c.disabledReason;
+    const costLabel = formatCost(c.cost);
+    if (costLabel) ch.costLabel = costLabel;
+    if (c.hint) ch.hint = c.hint;
+    return ch;
+  });
+  return {
+    source: 'event',
+    kind: KIND_BY_CATEGORY[event.category],
+    eventId: event.id,
+    title: event.title,
+    body: interpolate(event.body, s, realmName),
+    choices,
   };
 }

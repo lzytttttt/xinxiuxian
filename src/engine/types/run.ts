@@ -1,4 +1,4 @@
-import type { BondType, Decision, Fate } from './effects';
+import type { BondType, Decision, DecisionKind, Fate } from './effects';
 import type { LogLine } from './log';
 
 export type Arc = 'mortal' | 'immortal';
@@ -60,6 +60,19 @@ export interface SectState {
 export interface ScheduledEvent {
   eventId: string;
   year: number;
+}
+
+export interface DeferredEntry {
+  eventId: string;
+  /** 被推迟的年份；只在次年重试一次 */
+  year: number;
+}
+
+export interface DecisionRecord {
+  year: number;
+  kind: DecisionKind;
+  eventId: string;
+  choiceId: string;
 }
 
 export type BattlePolicy = 'manual' | 'yes' | 'no' | 'smart' | 'random';
@@ -133,9 +146,10 @@ export interface RunState {
   cooldowns: Record<string, number>;
   onceFired: string[];
   recencyQueue: string[];
-  deferredQueue: string[];
+  deferredQueue: DeferredEntry[];
   scheduled: ScheduledEvent[];
   chainDepth: number;
+  decisionLog: DecisionRecord[];
 
   battlePolicy: BattlePolicy;
   smartX: number;

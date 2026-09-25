@@ -161,7 +161,7 @@ export interface ContentBundle {
   names?: NameTables;
 }
 
-export type DecisionKind = 'tribulation' | 'encounter' | 'bond' | 'sect' | 'alchemy';
+export type DecisionKind = 'tribulation' | 'encounter' | 'bond' | 'sect' | 'alchemy' | 'world';
 
 export interface DecisionChoice {
   id: string;
@@ -169,10 +169,13 @@ export interface DecisionChoice {
   show: boolean;
   enable: boolean;
   disabledReason?: string;
+  costLabel?: string;
   hint?: { risk: 0 | 1 | 2 | 3; reward: 0 | 1 | 2 | 3 };
 }
 
 export interface Decision {
+  /** 判别：`event` = 内容事件决策；`system` = 机缘/天劫等引擎系统决策 */
+  source: 'event' | 'system';
   kind: DecisionKind;
   eventId: string;
   title: string;

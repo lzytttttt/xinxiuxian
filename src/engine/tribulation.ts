@@ -83,6 +83,7 @@ export function runTribulation(s: RunState, rng: RngBag): TribulationResult {
     return {
       logs,
       pending: {
+        source: 'system',
         kind: 'tribulation',
         eventId: 'ascension',
         title: '飞升',

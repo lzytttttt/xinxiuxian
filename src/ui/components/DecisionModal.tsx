@@ -43,6 +43,7 @@ export function DecisionModal({
   }, [decision.eventId]);
 
   const visible = decision.choices.filter((c) => c.show);
+  const dots = (n: number): string => '●'.repeat(n) + '○'.repeat(3 - n);
 
   return (
     <div className="mask">
@@ -67,8 +68,21 @@ export function DecisionModal({
               title={choice.enable ? undefined : choice.disabledReason}
               onClick={() => onChoose(choice.id)}
             >
-              {choice.label}
-              {!choice.enable && choice.disabledReason ? `（${choice.disabledReason}）` : ''}
+              <span className="choice-stack">
+                <span>{choice.label}</span>
+                {choice.costLabel ? <span className="choice-sub">代价 {choice.costLabel}</span> : null}
+                {choice.hint ? (
+                  <span
+                    className="choice-hint"
+                    aria-label={`风险 ${choice.hint.risk} 档，收益 ${choice.hint.reward} 档`}
+                  >
+                    险 {dots(choice.hint.risk)} · 利 {dots(choice.hint.reward)}
+                  </span>
+                ) : null}
+                {!choice.enable && choice.disabledReason ? (
+                  <span className="choice-sub">需 {choice.disabledReason}</span>
+                ) : null}
+              </span>
             </button>
           ))}
         </div>

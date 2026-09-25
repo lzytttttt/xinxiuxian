@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { powerOf, realmName, talentTier } from '../../engine/selectors';
 import { TALENT_NAMES, TOXICITY_MAX } from '../../engine/constants';
 import { useRunStore } from '../../store/runStore';
-import { DecisionModal } from '../components/DecisionModal';
 import { LogFeed } from '../components/LogFeed';
 import type { CSSProperties } from 'react';
 
@@ -18,13 +17,11 @@ const END_TEXT: Record<string, string> = {
 
 export function Cultivate() {
   const run = useRunStore((s) => s.run);
-  const pending = useRunStore((s) => s.pending);
   const ended = useRunStore((s) => s.ended);
   const running = useRunStore((s) => s.running);
   const version = useRunStore((s) => s.version);
   const tickMs = useRunStore((s) => s.tickMs);
   const setRunning = useRunStore((s) => s.setRunning);
-  const choose = useRunStore((s) => s.choose);
   const abandon = useRunStore((s) => s.abandon);
 
   useEffect(() => {
@@ -178,8 +175,6 @@ export function Cultivate() {
           </div>
         </section>
       </aside>
-
-      {pending && !ended ? <DecisionModal decision={pending} onChoose={choose} /> : null}
 
       {ended ? (
         <div className="mask">

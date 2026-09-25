@@ -1,7 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { BUNDLE } from '../src/content/index';
-import { calibrate, goldenSnapshot, simulate, type CalibrateRow, type GoldenEntry } from './simlib';
+import {
+  calibrate,
+  goldenSnapshot,
+  logDigest,
+  replayRun,
+  simulate,
+  type CalibrateRow,
+  type GoldenEntry,
+} from './simlib';
 
 const args = process.argv.slice(2);
 const has = (flag: string): boolean => args.includes(flag);
@@ -88,6 +96,50 @@ if (has('--golden')) {
     const ok = compareJson(path, 'calibrate', 0.02);
     process.exitCode = ok ? 0 : 1;
   }
+} else if (has('--pacing')) {
+  const runs = num('--runs', 200);
+  const years = num('--years', 200);
+  const yearsArr: number[] = [];
+  const decArr: number[] = [];
+  const optArr: number[] = [];
+  for (let i = 0; i < runs; i++) {
+    const out = simulate(BUNDLE, { seed: `pace-${String(i).padStart(4, '0')}`, maxYears: years });
+    yearsArr.push(out.years);
+    decArr.push(out.decisionCount);
+    optArr.push(out.optionPoints);
+  }
+  const q = (arr: number[], p: number): number => {
+    const a = [...arr].sort((x, y) => x - y);
+    return a[Math.min(a.length - 1, Math.floor(a.length * p))] ?? 0;
+  };
+  const avg = (arr: number[]): number => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const fmt = (arr: number[]): string => `${q(arr, 0.1)}/${q(arr, 0.5)}/${q(arr, 0.9)}`;
+  console.log(`runs=${runs} 年数 p10/p50/p90 = ${fmt(yearsArr)}（均 ${avg(yearsArr).toFixed(0)}）`);
+  console.log(`决策次数 p10/p50/p90 = ${fmt(decArr)}（均 ${avg(decArr).toFixed(1)}）`);
+  console.log(`选项点总数 p10/p50/p90 = ${fmt(optArr)}（均 ${avg(optArr).toFixed(1)}）`);
+  const p50 = q(optArr, 0.5);
+  const ok = p50 >= 25;
+  console.log(`验收 2.4（选项点总数 p50 ≥ 25）：${ok ? `通过（${p50}）` : `未达标（${p50}）`}`);
+  process.exitCode = ok ? 0 : 1;
+} else if (has('--replay')) {
+  const runs = num('--runs', 200);
+  const years = num('--years', 200);
+  let passed = 0;
+  for (let i = 0; i < runs; i++) {
+    const seed = `replay-${String(i).padStart(4, '0')}`;
+    const opts = { seed, maxYears: years };
+    try {
+      const first = simulate(BUNDLE, opts);
+      const again = replayRun(BUNDLE, opts, first.decisions);
+      if (logDigest(again.log) !== logDigest(first.log)) throw new Error('日志与首次运行分歧');
+      passed += 1;
+    } catch (err) {
+      console.error(`replay: ${seed} 失败 —— ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  const ok = passed === runs;
+  console.log(`replay: 记录→重放闭环 ${passed}/${runs} 局一致`);
+  process.exitCode = ok ? 0 : 1;
 } else {
   const runs = num('--runs', 200);
   const years = num('--years', 200);

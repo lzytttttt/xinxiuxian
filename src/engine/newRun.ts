@@ -125,6 +125,7 @@ export function createRun(
     deferredQueue: [],
     scheduled: [],
     chainDepth: 0,
+    decisionLog: [],
     battlePolicy: opts.battlePolicy ?? 'manual',
     smartX: 1,
     autopilot: null,
