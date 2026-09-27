@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { BUNDLE, STARTER_ART_IDS } from '../content';
+import { STARTER_ART_IDS } from '../content/arts/index';
+import { HOME_BUNDLE } from '../content/home';
 import { artById, equipArt, grantArt, unequipArt, upgradeArt } from '../engine/arts';
 import {
   autoFireAndCommit,
@@ -18,6 +19,13 @@ import {
   type CraftResult,
 } from '../engine/alchemy';
 import { applyChoice, rollYear } from '../engine/tick';
+import {
+  acceptMission,
+  joinSect,
+  missionById,
+  runTournament,
+  sectName,
+} from '../engine/sect';
 import { createRun, drawCards, type CharCard } from '../engine/newRun';
 import { makeRngBag } from '../engine/rng';
 import { recordPowerTrail, zones, type ZoneBreakdown } from '../engine/selectors';
@@ -65,11 +73,20 @@ export interface RunStoreState {
   refine: (recipeId: string) => void;
   takePill: (key: string) => void;
   buy: (herbId: string, count: number) => void;
+  join: (sectId: string) => void;
+  takeMission: (missionId: string) => void;
+  enterTournament: () => void;
 }
 
 let rng: RngBag = makeRngBag('boot');
 let timer: ReturnType<typeof setTimeout> | null = null;
 let runCounter = 0;
+
+/* 首屏只带 `HOME_BUNDLE`（命帖 + 开局功法），事件池/名称表/药材丹药丹方是动态 import 的
+   独立 chunk。抽卡屏挂载时开始预取，人读三张命帖的时间足够；万一没就绪，`tickOnce`
+   本轮不推进、下一次 tick 重试（自愈，不阻塞首屏、不弹等待界面）。 */
+let content: ContentBundle = HOME_BUNDLE;
+let contentPromise: Promise<void> | null = null;
 
 interface SaveSlot {
   meta: MetaState;
@@ -89,6 +106,14 @@ export const useRunStore = create<RunStoreState>((set, get) => {
   const log = (run: RunState, text: string, cls: 'ev1' | 'gold' | 'red' = 'ev1'): void => {
     run.log.push({ cls, text });
     if (run.log.length > LOG_LIMIT) run.log.splice(0, run.log.length - LOG_LIMIT);
+  };
+
+  /** 载入完整内容并把 `content` 从 HOME_BUNDLE 换掉（幂等；失败不回滚，下次 tick 重试） */
+  const loadContent = (): void => {
+    contentPromise ??= import('../content').then((m) => {
+      content = m.BUNDLE;
+      set({ content: m.BUNDLE, version: get().version + 1 });
+    });
   };
 
   const loop = (): void => {
@@ -141,7 +166,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
   };
 
   return {
-    content: BUNDLE,
+    content,
     meta: slot.meta,
     run: null,
     pending: null,
@@ -155,6 +180,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     pendingCard: null,
 
     refreshCards: () => {
+      loadContent();
       const loaded = loadEnvelope();
       if (loaded) {
         slot.meta = loaded.meta;
@@ -162,7 +188,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       }
       const seed = `card-${Date.now()}-${Math.round(performance.now())}`;
       const bag = makeRngBag(seed);
-      const cards = drawCards(bag, BUNDLE, {});
+      const cards = drawCards(bag, content, {});
       set({ cards, meta: slot.meta, version: get().version + 1 });
     },
 
@@ -173,7 +199,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       const options: ArtDef[] = [];
       while (options.length < 3 && pool.length > 0) {
         const id = pool.splice(Math.min(pool.length - 1, bag.misc.int(0, pool.length - 1)), 1)[0];
-        const def = id ? artById(BUNDLE, id) : undefined;
+        const def = id ? artById(content, id) : undefined;
         if (def) options.push(def);
       }
       set({ pendingCard: card, starterOptions: options, version: get().version + 1 });
@@ -194,7 +220,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
         createdAt: Date.now(),
         battlePolicy: slot.meta.autoPolicy.battlePolicy,
       });
-      grantArt(run, artId, BUNDLE);
+      grantArt(run, artId, content);
       run.slots[0] = artId;
       slot.run = run;
       set({
@@ -212,16 +238,16 @@ export const useRunStore = create<RunStoreState>((set, get) => {
 
     zonesOf: () => {
       const run = get().run;
-      return run ? zones(run, BUNDLE) : null;
+      return run ? zones(run, content) : null;
     },
 
     equip: (id) => {
       const run = get().run;
       if (!run) return;
-      const before = zones(run, BUNDLE).finalPower;
-      if (!equipArt(run, id, BUNDLE)) return;
-      const def = artById(BUNDLE, id);
-      recordPowerTrail(run, BUNDLE, `装备「${def?.name ?? id}」`, before);
+      const before = zones(run, content).finalPower;
+      if (!equipArt(run, id, content)) return;
+      const def = artById(content, id);
+      recordPowerTrail(run, content, `装备「${def?.name ?? id}」`, before);
       set({ version: get().version + 1 });
       saver.flush();
     },
@@ -229,10 +255,10 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     unequip: (id) => {
       const run = get().run;
       if (!run) return;
-      const before = zones(run, BUNDLE).finalPower;
+      const before = zones(run, content).finalPower;
       if (!unequipArt(run, id)) return;
-      const def = artById(BUNDLE, id);
-      recordPowerTrail(run, BUNDLE, `卸下「${def?.name ?? id}」`, before);
+      const def = artById(content, id);
+      recordPowerTrail(run, content, `卸下「${def?.name ?? id}」`, before);
       set({ version: get().version + 1 });
       saver.flush();
     },
@@ -240,11 +266,11 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     upgrade: (id) => {
       const run = get().run;
       if (!run) return;
-      const before = zones(run, BUNDLE).finalPower;
-      if (!upgradeArt(run, id, BUNDLE)) return;
-      const def = artById(BUNDLE, id);
+      const before = zones(run, content).finalPower;
+      if (!upgradeArt(run, id, content)) return;
+      const def = artById(content, id);
       const st = run.arts[id];
-      recordPowerTrail(run, BUNDLE, `升「${def?.name ?? id}」至 L${st?.level ?? 0}`, before);
+      recordPowerTrail(run, content, `升「${def?.name ?? id}」至 L${st?.level ?? 0}`, before);
       set({ version: get().version + 1 });
       saver.flush();
     },
@@ -252,7 +278,12 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     tickOnce: () => {
       const run = get().run;
       if (!run || run.dead) return;
-      const result = rollYear(run, rng, BUNDLE);
+      // 完整内容尚未就绪：本轮不推进，下一拍重试（抽卡屏已开始预取，正常不会走到这里）
+      if (content === HOME_BUNDLE) {
+        loadContent();
+        return;
+      }
+      const result = rollYear(run, rng, content);
       afterTick(run, { pending: result.pending, ended: result.ended });
     },
 
@@ -265,7 +296,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     choose: (choiceId) => {
       const { run, pending } = get();
       if (!run || !pending) return;
-      const result = applyChoice(run, pending, choiceId, rng, BUNDLE);
+      const result = applyChoice(run, pending, choiceId, rng, content);
       afterTick(run, { pending: result.pending, ended: result.ended });
       const state = get();
       if (!state.ended && !state.pending) {
@@ -297,7 +328,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     startCraft: (recipeId) => {
       const run = get().run;
       if (!run || run.dead || get().batch) return;
-      const recipe = recipeById(BUNDLE, recipeId);
+      const recipe = recipeById(content, recipeId);
       if (!recipe) return;
       stopTimer();
       const batch = startBatch(run, recipe);
@@ -311,11 +342,11 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       if (!batch || !run) return;
       stepBatch(batch, action, rng.alchemy);
       if (batch.done || batch.exploded) {
-        const recipe = recipeById(BUNDLE, get().batchRecipeId ?? '');
+        const recipe = recipeById(content, get().batchRecipeId ?? '');
         if (!recipe) return;
-        const powerBefore = zones(run, BUNDLE).finalPower;
-        const result = resolveBatch(run, recipe, batch, BUNDLE);
-        recordPowerTrail(run, BUNDLE, `炼丹「${recipe.name}」`, powerBefore);
+        const powerBefore = zones(run, content).finalPower;
+        const result = resolveBatch(run, recipe, batch, content);
+        recordPowerTrail(run, content, `炼丹「${recipe.name}」`, powerBefore);
         set({ batchResult: result, version: get().version + 1 });
         saver.flush();
         return;
@@ -340,13 +371,13 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     autoCraft: (recipeId) => {
       const run = get().run;
       if (!run || run.dead) return;
-      const recipe = recipeById(BUNDLE, recipeId);
+      const recipe = recipeById(content, recipeId);
       const mastery = run.recipes[recipeId]?.mastery ?? 0;
       if (!recipe || !canAutoFire(mastery)) return;
-      const powerBefore = zones(run, BUNDLE).finalPower;
-      const result = autoFireAndCommit(run, recipe, BUNDLE);
+      const powerBefore = zones(run, content).finalPower;
+      const result = autoFireAndCommit(run, recipe, content);
       if (!result) return;
-      recordPowerTrail(run, BUNDLE, `炼丹「${recipe.name}」`, powerBefore);
+      recordPowerTrail(run, content, `炼丹「${recipe.name}」`, powerBefore);
       set({
         batch: null,
         batchRecipeId: null,
@@ -360,13 +391,13 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     refine: (recipeId) => {
       const run = get().run;
       if (!run || run.dead) return;
-      const recipe = recipeById(BUNDLE, recipeId);
+      const recipe = recipeById(content, recipeId);
       const mastery = run.recipes[recipeId]?.mastery ?? 0;
       if (!recipe || !canAutoFire(mastery)) return;
-      const powerBefore = zones(run, BUNDLE).finalPower;
-      const result = batchRefine(run, recipe, BUNDLE);
+      const powerBefore = zones(run, content).finalPower;
+      const result = batchRefine(run, recipe, content);
       if (!result) return;
-      recordPowerTrail(run, BUNDLE, `批量炼丹「${recipe.name}」`, powerBefore);
+      recordPowerTrail(run, content, `批量炼丹「${recipe.name}」`, powerBefore);
       set({
         batch: null,
         batchRecipeId: null,
@@ -380,7 +411,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     buy: (herbId, count) => {
       const run = get().run;
       if (!run || run.dead) return;
-      if (!buyHerb(run, BUNDLE, herbId, count)) return;
+      if (!buyHerb(run, content, herbId, count)) return;
       set({ version: get().version + 1 });
       saver.flush();
     },
@@ -388,15 +419,52 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     takePill: (key) => {
       const run = get().run;
       if (!run || run.dead) return;
-      const check = canUsePill(run, key, BUNDLE);
+      const check = canUsePill(run, key, content);
       if (!check.ok) return;
-      const powerBefore = zones(run, BUNDLE).finalPower;
+      const powerBefore = zones(run, content).finalPower;
       const { pillId } = parsePillKey(key);
-      const name = pillById(BUNDLE, pillId)?.name ?? pillId;
-      const res = usePill(run, key, BUNDLE);
+      const name = pillById(content, pillId)?.name ?? pillId;
+      const res = usePill(run, key, content);
       if (!res.ok) return;
       log(run, `【丹药】${name} · ${res.text}`, 'gold');
-      recordPowerTrail(run, BUNDLE, `服丹「${name}」`, powerBefore);
+      recordPowerTrail(run, content, `服丹「${name}」`, powerBefore);
+      set({ version: get().version + 1 });
+      saver.flush();
+    },
+
+    join: (sectId) => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      const before = run.sect.id;
+      if (!joinSect(run, sectId, content)) return;
+      const name = sectName(content, sectId);
+      log(run, before ? `【宗门】你自旧门叛出，转投${name}。` : `【宗门】你拜入${name}。`, 'gold');
+      set({ version: get().version + 1 });
+      saver.flush();
+    },
+
+    takeMission: (missionId) => {
+      const { run, pending } = get();
+      if (!run || run.dead || pending) return;
+      const mission = missionById(content, missionId);
+      if (!mission) return;
+      const decision = acceptMission(run, mission, content, rng.event);
+      if (!decision) return;
+      set({ pending: decision, running: false, version: get().version + 1 });
+      saver.flush();
+    },
+
+    enterTournament: () => {
+      const run = get().run;
+      if (!run || run.dead) return;
+      const powerBefore = zones(run, content).finalPower;
+      const result = runTournament(run, content);
+      if (!result) return;
+      for (const line of result.logs) {
+        run.log.push(line);
+        if (run.log.length > LOG_LIMIT) run.log.splice(0, run.log.length - LOG_LIMIT);
+      }
+      recordPowerTrail(run, content, `大比第 ${result.place} 名`, powerBefore);
       set({ version: get().version + 1 });
       saver.flush();
     },

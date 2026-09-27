@@ -3,16 +3,18 @@ import { realmName } from './engine/selectors';
 import { useRunStore } from './store/runStore';
 import { DecisionModal } from './ui/components/DecisionModal';
 import { Alchemy } from './ui/screens/Alchemy';
+import { Bonds } from './ui/screens/Bonds';
 import { Build } from './ui/screens/Build';
 import { Cultivate } from './ui/screens/Cultivate';
 import { Home } from './ui/screens/Home';
+import { Sect } from './ui/screens/Sect';
 import { Self } from './ui/screens/Self';
 
 /* 外壳：左栏（品牌/境界）+ 主屏 + 右栏（由各屏自绘）+ 移动端底部导航。
    决策弹层挂在外壳层：任何屏（修炼/吾身）下都必须能看到并结算。 */
 
-type Screen = '修炼' | '构筑' | '炼丹' | '吾身';
-const NAV = ['修炼', '构筑', '炼丹', '洞天', '图鉴', '吾身'];
+type Screen = '修炼' | '构筑' | '炼丹' | '宗门' | '羁绊' | '吾身';
+const NAV = ['修炼', '构筑', '炼丹', '宗门', '羁绊', '洞天', '图鉴', '吾身'];
 
 function Ribbon({ children }: { children: ReactNode }) {
   return (
@@ -38,7 +40,7 @@ export default function App() {
   void version;
 
   const enabled = (item: string): boolean =>
-    item === '修炼' || item === '构筑' || item === '炼丹' || item === '吾身';
+    item === '修炼' || item === '构筑' || item === '炼丹' || item === '宗门' || item === '羁绊' || item === '吾身';
 
   return (
     <>
@@ -82,7 +84,7 @@ export default function App() {
             </ul>
           </nav>
           <p className="hint">
-            Phase 4：炼丹已上线（控火小游戏 / 丹毒 / 七类丹药 / 60 药材 / 35 丹方）。
+            Phase 5：宗门与羁绊已上线（八宗门 / 贡献职位俸禄 / 大比叛宗 / 五种关系 / 助战上限 30%）。
           </p>
         </aside>
 
@@ -94,6 +96,10 @@ export default function App() {
           <Build />
         ) : screen === '炼丹' ? (
           <Alchemy />
+        ) : screen === '宗门' ? (
+          <Sect />
+        ) : screen === '羁绊' ? (
+          <Bonds />
         ) : (
           <Cultivate />
         )}

@@ -5,6 +5,7 @@ import {
   CHAOS_CULT_HI,
   CHAOS_CULT_LO,
   CHAOS_RATE,
+  DEFECT_EVENT,
   ENCOUNTER_RATE,
   ENCOUNTER_RATE_PINNACLE,
   EVENT_RATE,
@@ -19,7 +20,9 @@ import {
   TOXICITY_DECAY_RATE,
 } from './constants';
 import { plunderDrain, swordNarrow, toxicityDecayMult } from './arts';
+import { bondMeetTick, bondTick } from './bonds';
 import { tickPillBuffs } from './alchemy';
+import { defectTargets, eventOrMission, sectPlunderSim, stipendTick, tensionTick } from './sect';
 import { evalCondition, makeEvalCtx } from './conditions';
 import { buildEncounter, encounterDecision, resolveEncounter, type EncounterPayload } from './encounter';
 import { resolveArtifact } from './artifact';
@@ -77,8 +80,14 @@ function push(s: RunState, logs: LogLine[], line: LogLine): void {
   if (s.log.length > LOG_LIMIT) s.log.splice(0, s.log.length - LOG_LIMIT);
 }
 
-function isEligible(s: RunState, ev: EventDef, c: ContentBundle, rng: RngBag): boolean {
-  if (ev.weight <= 0) return false;
+function isEligible(
+  s: RunState,
+  ev: EventDef,
+  c: ContentBundle,
+  rng: RngBag,
+  allowZeroWeight = false,
+): boolean {
+  if (!allowZeroWeight && ev.weight <= 0) return false;
   if (ev.levelMin !== undefined && s.realm.level < ev.levelMin) return false;
   if (ev.levelMax !== undefined && s.realm.level > ev.levelMax) return false;
   if (ev.once && s.onceFired.includes(ev.id)) return false;
@@ -142,7 +151,7 @@ function resolveInline(
   if (!res.ok) return null;
   recordEvent(s, ev);
   s.eventLog.push(ev.id);
-  push(s, logs, { cls: 'ev2', text: `${ev.title} · ${interpolate(ev.body, s, realmName(s.realm.level))}` });
+  push(s, logs, { cls: 'ev2', text: `${ev.title} · ${interpolate(ev.body, s, realmName(s.realm.level), c)}` });
   for (const line of res.logs) push(s, logs, line);
   for (const sched of res.scheduled) s.scheduled.push(sched);
   return handleChains(s, res.chained, rng, c, logs);
@@ -202,6 +211,10 @@ function scheduledTick(s: RunState, rng: RngBag, c: ContentBundle, logs: LogLine
   for (let i = 0; i < due.length; i++) {
     const ev = c.events.find((e) => e.id === due[i]?.eventId);
     if (!ev) continue;
+    // 调度型事件（weight 0）也要走 requires：条件不成立就作废，而不是硬发
+    if (ev.requires && !evalCondition(s, ev.requires, makeEvalCtx(c, rng.event), `${ev.id}.sched`)) {
+      continue;
+    }
     const pending = fireOrDecide(s, ev, rng, c, logs);
     if (pending) {
       for (const rest of due.slice(i + 1)) s.deferredQueue.push({ eventId: rest.eventId, year: s.year });
@@ -225,7 +238,8 @@ function arbitrate(
   const all: Candidate[] = [];
   for (const entry of retry) {
     const ev = c.events.find((e) => e.id === entry.eventId);
-    if (!ev || !isEligible(s, ev, c, rng)) continue;
+    // 调度型事件（weight 0）被顺延后必须还能重试，否则一次落选就永久丢失
+    if (!ev || !isEligible(s, ev, c, rng, true)) continue;
     const pending = fireOrDecide(s, ev, rng, c, logs);
     if (pending) all.push({ ev, decision: pending.decision, deferred: true });
   }
@@ -325,6 +339,18 @@ function toxicityTick(s: RunState, c: ContentBundle): void {
   s.toxicity = Math.max(0, s.toxicity - decay);
 }
 
+/** 张力 ≥ 阈值时把叛宗邀请排进本年候选（走正常仲裁，不抢占） */
+function queueDefectInvite(s: RunState, c: ContentBundle): void {
+  if (s.sect.id === null) return;
+  const target = defectTargets(s)[0];
+  if (!target) return;
+  if (!c.events.some((e) => e.id === DEFECT_EVENT)) return;
+  if ((s.cooldowns[DEFECT_EVENT] ?? 0) > s.year) return;
+  if (s.scheduled.some((x) => x.eventId === DEFECT_EVENT)) return;
+  s.sect.inviteFrom = target;
+  s.scheduled.push({ eventId: DEFECT_EVENT, year: s.year });
+}
+
 export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult {
   const logs: LogLine[] = [];
   if (s.dead) return { logs, pending: null, ended: s.endedReason as RunEndReason | null };
@@ -353,6 +379,16 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   const drain = plunderDrain(s, c);
   if (drain > 0) s.simPoints = Math.max(0, s.simPoints - drain);
 
+  // 槽 6：宗门俸禄与宗门政治
+  for (const line of stipendTick(s, c)) push(s, logs, line);
+  const sectPlunder = sectPlunderSim(s, c);
+  if (sectPlunder > 0) s.simPoints += sectPlunder;
+  tensionTick(s);
+  queueDefectInvite(s, c);
+  // 槽 7：羁绊（年常邂逅 + NPC 同步成长 + 宿敌论剑）
+  for (const line of bondMeetTick(s, rng.bond, c)) push(s, logs, line);
+  for (const line of bondTick(s, rng.bond, c)) push(s, logs, line);
+
   const candidates: Candidate[] = [];
   const schedPending = scheduledTick(s, rng, c, logs);
   if (schedPending) candidates.push({ ...schedPending, deferred: false });
@@ -364,7 +400,7 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   if (encDec) candidates.push({ ev: null, decision: encDec, deferred: false });
 
   qiTick(s, rng, logs);
-  for (const line of perilTick(s, rng)) push(s, logs, line);
+  for (const line of perilTick(s, rng, c)) push(s, logs, line);
   if (s.dead) return { logs, pending: null, ended: s.endedReason as RunEndReason | null };
 
   if (shouldTribulate(s)) {
@@ -413,7 +449,7 @@ export function applyChoice(
   } else if (d.source === 'system' && d.kind === 'tribulation') {
     for (const line of resolveAscensionChoice(s, choiceId)) push(s, logs, line);
   } else {
-    const ev = c.events.find((e) => e.id === d.eventId);
+    const ev = eventOrMission(c, d.eventId);
     if (ev) {
       const resolved = resolveChoice(
         s,

@@ -8,6 +8,8 @@ import {
   resonanceOf,
 } from './arts';
 import { pillBuffPower } from './alchemy';
+import { friendZ6Bonus, teacherInsight } from './bonds';
+import { sectArtifactBonus } from './sect';
 import {
   AGE_COEF_LATE,
   AGE_COEF_TEEN,
@@ -120,6 +122,7 @@ export type ZoneSourceKind =
   | 'fate'
   | 'bond'
   | 'cave'
+  | 'sect'
   | 'base'
   | 'synergy'
   | 'cap';
@@ -246,6 +249,8 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
     z3Sources.push({ label: '炼宝诀', delta: artDelta - artBaseDelta, kind: 'synergy' });
   }
   z3Sources.push(...artSources(s, c, 'z3'), ...pillSrc('z3', '丹药药力'));
+  const sectArt = sectArtifactBonus(s, c);
+  if (sectArt > 0) z3Sources.push({ label: '宗门·剑意', delta: sectArt, kind: 'sect' });
   const z3 = zoneOf('z3', z3Sources);
 
   const resonance = resonanceOf(s, c);
@@ -276,6 +281,8 @@ export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
     const delta = f.value * Z6_FATE_COEF;
     if (delta > 0) z6Sources.push({ label: `命格·${f.name}`, delta, kind: 'fate' });
   }
+  const friend = friendZ6Bonus(s);
+  if (friend > 0) z6Sources.push({ label: '挚友', delta: friend, kind: 'bond' });
   z6Sources.push(...artSources(s, c, 'z6'), ...pillSrc('z6', '丹药药力'));
   const z6 = zoneOf('z6', z6Sources);
 
@@ -367,8 +374,9 @@ export function xianqiRate(s: RunState): number {
   return 0;
 }
 
+/** 每年悟性：基础 1 + 境界档，师徒羁绊每级 +1（Phase 5） */
 export function insightPerYear(s: RunState): number {
-  return 1 + Math.floor(s.realm.level / 20);
+  return 1 + Math.floor(s.realm.level / 20) + teacherInsight(s);
 }
 
 export function readTarget(s: RunState, t: Target): number {

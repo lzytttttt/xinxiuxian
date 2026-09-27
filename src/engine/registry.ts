@@ -4,10 +4,12 @@ import type {
   EventDef,
   Fate,
   Herb,
+  MissionDef,
   NameTables,
   PillDef,
   Recipe,
   RollTable,
+  SectDef,
 } from './types/effects';
 
 export function defineEvent(e: EventDef): EventDef {
@@ -38,6 +40,14 @@ export function defineRollTable(t: RollTable): RollTable {
   return t;
 }
 
+export function defineSect(s: SectDef): SectDef {
+  return s;
+}
+
+export function defineMission(m: MissionDef): MissionDef {
+  return m;
+}
+
 export function bundle(parts: {
   events: EventDef[];
   fates: Fate[];
@@ -46,6 +56,8 @@ export function bundle(parts: {
   herbs?: Herb[];
   pills?: PillDef[];
   recipes?: Recipe[];
+  sects?: SectDef[];
+  missions?: MissionDef[];
   names?: NameTables;
 }): ContentBundle {
   return {
@@ -56,6 +68,8 @@ export function bundle(parts: {
     ...(parts.herbs ? { herbs: parts.herbs } : {}),
     ...(parts.pills ? { pills: parts.pills } : {}),
     ...(parts.recipes ? { recipes: parts.recipes } : {}),
+    ...(parts.sects ? { sects: parts.sects } : {}),
+    ...(parts.missions ? { missions: parts.missions } : {}),
     ...(parts.names ? { names: parts.names } : {}),
   };
 }

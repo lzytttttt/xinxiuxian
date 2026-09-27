@@ -32,6 +32,8 @@ import {
   talentTier,
 } from './selectors';
 import { thunderBreakMult, thunderFailLoss } from './arts';
+import { partnerCultRate } from './bonds';
+import { sectBreakBonus } from './sect';
 import type { ContentBundle } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
@@ -114,13 +116,15 @@ export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLin
   const age = ageCoef(s);
   const talent = talentMult(s.root);
   const thunder = thunderBreakMult(s, c);
+  // 宗门 perk（九霄雷府 / 太乙符宗）：突破概率加成
+  const sectBreak = sectBreakBonus(s, c);
   // 丹毒惩罚：×(1 − 丹毒/250)，与 Z5 同底（丹毒 100 → ×0.6）；破境丹为当年一次性倍率
   const toxin = Math.max(1 - Z5_TOX_PENALTY_MAX, 1 - s.toxicity / TOXICITY_BREAK_PENALTY);
   const pill = s.pillBreakMult;
 
   if (s.realm.level < max && s.realm.level % 10 !== 0) {
     const table = breakChance(tier, localLevel(s), s.realm.arc);
-    const base = (table / 100) * age * gate * talent * s.breakthroughMult * thunder * toxin * pill;
+    const base = (table / 100) * age * gate * talent * s.breakthroughMult * thunder * toxin * pill + sectBreak;
     if (base <= 0.25) {
       if (rng.break.chance(base)) levelUp(s, rng, logs, false);
     } else {
@@ -129,15 +133,16 @@ export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLin
       for (;;) {
         const p =
           (breakChance(tier, localLevel(s), s.realm.arc) / 100) *
-          age *
-          (s.realm.level % 10 === 9 ? GATE_PENALTY : 1) *
-          talent *
-          s.breakthroughMult *
-          thunder *
-          toxin *
-          pill *
-          Math.pow(CHAIN_MULT, step) *
-          chainMult;
+            age *
+            (s.realm.level % 10 === 9 ? GATE_PENALTY : 1) *
+            talent *
+            s.breakthroughMult *
+            thunder *
+            toxin *
+            pill *
+            Math.pow(CHAIN_MULT, step) *
+            chainMult +
+          sectBreak;
         if (p <= 0.25 || s.realm.level >= max || s.realm.level % 10 === 0) break;
         if (!rng.break.chance(p)) break;
         levelUp(s, rng, logs, step > 0);
@@ -163,9 +168,11 @@ export function attemptBreak(s: RunState, rng: RngBag, c: ContentBundle): LogLin
       s.cultivation += lo * coef * mult;
       logs.push({ cls: 'year', text: '你已至圆满，唯余苦修。' });
     } else {
+      // 静修增益：基础 0.05%~0.1% + 道侣双修 Σ(L × 0.05%)（见 v0.1.0-06 §三·3.2）
       const rate = 0.0005 + rng.break.next() * 0.0005;
+      const partner = partnerCultRate(s);
       const floor = rng.break.int(1 + tier, 5 + tier);
-      s.cultivation += Math.max(s.cultivation * rate, floor);
+      s.cultivation += Math.max(s.cultivation * (rate + partner), floor);
       logs.push({ cls: 'year', text: '闭关静修，修为微增。' });
     }
   }

@@ -5,7 +5,7 @@ import { applyChoice, rollYear } from './tick';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
-import type { DecisionRecord, RunState } from './types/run';
+import type { DecisionRecord, PastPartnerRef, RunState } from './types/run';
 
 export interface RunOptions {
   seed: string;
@@ -17,6 +17,8 @@ export interface RunOptions {
   startArts?: string[];
   /** 开局 flag（如洞府解锁的 `dao_seat`）；平衡对照用 */
   startFlags?: Record<string, number>;
+  /** 前世道侣：由边界层（store / simlib）从 MetaState 取出后注入（引擎不读 MetaState） */
+  pastPartner?: PastPartnerRef | null;
   /**
    * 纯观察钩子：每年结算（含决策应答）完成后回调一次。
    * 不得在其中修改状态或消费 RNG——只供平衡工具按等级采样。
@@ -48,6 +50,7 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
     runId: opts.seed,
     createdAt: 0,
     battlePolicy: opts.battlePolicy ?? 'manual',
+    pastPartner: opts.pastPartner ?? null,
   });
   for (const id of opts.startArts ?? []) grantStarterArt(s, id, content);
   for (const [id, value] of Object.entries(opts.startFlags ?? {})) s.flags[id] = value;

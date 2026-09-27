@@ -1,4 +1,5 @@
 import { schoolCount } from './arts';
+import { bondStrainCount } from './bonds';
 import type { Condition, ContentBundle } from './types/effects';
 import type { Rng } from './types/rng';
 import type { RunState } from './types/run';
@@ -51,12 +52,28 @@ export function evalCondition(s: RunState, c: Condition, ctx: EvalCtx, path = ''
     }
     case 'sect':
       return s.sect.id === c.id;
+    case 'inSect':
+      return s.sect.id !== null;
     case 'rankAtLeast':
       return s.sect.rank >= c.rank;
+    case 'defectReady':
+      return s.sect.id !== null && s.sect.inviteFrom !== null;
     case 'school':
       return schoolCount(s, ctx.content, c.id) >= c.countAtLeast;
     case 'bondType':
-      return s.bonds.list.filter((b) => b.type === c.type).length >= c.countAtLeast;
+      return s.bonds.list.filter((b) => b.bondType === c.type).length >= c.countAtLeast;
+    case 'bondStrain':
+      return bondStrainCount(s, c.type, c.minNeglect) >= c.countAtLeast;
+    case 'bondReady': {
+      const n = s.bonds.list.filter(
+        (b) =>
+          b.alive &&
+          b.bondType === c.type &&
+          b.bondLevel > 0 &&
+          b.affinity >= c.minAffinity,
+      ).length;
+      return n >= c.countAtLeast;
+    }
     case 'hasPill':
       return (s.pills[c.id] ?? 0) >= (c.countAtLeast ?? 1);
     case 'hasHerb':

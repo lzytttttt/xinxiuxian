@@ -73,8 +73,88 @@ export interface Recipe {
   baseGrade: number;
 }
 
-export type FateAttr = 'root' | 'luck' | 'xianqi' | 'artifact' | 'brk' | 'trib';
+// ── Phase 5：宗门 ──
+export interface SectPerk {
+  /** 突破概率加成（加法，九霄雷府） */
+  breakBonus?: number;
+  /** 炼丹品质加成（青囊谷，与流派加成可叠） */
+  alchemyBonus?: number;
+  /** 丹毒获取倍率（万毒窟 / 天音寺） */
+  toxMult?: number;
+  /** 药材俸禄倍率（青囊谷） */
+  herbMult?: number;
+  /** 法宝加成（太虚剑宗，计入 Z3） */
+  artifactBonus?: number;
+  /** 每年掠夺模拟点（幽冥魔宗） */
+  plunderSim?: number;
+  /** 战败损失倍率（玄岳门） */
+  damageMult?: number;
+  /** 走火入魔风险倍率（天音寺） */
+  perilMult?: number;
+  /** 俸禄悟性加成（天音寺） */
+  insightBonus?: number;
+}
 
+export interface SectDef {
+  id: string;
+  name: string;
+  /** 单流派宗门 1 个；混元宗门 2 个 */
+  schools: SchoolId[];
+  mixed: boolean;
+  text: string;
+  perk: SectPerk;
+  /** 宗门专属功法：真传弟子起进入任务奖励池，大比夺魁必得 */
+  arts: string[];
+}
+
+export type MissionKind = 'gather' | 'subdue' | 'parley' | 'relic' | 'secret';
+
+export interface MissionDef {
+  id: string;
+  /** 所属宗门；`*` = 全宗门通用 */
+  sect: string;
+  title: string;
+  body: string;
+  minRank: number;
+  levelMin: number;
+  levelMax: number;
+  cooldownYears: number;
+  kind: MissionKind;
+  /** 完成后对目标宗门的张力变化（讨伐为正、交涉为负） */
+  tensionTo?: { sect: string; delta: number };
+  choices: Choice[];
+  /** 基准贡献，按 kind 与阶位定；结算时再乘同门羁绊加成 */
+  contribution: number;
+}
+
+// ── Phase 5：羁绊 ──
+export type PersonalityTag = '刚直' | '狡黠' | '淡泊' | '痴狂' | '仁厚' | '孤傲';
+export type OriginTag = '世家' | '散修' | '宗门' | '妖族' | '皇族' | '乞儿';
+
+export interface Npc {
+  id: string;
+  name: string;
+  gender: '男' | '女';
+  /** 1-10，决定成长速度 */
+  rootTier: number;
+  personality: PersonalityTag;
+  origin: OriginTag;
+  level: number;
+  /** 好感 0-100 */
+  affinity: number;
+  bondType: BondType | null;
+  /** 0-5 */
+  bondLevel: number;
+  alive: boolean;
+  metYear: number;
+  /** 长期未互动的年数（背叛前置条件之一，互动即清零） */
+  neglect: number;
+  /** 战败受伤：此年份之前不可随行 */
+  injuredUntil: number;
+  seed: string;
+}
+
+export type FateAttr = 'root' | 'luck' | 'xianqi' | 'artifact' | 'brk' | 'trib';
 export type FateColor = 'green' | 'blue' | 'purple' | 'gold';
 
 export interface Fate {
@@ -121,9 +201,17 @@ export type Condition =
   | { op: 'cmp'; target: Target; cmp: Cmp; value: number }
   | { op: 'flag'; id: string; min?: number; max?: number }
   | { op: 'sect'; id: string }
+  /** 任意宗门在册（散修不满足） */
+  | { op: 'inSect' }
   | { op: 'rankAtLeast'; rank: number }
+  /** 有可叛的对方宗门（张力 ≥ 阈值）——叛宗邀请事件的门槛 */
+  | { op: 'defectReady' }
   | { op: 'school'; id: SchoolId; countAtLeast: number }
   | { op: 'bondType'; type: BondType; countAtLeast: number }
+  /** 羁绊张力：该类型下「好感 ≤ 30 或 neglect ≥ minNeglect」的关系数 ≥ countAtLeast。背叛事件的前置条件 */
+  | { op: 'bondStrain'; type: BondType; minNeglect?: number; countAtLeast: number }
+  /** 羁绊可用：该类型下好感 ≥ minAffinity 的活关系数 ≥ countAtLeast。道侣/师徒等升级事件的前置条件 */
+  | { op: 'bondReady'; type: BondType; minAffinity: number; countAtLeast: number }
   | { op: 'hasPill'; id: string; countAtLeast?: number }
   | { op: 'hasHerb'; id: string; countAtLeast?: number }
   | { op: 'toxicityAtMost'; value: number }
@@ -147,15 +235,35 @@ export type Effect =
   | { op: 'learnRecipe'; id: string }
   | { op: 'gainInsight'; value: number }
   | { op: 'addToxicity'; value: number }
+  /** 宗门贡献（唯一入口，走同门羁绊加成） */
+  | { op: 'gainContribution'; value: number }
+  /** 对某宗门的张力增减 */
+  | { op: 'addTension'; sect: string; value: number }
   | {
       op: 'bond';
       action: 'create' | 'levelUp' | 'break' | 'retype';
       type?: BondType;
       id?: string;
       npcSeed?: string;
+      /** 指定姓名（前世道侣重逢用；缺省则按词池生成） */
+      name?: string;
     }
   | { op: 'sectJoin'; id: string }
   | { op: 'sectLeave'; defect: boolean }
+  /**
+   * 羁绊的**动态**操作：对象由引擎按类型挑选（`top` = 好感最高，`low` = 最低），
+   * 内容侧因此不必知道 NPC 的 id —— 这是羁绊事件能写成通用文案的关键。
+   */
+  | {
+      op: 'bondAct';
+      action: 'affinity' | 'promote' | 'levelUp' | 'break' | 'kill';
+      type: BondType;
+      value?: number;
+      to?: BondType;
+      pick?: 'top' | 'low';
+    }
+  /** 叛宗邀请的裁决：accept = 转投邀请方（旧贡献 ×30% 起算），否则张力回落 */
+  | { op: 'defectDecide'; accept: boolean }
   | { op: 'chain'; eventId: string }
   | { op: 'schedule'; eventId: string; inYears: number }
   | { op: 'log'; text: string; tone?: LogTone }
@@ -221,6 +329,8 @@ export interface RollTable {
 export interface NameTables {
   encounter: Record<string, string[]>;
   artifact: Record<string, string[]>;
+  /** Phase 5：NPC 姓名池（姓 × 名组合，不做全量枚举） */
+  npc?: { surnames: string[]; givenM: string[]; givenF: string[] };
 }
 
 export interface ContentBundle {
@@ -233,6 +343,9 @@ export interface ContentBundle {
   herbs?: Herb[];
   pills?: PillDef[];
   recipes?: Recipe[];
+  /** Phase 5：宗门 / 宗门任务；缺省为空 */
+  sects?: SectDef[];
+  missions?: MissionDef[];
   names?: NameTables;
 }
 

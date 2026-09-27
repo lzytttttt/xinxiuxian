@@ -1,9 +1,9 @@
-import { COMBAT_COEF, PITY_TRIGGER, TALENT_BASE, TIER_WEIGHTS } from './constants';
+import { COMBAT_COEF, PAST_LOVER_EVENT, PITY_TRIGGER, TALENT_BASE, TIER_WEIGHTS } from './constants';
 import { drawFates } from './fate';
 import { talentTier } from './selectors';
 import type { ContentBundle, Fate } from './types/effects';
 import type { RngBag } from './types/rng';
-import type { RunState } from './types/run';
+import type { RunState, PastPartnerRef } from './types/run';
 
 export interface CharCard {
   tier: number;
@@ -72,11 +72,17 @@ export function createRun(
   life: number,
   card: CharCard,
   rng: RngBag,
-  opts: { runId: string; createdAt: number; battlePolicy?: RunState['battlePolicy'] },
+  opts: {
+    runId: string;
+    createdAt: number;
+    battlePolicy?: RunState['battlePolicy'];
+    /** 前世道侣：由边界层从 MetaState 注入（引擎不读 MetaState，见 6.3 红线） */
+    pastPartner?: PastPartnerRef | null;
+  },
 ): RunState {
   const tier = talentTier(card.value);
   const initial = (COMBAT_COEF[tier] ?? 1) * card.value * (0.75 + rng.break.next() * 0.5);
-  return {
+  const run: RunState = {
     runId: opts.runId,
     seed,
     life,
@@ -120,8 +126,19 @@ export function createRun(
     pillBreakMult: 1,
     pillGuardMult: 1,
     pillCooldown: {},
-    sect: { id: null, rank: 0, contribution: 0, joinedYear: null, defections: 0, tension: {} },
+    sect: {
+      id: null,
+      rank: 0,
+      contribution: 0,
+      joinedYear: null,
+      defections: 0,
+      tension: {},
+      lastTournament: -1,
+      inviteFrom: null,
+      tournamentPlaces: [],
+    },
     bonds: { list: [], nextId: 1 },
+    pastPartner: opts.pastPartner ?? null,
     flags: {},
     cooldowns: {},
     onceFired: [],
@@ -149,4 +166,8 @@ export function createRun(
     eventLog: [],
     log: [],
   };
+
+  // 前世道侣：新局第 1 年就排上重逢事件（事件自身再判年龄与「当前无道侣」）
+  if (run.pastPartner) run.scheduled.push({ eventId: PAST_LOVER_EVENT, year: 1 });
+  return run;
 }

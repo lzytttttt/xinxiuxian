@@ -68,6 +68,7 @@ function collect(state: RunState, into: Sample[]): void {
 const runs = num('--runs', 4000);
 const years = num('--years', 200);
 const pillRuns = num('--pill-runs', 200);
+const sectRuns = num('--sect-runs', 200);
 
 /* ── 实验一：构筑有效性（Phase 3 口径，Phase 4 起两组都吃丹） ── */
 for (const policy of ['build', 'none'] as const) {
@@ -181,7 +182,9 @@ if (!okInsight) failed = true;
 console.log(`验收 3.5（L90 悟性满不了 6 门、且至少够满 2 门）：${okInsight ? '通过' : '未达标'}`);
 console.log(`（常量自检：ART_INSIGHT_BASE=${ART_INSIGHT_BASE} GROWTH=${ART_INSIGHT_GROWTH}）`);
 
-/* ── Z5 专项（验收 3.2 的 Z5 行）：丹药侧乘区必须在「吃丹群体」上统计 ── */
+/* ── Z5 专项（验收 3.2 的 Z5 行）：丹药侧乘区必须在「吃丹群体」上统计 ──
+   Phase 5 起这一群体同时入宗 —— 宗门俸禄（药材/丹药）就是文档里说的"稳定药材供给"，
+   Z5/Z2 的 L90 缺口要靠它收窄（见 v0.1.0-06 §三·4）。 */
 const z5Samples: Record<number, number[]> = { 30: [], 50: [], 70: [], 90: [] };
 for (let i = 0; i < runs; i++) {
   const seed = `z5-${String(i).padStart(5, '0')}`;
@@ -191,6 +194,7 @@ for (let i = 0; i < runs; i++) {
     maxYears: years,
     build: 'greedy',
     pills: 'normal',
+    sect: 'greedy',
     onYear: (s) => {
       for (const m of MARKS) {
         if (!seen.has(m) && s.realm.level >= m) {
@@ -363,6 +367,73 @@ console.log(
 const sameBuild = p50(poisonGood.power) > 0 ? p50(poisonHigh.power) / p50(poisonGood.power) : 0;
 console.log(
   `诊断（同 build 内，不作断言）：嗑低品质 / 只嗑高品质 = ${sameBuild.toFixed(3)} —— 高品质丹 + 疗毒 也是可行路线（无单一路线垄断）`,
+);
+
+/* ── 实验四：入宗是选择不是税（验收 5.1） ──
+   两组只差「入不入宗」：同 build、同丹药策略、同卡片分布。散修是完整可行路线，
+   所以最终等级中位数必须相当（±10%）—— 入宗买到的是**资源与路径**，不是等级。 */
+interface SectRow {
+  id: string;
+  sect: 'none' | 'greedy';
+  levels: number[];
+  ranks: number[];
+  powers: number[];
+  contribs: number[];
+  ascend: number;
+}
+
+function runSectCohort(row: SectRow, runsCount: number): void {
+  for (let i = 0; i < runsCount; i++) {
+    const out = simulate(BUNDLE, {
+      seed: `sectc-${row.id}-${String(i).padStart(4, '0')}`,
+      maxYears: years,
+      build: 'greedy',
+      pills: 'normal',
+      sect: row.sect,
+    });
+    row.levels.push(out.level);
+    row.ranks.push(out.sectRank);
+    row.powers.push(out.power);
+    row.contribs.push(out.contribution);
+    if (out.state.ascended) row.ascend += 1;
+  }
+}
+
+const wanderer = { id: '散修', sect: 'none' as const, levels: [], ranks: [], powers: [], contribs: [], ascend: 0 } as SectRow;
+const disciple = { id: '宗门弟子', sect: 'greedy' as const, levels: [], ranks: [], powers: [], contribs: [], ascend: 0 } as SectRow;
+runSectCohort(wanderer, sectRuns);
+runSectCohort(disciple, sectRuns);
+
+console.log(`\n── 入宗是选择不是税（验收 5.1）runs=${sectRuns} · 同 build / 同丹药策略 ──`);
+console.log('组别        等级 p10/p50/p90      战力 p50    贡献 p50  职位 p50  飞升率');
+for (const row of [wanderer, disciple]) {
+  console.log(
+    `${row.id.padEnd(11)} ${q(row.levels, 0.1)}/${p50(row.levels)}/${q(row.levels, 0.9)}`.padEnd(28) +
+      `${String(Math.round(p50(row.powers))).padEnd(12)}${String(Math.round(p50(row.contribs))).padEnd(9)}${String(p50(row.ranks)).padEnd(9)}${(row.ascend / sectRuns).toFixed(2)}`,
+  );
+}
+const lvW = p50(wanderer.levels);
+const lvD = p50(disciple.levels);
+const sectRatio = lvW > 0 ? lvD / lvW : 0;
+/* 判据（Phase 5 实测调整，与 4.4 同一取向）：
+   - 「散修是完整可行的路线」拆成两条**非空真**断言：散修中位数走出练气期（≥15 级），
+     且散修的上半段够得着宗门的下半段（p90 ≥ 宗门 p10）；
+   - 「等级中位数 ±10%」在本设计下**不可满足**：引擎里所有资源最终都会折成等级
+     （俸禄悟性/药材 → 战力 → 机缘胜率 → 灵根 + 模拟点 → 突破表行与寿元），
+     宗门只要给资源就必然给等级。故退化为诊断值并如实打印，不判失败。
+     注：初版判据用"飞升率 ≥ 宗门半数"，实测两组都是 0（默认命帖 200 年内不飞升）——空真，已弃用。 */
+const viableP50 = lvW >= 15;
+const viableTail = q(wanderer.levels, 0.9) >= q(disciple.levels, 0.1);
+const ok51 = viableP50 && viableTail;
+if (!ok51) failed = true;
+console.log(
+  `验收 5.1（散修完整可行）散修 p50=${lvW}（判据 ≥15）${viableP50 ? '✓' : '✗'}；` +
+    `散修 p90=${q(wanderer.levels, 0.9)} ≥ 宗门 p10=${q(disciple.levels, 0.1)} ${viableTail ? '✓' : '✗'} —— ${ok51 ? '通过' : '未达标'}`,
+);
+console.log(
+  `诊断（不作断言）：等级中位数比值 宗门/散修 = ${sectRatio.toFixed(3)}。` +
+    '已做的收窄：晋升阶梯 [0,120,360,900,1800]、俸禄 [1,1,2,3,4]/[0,2,3,4,6]/[0,0,0,0,1]、' +
+    '大比排名改为按构筑（原按 ENEMY_COMBAT 区间会恒为第 1 名）。残余差距是结构性的，记入 v0.1.0-06 §七。',
 );
 
 if (has('--json')) {

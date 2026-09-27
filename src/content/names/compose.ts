@@ -13,6 +13,7 @@ import {
   type Mod,
   type Noun,
 } from './pools';
+import { GIVEN_F, GIVEN_M, SURNAMES } from './npc';
 
 const TARGET_PER_TIER = 120;
 const CAP_PER_TIER = 260;
@@ -108,7 +109,15 @@ function shortTiers(tiers: number[], buckets: Map<number, string[]>): number[] {
 }
 
 export function generateNames(): NameTables {
-  const tables: NameTables = { encounter: {}, artifact: {} };
+  const tables: NameTables = {
+    encounter: {},
+    artifact: {},
+    npc: {
+      surnames: [...SURNAMES],
+      givenM: [...GIVEN_M],
+      givenF: [...GIVEN_F],
+    },
+  };
   const used = new Set<string>();
 
   for (const kind of ['encounter', 'artifact'] as const) {

@@ -11,6 +11,8 @@ import {
 } from './constants';
 import { battleOutcome, displayInterval } from './power';
 import { hasSynergy, swordNarrow } from './arts';
+import { aidBonus, companionCost } from './bonds';
+import { sectDamageMult } from './sect';
 import { escapeRate, levelTier, powerOf } from './selectors';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
@@ -96,8 +98,11 @@ export function resolveEncounter(
   c: ContentBundle,
 ): LogLine[] {
   const logs: LogLine[] = [];
-  const own = powerOf(s, c);
+  // 助战：同行 NPC 提供 min(30%, Σ) 的战力加成（G5 唯一出口在 bonds.aidBonus）
+  const aid = aidBonus(s);
+  const own = powerOf(s, c) * (1 + aid);
   const immortal = s.realm.arc === 'immortal';
+  const dmg = sectDamageMult(s, c);
 
   if (choiceId === 'flee') {
     const tier = payload.tier;
@@ -108,13 +113,14 @@ export function resolveEncounter(
     } else {
       if (immortal) {
         const loss = s.cultivation * (IMM_ESCAPE_LOSS_LO + rng.encounter.next() * (IMM_ESCAPE_LOSS_HI - IMM_ESCAPE_LOSS_LO));
-        s.cultivation = Math.max(0, s.cultivation - loss);
+        s.cultivation = Math.max(0, s.cultivation - loss * dmg);
       } else {
         const loss = Math.round(ESCAPE_LOSE_SIM_SCALE * rng.encounter.next() * tier + 1);
-        s.simPoints = Math.max(0, s.simPoints - loss);
+        s.simPoints = Math.max(0, s.simPoints - Math.round(loss * dmg));
       }
       logs.push({ cls: 'red', text: `你转身欲走，却被${payload.name}缠住，脱身时已受了暗伤。` });
     }
+    logs.push(...companionCost(s, 'flee'));
     return logs;
   }
 
@@ -144,6 +150,7 @@ export function resolveEncounter(
       cls: 'gold',
       text: `你击溃了${payload.name}，修为大涨（灵根 +${gains.root}、气运 +${gains.luck}、模拟点 +${gains.simPoints}${plunder > 0 ? `，掠夺 +${plunder}` : ''}）。`,
     });
+    logs.push(...companionCost(s, 'win'));
     return logs;
   }
   if (result === 'draw') {
@@ -153,11 +160,12 @@ export function resolveEncounter(
   s.stats.battlesLost += 1;
   if (immortal) {
     const loss = s.cultivation * (IMM_BATTLE_LOSS_LO + rng.encounter.next() * (IMM_BATTLE_LOSS_HI - IMM_BATTLE_LOSS_LO));
-    s.cultivation = Math.max(0, s.cultivation - loss);
+    s.cultivation = Math.max(0, s.cultivation - loss * dmg);
   } else {
     const loss = rng.encounter.int(1, payload.tier + 1);
-    s.simPoints = Math.max(0, s.simPoints - loss);
+    s.simPoints = Math.max(0, s.simPoints - Math.round(loss * dmg));
   }
   logs.push({ cls: 'red', text: `你不敌${payload.name}，重伤而退。` });
+  logs.push(...companionCost(s, 'lose'));
   return logs;
 }

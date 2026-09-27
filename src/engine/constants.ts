@@ -485,3 +485,98 @@ export const PILL_CURE_TOX = 30;
 /** 阴阳互济（Phase 3 共鸣）：丹毒衰减 ×1.5 */
 export const TOXICITY_TWO3_DECAY_MULT = 1.5;
 
+// ── Phase 5：宗门 ──
+export const SECT_RANK_NAMES: readonly string[] = ['外门弟子', '内门弟子', '真传弟子', '长老', '宗主'];
+/** 晋升到该 rank 所需贡献（下标 = rank）。
+    门槛经 Phase 5 实测上调：原表 [0,100,300,700,1500] 在"每年接一个任务"的节奏下
+    约第 45 年就到宗主，导致四分之三的局吃满 rank 4 俸禄，5.1 直接 3.09×。 */
+export const SECT_PROMOTE: readonly number[] = [0, 120, 360, 900, 1800];
+/** 每年俸禄：悟性 / 药材株数 / 丹药颗数。
+    同样按 5.1 实测下调（原表 [1,2,3,5,8] / [0,2,4,6,10] / [0,0,0,1,2]）——
+    俸禄给的是**资源**，但资源会经"战力→战斗胜率→灵根/模拟点→突破表行"折成等级。 */
+export const SECT_STIPEND_INSIGHT: readonly number[] = [1, 1, 2, 3, 4];
+export const SECT_STIPEND_HERB: readonly number[] = [0, 2, 3, 4, 6];
+export const SECT_STIPEND_PILL: readonly number[] = [0, 0, 0, 0, 1];
+export const SECT_TENSION_MAX = 100;
+/** 张力每年自然缓和 */
+export const SECT_TENSION_DECAY = 1;
+/** 张力达到此值触发对方宗门的叛宗邀请 */
+export const SECT_DEFECT_TENSION = 80;
+/** 叛宗后新宗门按旧贡献的这个比例起算 */
+export const SECT_DEFECT_KEEP = 0.3;
+/** 拒绝叛宗邀请的张力回落 */
+export const SECT_REFUSE_TENSION = 30;
+/** 同门羁绊：每级贡献获取 +10% */
+export const SECT_CONTRIB_BOND_PER = 0.1;
+/** 真传弟子（rank ≥ 2）起宗门功法进入任务奖励池 */
+export const SECT_ART_RANK = 2;
+/** 宗门 perk 的丹毒上限加成（万毒窟） */
+export const SECT_TOX_MAX_BONUS = 20;
+
+// ── Phase 5：宗门大比 ──
+export const TOURNAMENT_EVERY = 20;
+export const TOURNAMENT_POOL_BASE = 40;
+export const TOURNAMENT_POOL_PER_RANK = 20;
+export const TOURNAMENT_REWARD_FIRST = 200;
+export const TOURNAMENT_REWARD_TEN = 80;
+export const TOURNAMENT_REWARD_FIFTY = 30;
+export const TOURNAMENT_INSIGHT_TEN = 10;
+
+// ── Phase 5：羁绊 ──
+export const BOND_LEVEL_MAX = 5;
+/** 羁绊等级门槛（下标 = 等级） */
+export const BOND_AFFINITY_REQ: readonly number[] = [0, 20, 40, 60, 80, 100];
+/**
+ * 背叛条件：好感低于此值即计入 bondStrain。
+ * **必须低于新结识时的初始好感**（`BOND_AFFINITY_REQ[1] = 20`），否则每段新关系一出生就算"已生嫌隙"
+ * （浏览器实测发现的瑕疵）。14 意味着"关系被真的搞坏了"：一次带人逃跑（−10）就足以越线。
+ */
+export const BOND_STRAIN_AFFINITY = 14;
+/** 长期未互动的年数阈值（背叛事件的 minNeglect） */
+export const BOND_NEGLECT_ALERT = 20;
+/** 助战：每级羁绊 3%，道侣额外 5%，总和硬上限 30%（G5 红线） */
+export const BOND_AID_PER_LEVEL = 0.03;
+export const BOND_AID_PARTNER_EXTRA = 0.05;
+export const BOND_AID_CAP = 0.3;
+/** 道侣双修：静修年修为增益率 += L × 此值（实测基线率 0.0005~0.001，见 v0.1.0-06 §三·3.2） */
+export const BOND_PARTNER_CULT_PER = 0.0005;
+/** 师徒：每年悟性 +L */
+export const BOND_TEACHER_INSIGHT_PER = 1;
+/** 挚友：Z6 += L × 此值 */
+export const BOND_FRIEND_Z6_PER = 0.02;
+/** 宿敌论剑：每年触发概率 / 胜方修为增益 / 败方修为损失 / 败方好感损失 */
+export const BOND_RIVAL_CHANCE = 0.35;
+export const BOND_RIVAL_WIN_CULT = 0.04;
+export const BOND_RIVAL_LOSE_CULT = 0.02;
+export const BOND_RIVAL_LOSE_AFFINITY = 3;
+/** 带人代价：胜 +2 / 败 −5 并伤停 3 年 / 逃跑 −10 */
+export const BOND_WIN_AFFINITY = 2;
+export const BOND_LOSE_AFFINITY = 5;
+export const BOND_FLEE_AFFINITY = 10;
+export const BOND_INJURY_YEARS = 3;
+/** NPC 名单上限（防事件反复创建导致状态膨胀） */
+export const NPC_MAX = 12;
+/** 年常邂逅：每年结识新人的概率（羁绊事件池被内容稀释后，光靠事件凑不满 3-5 段） */
+export const BOND_MEET_RATE = 0.06;
+/** 年常邂逅的人数目标：达到即不再自动结识（留给事件去深化关系） */
+export const BOND_MEET_TARGET = 3;
+/** 年常邂逅的关系类型权重（道侣/师徒只能由事件确立，不在此列） */
+export const BOND_MEET_TYPES: readonly string[] = ['挚友', '同门', '宿敌'];
+
+// ── Phase 5：NPC 生成与成长 ──
+export const NPC_ROOT_TIER_MIN = 3;
+export const NPC_ROOT_TIER_MAX = 10;
+/** 成长比：rootTier 线性映射到 [MIN, MAX] —— NPC 约为玩家的 60%-90% */
+export const NPC_GROWTH_MIN = 0.6;
+export const NPC_GROWTH_MAX = 0.9;
+/** 前世道侣重逢的年龄上限 */
+export const PAST_LOVER_MAX_AGE = 30;
+export const PAST_LOVER_MIN_LIFE = 2;
+/** 前世道侣重逢事件 id（由 createRun 注入 scheduled） */
+export const PAST_LOVER_EVENT = 'ev_bond_past_lover';
+/** 叛宗邀请事件 id（张力 ≥ 阈值时由 tick 注入 scheduled） */
+export const DEFECT_EVENT = 'ev_sect_defect_invite';
+/** 叛宗邀请的冷却（年）——拒绝之后不会年年来敲门 */
+export const DEFECT_INVITE_COOLDOWN = 15;
+
+

@@ -270,7 +270,7 @@ describe('丹毒（验收 4.3 的计算基础）', () => {
         s.realm.level = 101;
         s.realm.stage = 1;
         s.toxicity = toxicity;
-        perilTick(s, makeRngBag(`peril:${toxicity}:${i}`));
+        perilTick(s, makeRngBag(`peril:${toxicity}:${i}`), BUNDLE);
         if (s.dead) dead += 1;
       }
       return dead;

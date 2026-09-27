@@ -1,6 +1,17 @@
-import { CHAIN_DEPTH_MAX, TOXICITY_MAX } from './constants';
+import { CHAIN_DEPTH_MAX, TOXICITY_MAX, BOND_LEVEL_MAX } from './constants';
 import { grantArt, toxicityGain } from './arts';
+import {
+  addAffinity,
+  breakBond,
+  createNpc,
+  killNpc,
+  npcById,
+  pickBond,
+  retypeBond,
+  syncBondLevel,
+} from './bonds';
 import { evalCondition, makeEvalCtx, type EvalCtx } from './conditions';
+import { addContribution, addTension, decideDefect, joinSect, leaveSect, sectName } from './sect';
 import { readTarget } from './selectors';
 import type {
   Choice,
@@ -111,13 +122,17 @@ function write(s: RunState, t: Target, value: number): void {
       s.sect.rank = value;
       return;
     case 'bondLevel': {
-      const bond = s.bonds.list.find((b) => b.id === t.id);
-      if (bond) bond.level = value;
+      const npc = s.bonds.list.find((b) => b.id === t.id);
+      if (npc) npc.bondLevel = Math.max(0, Math.min(BOND_LEVEL_MAX, value));
       return;
-    }
-    case 'bondAffinity': {
-      const bond = s.bonds.list.find((b) => b.id === t.id);
-      if (bond) bond.affinity = value;
+    }    case 'bondAffinity': {
+      const npc = s.bonds.list.find((b) => b.id === t.id);
+      if (npc) {
+        const delta = value - npc.affinity;
+        npc.affinity = Math.max(0, Math.min(100, value));
+        if (delta > 0) npc.neglect = 0;
+        syncBondLevel(npc);
+      }
       return;
     }
     case 'flag':
@@ -204,6 +219,57 @@ function collectPctTargets(effects: Effect[], into: Map<string, Target>): void {
   }
 }
 
+/** `bondAct`：按类型动态定位对象（内容侧不必知道 NPC id） */
+function applyBondAct(env: Env, e: Extract<Effect, { op: 'bondAct' }>): void {
+  const { s } = env;
+  const pick = e.pick ?? 'top';
+  if (e.action === 'promote' && e.to) {
+    const npc = pickBond(s, e.type, pick);
+    if (npc) retypeBond(s, npc.id, e.to);
+    return;
+  }
+  const npc = pickBond(s, e.type, pick);
+  if (!npc) return;
+  if (e.action === 'affinity') {
+    addAffinity(s, npc.id, e.value ?? 0);
+    return;
+  }
+  if (e.action === 'levelUp') {
+    npc.bondLevel = Math.min(BOND_LEVEL_MAX, npc.bondLevel + 1);
+    return;
+  }
+  if (e.action === 'break') {
+    breakBond(s, npc.id);
+    return;
+  }
+  if (e.action === 'kill') killNpc(s, npc.id);
+}
+
+/** `bond` 效果：create 走确定性生成（`bond` 流），其余按 id 操作既有 NPC */
+function applyBondEffect(env: Env, e: Extract<Effect, { op: 'bond' }>): void {
+  const { s, ctx } = env;
+  if (e.action === 'create') {
+    if (!e.type) return;
+    createNpc(s, ctx.rng, ctx.content, {
+      type: e.type,
+      ...(e.npcSeed !== undefined ? { seed: e.npcSeed } : {}),
+      ...(e.name !== undefined ? { name: e.name } : {}),
+    });
+    return;
+  }
+  if (!e.id) return;
+  if (e.action === 'levelUp') {
+    const npc = npcById(s, e.id);
+    if (npc) npc.bondLevel = Math.min(BOND_LEVEL_MAX, npc.bondLevel + 1);
+    return;
+  }
+  if (e.action === 'break') {
+    breakBond(s, e.id);
+    return;
+  }
+  if (e.action === 'retype' && e.type) retypeBond(s, e.id, e.type);
+}
+
 function applyOne(env: Env, e: Effect, path: string): void {
   const { s, overlay } = env;
   switch (e.op) {
@@ -269,16 +335,25 @@ function applyOne(env: Env, e: Effect, path: string): void {
       );
       return;
     case 'bond':
-      // Phase 5：羁绊系统未建，此处不产生状态变更
+      applyBondEffect(env, e);
+      return;
+    case 'bondAct':
+      applyBondAct(env, e);
       return;
     case 'sectJoin':
-      s.sect.id = e.id;
-      s.sect.joinedYear = s.year;
+      joinSect(s, e.id, env.ctx.content);
       return;
     case 'sectLeave':
-      s.sect.id = null;
-      s.sect.rank = 0;
-      if (e.defect) s.sect.defections += 1;
+      leaveSect(s, e.defect);
+      return;
+    case 'defectDecide':
+      for (const line of decideDefect(s, e.accept, env.ctx.content)) env.logs.push(line);
+      return;
+    case 'gainContribution':
+      addContribution(s, e.value);
+      return;
+    case 'addTension':
+      addTension(s, e.sect, e.value);
       return;
     case 'chain':
       env.chained.push(e.eventId);
@@ -362,11 +437,22 @@ function pickOutcome(
   return passing[0] ?? null;
 }
 
-export function interpolate(text: string, s: RunState, realm: string): string {
-  return text
+/** 文案插值：`{level}` / `{realm}` / `{age}` / `{sect}`（当前宗门）/ `{inviter}`（邀请方宗门） */
+export function interpolate(
+  text: string,
+  s: RunState,
+  realm: string,
+  c?: ContentBundle,
+): string {
+  const out = text
     .replaceAll('{level}', String(s.realm.level))
     .replaceAll('{realm}', realm)
-    .replaceAll('{age}', String(s.age));
+    .replaceAll('{age}', String(s.age))
+    .replaceAll('{pastPartner}', s.pastPartner?.name ?? '那个陌生人');
+  if (!c) return out;
+  return out
+    .replaceAll('{sect}', sectName(c, s.sect.id))
+    .replaceAll('{inviter}', sectName(c, s.sect.inviteFrom));
 }
 
 export interface ResolveOptions {
@@ -435,7 +521,7 @@ export function resolveChoice(
   clampAll(s);
 
   const tone: LogTone = outcome.tone ?? 'ev1';
-  const text = interpolate(outcome.text, s, realmName);
+  const text = interpolate(outcome.text, s, realmName, ctx.content);
   const lines: LogLine[] = [{ cls: tone, text }, ...env.logs];
 
   if (env.chained.length > 0) {
@@ -557,7 +643,7 @@ export function buildEventDecision(
     kind: KIND_BY_CATEGORY[event.category],
     eventId: event.id,
     title: event.title,
-    body: interpolate(event.body, s, realmName),
+    body: interpolate(event.body, s, realmName, content),
     choices,
   };
 }

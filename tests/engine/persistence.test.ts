@@ -32,7 +32,7 @@ const bundle: ContentBundle = { events: [EV_TWO] as EventDef[], fates: [], rollT
 
 const v1 = fixture as unknown as SaveEnvelope;
 
-describe('存档迁移链 v1 → v4（Phase 2/3/4）', () => {
+describe('存档迁移链 v1 → v5（Phase 2/3/4/5）', () => {
   it('fixture 是真实的 v1 档：无 decisionLog、deferredQueue 为 string[]', () => {
     expect(v1.v).toBe(1);
     expect(v1.run).not.toBeNull();
@@ -46,10 +46,10 @@ describe('存档迁移链 v1 → v4（Phase 2/3/4）', () => {
     expect(() => verifyChecksum(v1)).not.toThrow();
   });
 
-  it('迁移产出合法 v4：decisionLog 补空数组、deferredQueue 转 DeferredEntry、powerTrail 补 null、丹药状态补默认', () => {
-    const v4 = migrate(v1);
-    expect(v4.v).toBe(4);
-    const run = v4.run as RunState;
+  it('迁移产出合法 v5：decisionLog 补空数组、deferredQueue 转 DeferredEntry、powerTrail 补 null、丹药与宗门/羁绊状态补默认', () => {
+    const v5 = migrate(v1);
+    expect(v5.v).toBe(5);
+    const run = v5.run as RunState;
     expect(run.decisionLog).toEqual([]);
     expect(run.deferredQueue).toEqual([]);
     expect(run.powerTrail).toBeNull();
@@ -57,26 +57,61 @@ describe('存档迁移链 v1 → v4（Phase 2/3/4）', () => {
     expect(run.pillBreakMult).toBe(1);
     expect(run.pillGuardMult).toBe(1);
     expect(run.pillCooldown).toEqual({});
-    expect(checksumOf(v4.meta, run)).toBe(v4.checksum);
-    expect(() => verifyChecksum(v4)).not.toThrow();
+    expect(run.sect.lastTournament).toBe(-1);
+    expect(run.sect.inviteFrom).toBeNull();
+    expect(run.pastPartner).toBeNull();
+    expect(run.bonds.list).toEqual([]);
+    expect(checksumOf(v5.meta, run)).toBe(v5.checksum);
+    expect(() => verifyChecksum(v5)).not.toThrow();
     expect(run.eventLog).toEqual(v1.run?.eventLog);
     expect(run.cultivation).toBe(v1.run?.cultivation);
   });
 
-  it('v2 fixture（Phase 2 真实导出）→ v4：补 powerTrail 与丹药状态，其余字段不动', () => {
+  it('v2 fixture（Phase 2 真实导出）→ v5：补 powerTrail、丹药、宗门与羁绊状态，其余字段不动', () => {
     const v2 = fixtureV2 as unknown as SaveEnvelope;
     expect(v2.v).toBe(2);
     expect(() => verifyChecksum(v2)).not.toThrow();
-    const v4 = migrate(v2);
-    expect(v4.v).toBe(4);
-    const run = v4.run as RunState;
+    const v5 = migrate(v2);
+    expect(v5.v).toBe(5);
+    const run = v5.run as RunState;
     expect(run.powerTrail).toBeNull();
     expect(run.pillBuffs).toEqual([]);
     expect(run.pillCooldown).toEqual({});
     expect(run.decisionLog).toEqual(v2.run?.decisionLog);
     expect(run.deferredQueue).toEqual(v2.run?.deferredQueue);
     expect(run.arts).toEqual(v2.run?.arts);
-    expect(() => verifyChecksum(v4)).not.toThrow();
+    expect(() => verifyChecksum(v5)).not.toThrow();
+  });
+
+  it('窄 Bond（Phase 1 形态）补齐为完整 Npc：type→bondType、createdYear→metYear', () => {
+    const legacy = {
+      ...v1,
+      v: 4,
+      run: {
+        ...(v1.run as object),
+        sect: { id: 'sect_taixu', rank: 2, contribution: 400, joinedYear: 12, defections: 0, tension: {} },
+        bonds: {
+          nextId: 3,
+          list: [
+            { id: 'npc_1', name: '柳疏影', type: '道侣', level: 4, affinity: 88, createdYear: 33, seed: 's:1' },
+          ],
+        },
+      },
+    } as unknown as SaveEnvelope;
+    legacy.checksum = checksumOf(legacy.meta, legacy.run);
+    const v5 = migrate(legacy);
+    const npc = v5.run?.bonds.list[0];
+    expect(npc).toBeDefined();
+    expect(npc?.bondType).toBe('道侣');
+    expect(npc?.bondLevel).toBe(4);
+    expect(npc?.affinity).toBe(88);
+    expect(npc?.metYear).toBe(33);
+    expect(npc?.alive).toBe(true);
+    expect(npc?.name).toBe('柳疏影');
+    expect(npc?.rootTier).toBeGreaterThanOrEqual(1);
+    expect(npc?.personality).toBeTruthy();
+    expect(v5.run?.sect.lastTournament).toBe(-1);
+    expect(() => verifyChecksum(v5)).not.toThrow();
   });
 
   it('旧档 string[] 形态的 deferredQueue 转成 {eventId, year:0}', () => {
@@ -84,8 +119,8 @@ describe('存档迁移链 v1 → v4（Phase 2/3/4）', () => {
       ...v1,
       run: { ...(v1.run as object), deferredQueue: ['ev_early_dawn_dew'] },
     } as unknown as SaveEnvelope;
-    const v4 = migrate(legacy);
-    expect(v4.run?.deferredQueue).toEqual([{ eventId: 'ev_early_dawn_dew', year: 0 }]);
+    const v5 = migrate(legacy);
+    expect(v5.run?.deferredQueue).toEqual([{ eventId: 'ev_early_dawn_dew', year: 0 }]);
   });
 
   it('迁移后的旧档可继续游戏：rollYear → applyChoice 不抛且写入 decisionLog', () => {

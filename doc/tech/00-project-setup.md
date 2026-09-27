@@ -220,14 +220,25 @@ export default defineConfig({
 
 ## 五、构建产物预算
 
-| 产物 | 估算 | gzip |
-|---|---|---|
-| 引擎 + 内容（JS） | ~500 KB | ~120 KB |
-| React + Zustand + Immer | ~180 KB | ~58 KB |
-| CSS | ~30 KB | ~6 KB |
-| 名称表（names.json） | ~400 KB | 按需拆分 |
-| **合计** | **~1.1 MB** | **~200 KB** |
+> 建库时的估算（引擎+内容 ~120 KB、React 系 ~58 KB、CSS ~6 KB、名称表按需拆分）已被 v0.1.0-06 的实测取代，见下表。名称表**不拆 chunk**——改为运行时生成。
 
-**名称表优化**：`names.json` 若全量打包会让首屏体积翻倍。方案：按档位拆分为 20 个 chunk，**只加载当前境界段需要的档位**（1-3 档在凡界早期，8-10 档在凡界后期，11-20 档在仙界）。用动态 `import()` 实现，Vite 会自动分包。
+**首屏目标：< 200 KB gzip**（index.html + entry JS + CSS；异步 chunk 不计入，但必须一并报数）。
 
-**首屏目标**：< 200 KB gzip（不含名称表），名称表按需加载。
+### 现状（v0.1.0-06 实测，2026-09-25）
+
+| 产物 | raw | gzip | 计首屏 |
+|---|---|---|---|
+| entry JS（外壳 + React + 引擎 + UI + 命帖/开局功法） | 320.67 KB | **103.60 KB** | ✅ |
+| CSS | 19.14 KB | 5.07 KB | ✅ |
+| index.html | 2.19 KB | 1.27 KB | ✅ |
+| **首屏合计** | | **109.94 KB** | |
+| `content` chunk（事件池 + 名称表 + 药材/丹药/丹方） | 217.03 KB | 61.90 KB | ❌ 开局后按需载入 |
+| 字体（woff2，Nunito latin） | 39.12 KB | 已压缩 | 单独计 |
+
+### 两条生效的分包策略
+
+1. **名称表运行时生成，不打包产物**。`content/generated/names.json` 是 240 KB raw / 34.9 KB gzip，而词池 `content/names/pools.ts` 只有 13.7 KB raw / 2.9 KB gzip，`generateNames()` 是纯函数（无 RNG）、耗时约 27 ms。产物**保留为冻结基线**，由 `npm run content:names:check` 比对——一致性校验的意义从"产物有没有跟词池同步"变成"词池改动有没有意外改变名称表"。
+   > 原计划是"按档位拆 20 个 chunk + 动态 `import()`"。实测否决：名称在 `rollYear` 内被**同步**消费（`encounter.ts` / `artifact.ts`），拆成异步 chunk 就得改造 tick，代价远高于运行时生成。
+2. **内容层按需载入**。抽卡屏只需要 `fates` + `arts`（`src/content/home.ts` 的 `HOME_BUNDLE`）；事件池 / 名称表 / 药材 / 丹药 / 丹方收进 `src/content/index.ts`，由 `store/runStore.ts` 动态 `import()` 成独立 chunk。抽卡屏挂载即预取，`tickOnce` 在内容未就绪时本轮不推进、下一拍重试。
+
+**红线**：新增内容前先跑 `npm run build`，确认首屏 gzip 与异步 chunk 两笔数都在预算内。

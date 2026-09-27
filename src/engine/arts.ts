@@ -26,6 +26,7 @@ import {
   TREASURE_RATIO,
   Z3_TREASURE_MULT,
 } from './constants';
+import { sectToxMult } from './sect';
 import type { ArtDef, ContentBundle, SchoolId, ZoneId } from './types/effects';
 import type { RunState } from './types/run';
 
@@ -217,9 +218,10 @@ export function swordNarrow(s: RunState, c: ContentBundle): number {
   return Math.min(SWORD_HEART_NARROW_MAX, SWORD_HEART_BASE + s.luck * SWORD_HEART_PER_LUCK);
 }
 
-/** 丹火不侵：丹毒获取 ×0.5（Phase 4 丹药走同一入口，事件加毒在本 Phase 即生效） */
+/** 丹火不侵：丹毒获取 ×0.5（Phase 4 丹药走同一入口）；宗门抗性（万毒窟 / 天音寺）再乘一层 */
 export function toxicityGain(s: RunState, c: ContentBundle, value: number): number {
-  return hasSynergy(s, c, 'fireImmunity') ? value * TOXICITY_GAIN_MULT : value;
+  const synergy = hasSynergy(s, c, 'fireImmunity') ? TOXICITY_GAIN_MULT : 1;
+  return value * synergy * sectToxMult(s, c);
 }
 
 /** 丹火不侵：丹毒衰减 ×2；阴阳互济（Phase 3 共鸣文案）：再 ×1.5 */

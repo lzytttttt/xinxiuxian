@@ -19,11 +19,14 @@ import {
   recipeAvailable,
   usePill,
 } from '../src/engine/alchemy';
+import { acceptMission, joinSect, pickMissions, runTournament, tournamentDue } from '../src/engine/sect';
+import { applyChoice } from '../src/engine/tick';
 import { STARTER_ART_IDS } from '../src/content/arts/index';
 import { drawFates } from '../src/engine/fate';
 import { makeRngBag } from '../src/engine/rng';
 import { runRun, type AnswerFn, type RunOptions } from '../src/engine/replay';
 import { powerOf, zones } from '../src/engine/selectors';
+import { aidBonus } from '../src/engine/bonds';
 import type { CharCard } from '../src/engine/newRun';
 import type { ArtDef, ContentBundle, Decision, Fate, SchoolId } from '../src/engine/types/effects';
 import type { LogLine } from '../src/engine/types/log';
@@ -44,6 +47,9 @@ export type BuildPolicy = 'none' | 'greedy';
  */
 export type PillPolicy = 'none' | 'normal' | 'naive' | 'poison';
 
+/** 宗门策略：`none` 散修（完整可行路线）；`greedy` 尽早入宗 + 接任务 + 打大比 */
+export type SectPolicy = 'none' | 'greedy';
+
 export interface SimOptions extends RunOptions {
   tier?: number;
   policy?: EventPolicy;
@@ -57,6 +63,13 @@ export interface SimOptions extends RunOptions {
   preferSchool?: SchoolId;
   /** 开局 flag（毒修对照组需要第 4 槽才够 4 门） */
   startFlags?: Record<string, number>;
+  /** 宗门策略（5.1 的两组对照） */
+  sect?: SectPolicy;
+  /** 宗门偏好：不指定则取第一门 |
+   */
+  startSectId?: string;
+  /** 是否参加大比（界面操作，模拟里由策略代按） */
+  tournament?: boolean;
 }
 
 export interface SimOutcome {
@@ -78,6 +91,15 @@ export interface SimOutcome {
   /** 选项点总数：各决策展示的可见选项数之和（含开局抽卡的 3 张） */
   optionPoints: number;
   state: RunState;
+  /** 宗门/羁绊诊断（Phase 5 验收 5.1/5.3/5.6） */
+  sectId: string | null;
+  sectRank: number;
+  contribution: number;
+  tournamentPlaces: number[];
+  bondCount: number;
+  bondTypes: string[];
+  aliveBonds: number;
+  aidBonus: number;
 }
 
 interface Tally {
@@ -206,6 +228,37 @@ export function buildStep(s: RunState, content: ContentBundle, preferSchool?: Sc
 }
 
 /**
+ * 宗门策略一步（每年一次，模拟玩家在宗门屏上的操作）：
+ * 入宗 → 能接就接任务（走 acceptMission + applyChoice，与事件同一条路径）→ 到年就打大比。
+ */
+export function sectStep(
+  s: RunState,
+  content: ContentBundle,
+  policy: SectPolicy,
+  rng: RngBag,
+  opts: { startSectId?: string; tournament?: boolean } = {},
+): void {
+  if (policy === 'none') return;
+  if (s.sect.id === null) {
+    const id = opts.startSectId ?? content.sects?.[0]?.id;
+    if (id) joinSect(s, id, content);
+    return;
+  }
+  // 任务：每年最多接一个，避免把贡献刷成线性外推
+  const missions = pickMissions(s, content);
+  const mission = missions[0];
+  if (mission) {
+    const decision = acceptMission(s, mission, content, rng.event);
+    if (decision) {
+      const playable = decision.choices.filter((c) => c.show && c.enable);
+      const choiceId = playable[0]?.id ?? decision.choices[0]?.id;
+      if (choiceId) applyChoice(s, decision, choiceId, rng, content);
+    }
+  }
+  if (opts.tournament !== false && tournamentDue(s)) runTournament(s, content);
+}
+
+/**
  * 丹药策略一步（每年一次）。炼丹用贪心期望品质（不消费 RNG），服丹按策略选栈。
  * 这是验收 4.3/4.4 的对照组实验装置：三组只差这一个函数的行为。
  */
@@ -301,6 +354,14 @@ function toOutcome(
     decisionCount: tally.decisions + 1,
     optionPoints: tally.options + CARD_OPTIONS,
     state: s,
+    sectId: s.sect.id,
+    sectRank: s.sect.rank,
+    contribution: s.sect.contribution,
+    tournamentPlaces: s.sect.tournamentPlaces,
+    bondCount: s.bonds.list.filter((n) => n.bondLevel > 0 && n.bondType !== null).length,
+    bondTypes: [...new Set(s.bonds.list.filter((n) => n.bondType).map((n) => n.bondType as string))],
+    aliveBonds: s.bonds.list.filter((n) => n.alive).length,
+    aidBonus: aidBonus(s),
   };
 }
 
@@ -318,11 +379,20 @@ function runOptions(
   if (starterId) out.startArts = [starterId];
   const build = opts.build ?? 'none';
   const pills = opts.pills ?? 'none';
+  const sect = opts.sect ?? 'none';
   const userOnYear = opts.onYear;
-  if (build === 'greedy' || userOnYear || pills !== 'none') {
+  // 宗门策略的 RNG 流：整局复用同一条，逐年推进（每年新建 bag 会让序列退化）
+  const sectRng = makeRngBag(`${opts.seed}:sect`);
+  if (build === 'greedy' || userOnYear || pills !== 'none' || sect !== 'none') {
     out.onYear = (s, year) => {
       if (build === 'greedy') buildStep(s, content, opts.preferSchool);
       if (pills !== 'none') pillStep(s, content, pills, opts.market ?? true);
+      if (sect !== 'none') {
+        sectStep(s, content, sect, sectRng, {
+          ...(opts.startSectId !== undefined ? { startSectId: opts.startSectId } : {}),
+          ...(opts.tournament !== undefined ? { tournament: opts.tournament } : {}),
+        });
+      }
       if (userOnYear) userOnYear(s, year);
     };
   }

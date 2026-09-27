@@ -1,5 +1,6 @@
 import { defineArt } from '../../engine/registry';
 import type { ArtDef } from '../../engine/types/effects';
+import { SECT_ARTS } from './sect';
 
 /* 六流派各 7 门，共 42 门。被动按「每级增量」声明，L 级贡献 = 值 × L（区内加法）。
    z4 为各流派主被动（功法自身强度），其余乘区为流派特色（z1 修为 / z2 灵根 / z3 法宝 / z6 气运命格）。
@@ -361,7 +362,7 @@ const MO: ArtDef[] = [
   }),
 ];
 
-export const ARTS: ArtDef[] = [...JIAN, ...DAN, ...TI, ...DU, ...LEI, ...MO];
+export const ARTS: ArtDef[] = [...JIAN, ...DAN, ...TI, ...DU, ...LEI, ...MO, ...SECT_ARTS];
 
 export const JIAN_ARTS = JIAN;
 export const DAN_ARTS = DAN;

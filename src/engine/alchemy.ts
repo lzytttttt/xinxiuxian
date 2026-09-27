@@ -33,6 +33,7 @@ import {
 } from './constants';
 import { resonanceOf, schoolCount, toxicityGain } from './arts';
 import { evalCondition, makeEvalCtx } from './conditions';
+import { sectAlchemyBonus } from './sect';
 import type { ContentBundle, Herb, PillDef, Recipe } from './types/effects';
 import type { Rng } from './types/rng';
 import type { BatchState, RunState } from './types/run';
@@ -240,11 +241,12 @@ export function qualityScoreOf(b: BatchState): number {
   return 1 - Math.min(1, Math.max(0, b.trackError / denom));
 }
 
-/** 当时的门派与共鸣加成（丹修 +0.3；万法归一 +0.2；可叠） */
+/** 当时的门派与共鸣加成（丹修 +0.3；万法归一 +0.2；宗门丹药加成，可叠） */
 export function schoolBonusOf(s: RunState, c: ContentBundle): number {
   let bonus = 0;
   if (schoolCount(s, c, '丹修') > 0) bonus += ALCHEMY_SCHOOL_BONUS;
   if (resonanceOf(s, c).id === 'three2') bonus += ALCHEMY_MIXED_BONUS;
+  bonus += sectAlchemyBonus(s, c);
   return bonus;
 }
 

@@ -1,4 +1,4 @@
-import type { BondType, Decision, DecisionKind, Fate, PillType, TempCurve } from './effects';
+import type { Decision, DecisionKind, Fate, Npc, PillType, TempCurve } from './effects';
 import type { LogLine } from './log';
 
 export type Arc = 'mortal' | 'immortal';
@@ -23,19 +23,16 @@ export interface FruitItem {
   power: number;
 }
 
-export interface Bond {
-  id: string;
-  name: string;
-  type: BondType;
-  level: number;
-  affinity: number;
-  createdYear: number;
-  seed: string;
+export interface BondSystem {
+  list: Npc[];
+  nextId: number;
 }
 
-export interface BondSystem {
-  list: Bond[];
-  nextId: number;
+/** 前世道侣：由边界层（store / simlib）从 MetaState 注入，引擎只读本字段 */
+export interface PastPartnerRef {
+  name: string;
+  seed: string;
+  level: number;
 }
 
 export interface ArtState {
@@ -87,6 +84,12 @@ export interface SectState {
   joinedYear: number | null;
   defections: number;
   tension: Record<string, number>;
+  /** 最近一次参加大比的年份（`year % 20 === 0` 时判「今年比过没有」） */
+  lastTournament: number;
+  /** 当前向玩家伸出橄榄枝的宗门（张力 ≥ 阈值时由 tick 写入） */
+  inviteFrom: string | null;
+  /** 已参加的大比名次（按年序；诊断用） */
+  tournamentPlaces: number[];
 }
 
 export interface ScheduledEvent {
@@ -189,6 +192,9 @@ export interface RunState {
   sect: SectState;
 
   bonds: BondSystem;
+
+  /** 前世道侣（跨局情感锚点）：由边界层注入，引擎只读 */
+  pastPartner: PastPartnerRef | null;
 
   flags: Record<string, number>;
   cooldowns: Record<string, number>;

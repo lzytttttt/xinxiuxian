@@ -1,4 +1,5 @@
 import { BUNDLE } from '../src/content/index';
+import { DEFECT_EVENT, PAST_LOVER_EVENT } from '../src/engine/constants';
 import { evalCondition, makeEvalCtx } from '../src/engine/conditions';
 import { createRun } from '../src/engine/newRun';
 import { makeRngBag } from '../src/engine/rng';
@@ -10,8 +11,10 @@ import type {
   Effect,
   EventDef,
   Herb,
+  MissionDef,
   PillDef,
   Recipe,
+  SectDef,
 } from '../src/engine/types/effects';
 import type { RunState } from '../src/engine/types/run';
 
@@ -63,6 +66,9 @@ interface Tables {
 
 /** 引擎侧消费的 flag（不在内容里读，拦截「死 flag」误报） */
 const ENGINE_FLAGS = new Set(['dao_seat']);
+
+/** 引擎按条件注入的调度事件（不由内容 `schedule` 引用） */
+const ENGINE_SCHEDULED = new Set([DEFECT_EVENT, PAST_LOVER_EVENT]);
 
 const SCHOOL_SET = new Set(['剑修', '丹修', '体修', '毒修', '雷修', '魔修']);
 const ZONE_SET = new Set(['z1', 'z2', 'z3', 'z4', 'z6']);
@@ -191,6 +197,69 @@ function checkRecipes(recipes: Recipe[] | undefined, tables: Tables): void {
   if (perTierBand.mid < 8) warn('丹方阶位分布', `4-6 阶只有 ${perTierBand.mid} 张`);
   if (perTierBand.high < 6) warn('丹方阶位分布', `7-9 阶只有 ${perTierBand.high} 张`);
   if (perTierBand.top < 2) warn('丹方阶位分布', `10 阶只有 ${perTierBand.top} 张`);
+}
+
+const MISSION_KINDS = new Set(['gather', 'subdue', 'parley', 'relic', 'secret']);
+
+function checkSects(
+  sects: SectDef[] | undefined,
+  missions: MissionDef[] | undefined,
+  tables: Tables,
+): void {
+  if (!sects) return;
+  const ids = new Set<string>();
+  const artIds = new Set((tables.arts ?? []).map((a) => a.id));
+  for (const sect of sects) {
+    if (ids.has(sect.id)) error('宗门 id 唯一', `${sect.id} 重复`);
+    ids.add(sect.id);
+    if (sect.schools.length === 0) error('宗门需有流派', `${sect.id}: schools 为空`);
+    for (const s of sect.schools) {
+      if (!SCHOOL_SET.has(s)) error('宗门流派合法', `${sect.id}: 未知流派 ${s}`);
+    }
+    if (sect.mixed !== (sect.schools.length > 1)) {
+      warn('混元标记与流派数一致', `${sect.id}: mixed=${sect.mixed} 但 schools=${sect.schools.length}`);
+    }
+    if (sect.arts.length === 0) warn('宗门应有专属功法', `${sect.id}: arts 为空`);
+    for (const a of sect.arts) {
+      if (!artIds.has(a)) error('宗门功法可解析', `${sect.id}: art ${a} 不存在`);
+      const def = (tables.arts ?? []).find((x) => x.id === a);
+      if (def && def.requires === undefined) {
+        warn('宗门功法应带门槛', `${a}: 无 requires（散修可能白拿）`);
+      }
+    }
+  }
+
+  if (!missions) return;
+  const mids = new Set<string>();
+  const sinkPerKind = new Map<string, number>();
+  for (const m of missions) {
+    if (mids.has(m.id)) error('任务 id 唯一', `${m.id} 重复`);
+    mids.add(m.id);
+    if (m.sect !== '*' && !ids.has(m.sect)) error('任务宗门可解析', `${m.id}: sect ${m.sect} 不存在`);
+    if (!MISSION_KINDS.has(m.kind)) error('任务类型合法', `${m.id}: ${m.kind}`);
+    if (!(m.contribution > 0)) error('任务贡献为正', `${m.id}: ${m.contribution}`);
+    if (!(m.minRank >= 0 && m.minRank <= 4)) error('任务职位门槛 0-4', `${m.id}: ${m.minRank}`);
+    if (!(m.levelMin >= 1 && m.levelMax <= 200 && m.levelMin <= m.levelMax)) {
+      error('任务境界区间合法', `${m.id}: ${m.levelMin}~${m.levelMax}`);
+    }
+    if (!(m.cooldownYears >= 8 && m.cooldownYears <= 20)) {
+      warn('任务冷却 8-20 年', `${m.id}: ${m.cooldownYears}`);
+    }
+    if (m.tensionTo) {
+      if (!ids.has(m.tensionTo.sect)) error('任务张力目标可解析', `${m.id}: ${m.tensionTo.sect}`);
+      const toward = m.kind === 'subdue' && m.tensionTo.delta < 0;
+      const toward2 = m.kind === 'parley' && m.tensionTo.delta > 0;
+      if (toward || toward2) warn('张力方向与任务类型', `${m.id}: ${m.kind} 却给 ${m.tensionTo.delta}`);
+    }
+    if (m.choices.length < 2) warn('任务应有真实选项', `${m.id}: 只有 ${m.choices.length} 个选项`);
+    sinkPerKind.set(m.kind, (sinkPerKind.get(m.kind) ?? 0) + 1);
+  }
+  for (const kind of MISSION_KINDS) {
+    if ((sinkPerKind.get(kind) ?? 0) === 0) error('五类任务齐备', `缺少「${kind}」类任务`);
+  }
+  for (const [kind, n] of sinkPerKind) {
+    if (n < 3) warn('任务类型数量', `${kind} 类只有 ${n} 个`);
+  }
 }
 
 function walkCondition(c: Condition, visit: (x: Condition) => void): void {
@@ -340,6 +409,8 @@ interface ProbeNeeds {
   herbs: string[];
   sects: string[];
   bondTypes: BondType[];
+  /** 需要「已结怨」状态的羁绊类型（背叛事件的前置条件） */
+  bondStrain: BondType[];
   maxLife: number;
   minToxicity: number;
 }
@@ -351,11 +422,37 @@ function collectNeeds(content: ContentBundle): ProbeNeeds {
     herbs: [],
     sects: [],
     bondTypes: [],
+    bondStrain: [],
     maxLife: 1,
     minToxicity: 100,
   };
   const push = <T>(xs: T[], x: T): void => {
     if (!xs.includes(x)) xs.push(x);
+  };
+  /* 只在**肯定位置**收集需求：`not { bondType 道侣 }` 这类条件不该要求探针造出该关系，
+     否则反向条件永远不可满足（ev_bond_past_lover 就是这么被误判成不可达的）。 */
+  const walkNeeds = (c: Condition, positive: boolean): void => {
+    switch (c.op) {
+      case 'and':
+      case 'or':
+        for (const sub of c.of) walkNeeds(sub, positive);
+        return;
+      case 'not':
+        walkNeeds(c.of, !positive);
+        return;
+      default:
+        break;
+    }
+    if (!positive) return;
+    if (c.op === 'flag') push(needs.flags, c.id);
+    if (c.op === 'hasPill') push(needs.pills, c.id);
+    if (c.op === 'hasHerb') push(needs.herbs, c.id);
+    if (c.op === 'sect') push(needs.sects, c.id);
+    if (c.op === 'bondType') push(needs.bondTypes, c.type);
+    if (c.op === 'bondReady') push(needs.bondTypes, c.type);
+    if (c.op === 'bondStrain') push(needs.bondStrain, c.type);
+    if (c.op === 'lifeAtLeast') needs.maxLife = Math.max(needs.maxLife, c.n);
+    if (c.op === 'toxicityAtMost') needs.minToxicity = Math.min(needs.minToxicity, c.value);
   };
   for (const ev of content.events) {
     const conds: Condition[] = [];
@@ -363,17 +460,16 @@ function collectNeeds(content: ContentBundle): ProbeNeeds {
     const effects: Effect[] = [];
     collectEffects(ev, effects);
     for (const e of effects) if (e.op === 'if') conds.push(e.cond);
-    for (const c of conds) {
-      walkCondition(c, (x) => {
-        if (x.op === 'flag') push(needs.flags, x.id);
-        if (x.op === 'hasPill') push(needs.pills, x.id);
-        if (x.op === 'hasHerb') push(needs.herbs, x.id);
-        if (x.op === 'sect') push(needs.sects, x.id);
-        if (x.op === 'bondType') push(needs.bondTypes, x.type);
-        if (x.op === 'lifeAtLeast') needs.maxLife = Math.max(needs.maxLife, x.n);
-        if (x.op === 'toxicityAtMost') needs.minToxicity = Math.min(needs.minToxicity, x.value);
-      });
+    for (const c of conds) walkNeeds(c, true);
+  }
+  for (const m of content.missions ?? []) {
+    const conds: Condition[] = [];
+    for (const ch of m.choices) {
+      if (ch.show) conds.push(ch.show);
+      if (ch.enable) conds.push(ch.enable);
+      for (const o of ch.outcomes) if (o.when) conds.push(o.when);
     }
+    for (const c of conds) walkNeeds(c, true);
   }
   return needs;
 }
@@ -389,19 +485,32 @@ function probeState(seed: string, level: number, variant: number, needs: ProbeNe
   );
   s.realm.level = level;
   s.realm.arc = level > 100 ? 'immortal' : 'mortal';
+  const sectBase = 2;
+  const bondBase = sectBase + needs.sects.length;
+  // 「单一羁绊类型」变体：只造一种关系，让 `not { bondType X }` 这类反向条件有机会成立
+  const onlyType = variant >= bondBase ? needs.bondTypes[variant - bondBase] : undefined;
   if (variant >= 1) {
     for (const f of needs.flags) s.flags[f] = 1;
     for (const p of needs.pills) s.pills[p] = 99;
     for (const h of needs.herbs) s.herbs[h] = 99;
-    for (const bt of needs.bondTypes) {
+    const types = onlyType !== undefined ? [onlyType] : needs.bondTypes;
+    for (const bt of types) {
       for (let i = 0; i < 10; i++) {
         s.bonds.list.push({
           id: `probe-${bt}-${i}`,
           name: '探针',
-          type: bt,
-          level: 5,
+          gender: '男',
+          rootTier: 6,
+          personality: '仁厚',
+          origin: '散修',
+          level: level,
           affinity: 100,
-          createdYear: 0,
+          bondType: bt,
+          bondLevel: 5,
+          alive: true,
+          metYear: 0,
+          neglect: 0,
+          injuredUntil: 0,
           seed: 'probe',
         });
       }
@@ -410,17 +519,45 @@ function probeState(seed: string, level: number, variant: number, needs: ProbeNe
     s.root = 100;
     s.life = needs.maxLife;
     s.toxicity = needs.minToxicity;
+    // 「已结怨」形态：低好感 + 长期未互动，让 bondStrain 前置条件也能被满足。
+    // 单一类型变体下只造同类型的结怨关系 —— 否则混进来的其它关系会推翻 `not { bondType X }`
+    const strainTypes = onlyType !== undefined ? [onlyType] : needs.bondStrain;
+    for (const bt of strainTypes) {
+      for (let i = 0; i < 3; i++) {
+        s.bonds.list.push({
+          id: `probe-strain-${bt}-${i}`,
+          name: '探针',
+          gender: '女',
+          rootTier: 5,
+          personality: '孤傲',
+          origin: '散修',
+          level,
+          affinity: 10,
+          bondType: bt,
+          bondLevel: 1,
+          alive: true,
+          metYear: 0,
+          neglect: 99,
+          injuredUntil: 0,
+          seed: 'probe-strain',
+        });
+      }
+    }
   }
-  if (variant >= 2) {
-    const sectId = needs.sects[variant - 2];
+  if (variant >= sectBase && variant < bondBase) {
+    const sectId = needs.sects[variant - sectBase];
     if (sectId) s.sect.id = sectId;
+  }
+  if (variant >= 1 && onlyType === undefined && needs.sects.length > 0) {
+    s.sect.id = needs.sects[0] ?? null;
+    s.sect.inviteFrom = needs.sects[1] ?? needs.sects[0] ?? null;
   }
   return s;
 }
 
 function sampleStates(content: ContentBundle): RunState[] {
   const needs = collectNeeds(content);
-  const variants = 2 + needs.sects.length;
+  const variants = 2 + needs.sects.length + needs.bondTypes.length;
   const states: RunState[] = [];
   for (let level = 1; level <= 200; level++) {
     for (let v = 0; v < variants; v++) {
@@ -428,6 +565,34 @@ function sampleStates(content: ContentBundle): RunState[] {
     }
   }
   return states;
+}
+
+/** 调度型事件（由 `schedule` 效果或引擎按条件注入）不参与可达性采样：它们的 weight 是 0，
+    进池始终为假，但会在特定年份被排进候选 —— 判可达只能靠链式/调度侧的引用检查。 */
+function scheduledEventIds(content: ContentBundle): Set<string> {
+  const ids = new Set<string>([DEFECT_EVENT, PAST_LOVER_EVENT]);
+  const scan = (effects: Effect[]): void => {
+    for (const e of effects) {
+      if (e.op === 'schedule') ids.add(e.eventId);
+      if (e.op === 'if') {
+        scan(e.then);
+        if (e.else) scan(e.else);
+      }
+    }
+  };
+  for (const ev of content.events) {
+    for (const ch of ev.choices) {
+      if (ch.cost) scan(ch.cost);
+      for (const o of ch.outcomes) scan(o.effects);
+    }
+  }
+  for (const m of content.missions ?? []) {
+    for (const ch of m.choices) {
+      if (ch.cost) scan(ch.cost);
+      for (const o of ch.outcomes) scan(o.effects);
+    }
+  }
+  return ids;
 }
 
 function eligibleIn(s: RunState, ev: EventDef, content: ContentBundle): boolean {
@@ -450,6 +615,7 @@ function main(): void {
   checkHerbs(content.herbs);
   checkPills(content.pills);
   checkRecipes(content.recipes, content);
+  checkSects(content.sects, content.missions, content);
 
   const ids = new Set<string>();
   const flagWrites = new Map<string, string[]>();
@@ -501,6 +667,39 @@ function main(): void {
     });
   }
 
+  // 宗门任务复用同一套 flag 经济，读写都要计入（否则 sect_secret_known 会被误报为孤儿）
+  for (const m of content.missions ?? []) {
+    const effects: Effect[] = [];
+    for (const ch of m.choices) {
+      if (ch.cost) effects.push(...ch.cost);
+      for (const o of ch.outcomes) effects.push(...o.effects);
+    }
+    for (const e of effects) {
+      if (e.op === 'setFlag' || e.op === 'incFlag' || e.op === 'clearFlag') add(flagWrites, e.id, m.id);
+      if (e.op === 'if') {
+        walkCondition(e.cond, (x) => {
+          if (x.op === 'flag') add(flagReads, x.id, m.id);
+        });
+      }
+    }
+    for (const ch of m.choices) {
+      for (const c of [ch.show, ch.enable]) {
+        if (c) {
+          walkCondition(c, (x) => {
+            if (x.op === 'flag') add(flagReads, x.id, m.id);
+          });
+        }
+      }
+      for (const o of ch.outcomes) {
+        if (o.when) {
+          walkCondition(o.when, (x) => {
+            if (x.op === 'flag') add(flagReads, x.id, m.id);
+          });
+        }
+      }
+    }
+  }
+
   for (const [flag, readers] of flagReads) {
     if (!flagWrites.has(flag)) {
       error('孤儿 flag（读无写）', `${flag} 被 ${readers.join('、')} 读取，但无任何写入方`);
@@ -514,11 +713,44 @@ function main(): void {
 
   const unreachable: string[] = [];
   if (!skipReach) {
+    const scheduled = scheduledEventIds(content);
     const states = sampleStates(content);
     for (const ev of content.events) {
+      if (scheduled.has(ev.id)) continue;
       if (!states.some((s) => eligibleIn(s, ev, content))) unreachable.push(ev.id);
     }
     for (const id of unreachable) error('事件可达', `${id}: 采样状态中无任何状态可使其进入事件池`);
+    // 调度型事件的引用完整性：必须真被某个地方排过，否则就是死内容
+    const referenced = new Set<string>();
+    const scan = (effects: Effect[]): void => {
+      for (const e of effects) {
+        if (e.op === 'schedule') referenced.add(e.eventId);
+        if (e.op === 'if') {
+          scan(e.then);
+          if (e.else) scan(e.else);
+        }
+      }
+    };
+    for (const ev of content.events) {
+      for (const ch of ev.choices) {
+        if (ch.cost) scan(ch.cost);
+        for (const o of ch.outcomes) scan(o.effects);
+      }
+    }
+    for (const m of content.missions ?? []) {
+      for (const ch of m.choices) {
+        if (ch.cost) scan(ch.cost);
+        for (const o of ch.outcomes) scan(o.effects);
+      }
+    }
+    for (const id of scheduled) {
+      if (!referenced.has(id) && !ENGINE_SCHEDULED.has(id)) {
+        error('调度事件被引用', `${id}: 既不在事件池的正常权重里，也没有任何 schedule 指向它`);
+      }
+      if (!content.events.some((e) => e.id === id)) {
+        error('调度事件存在', `${id}: 被 schedule 引用，但内容里没有这个事件`);
+      }
+    }
   }
 
   const byCategory = new Map<string, number>();

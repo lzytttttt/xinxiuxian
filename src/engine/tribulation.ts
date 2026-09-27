@@ -18,6 +18,7 @@ import {
 } from './constants';
 import { powerOf } from './selectors';
 import { luckyTribMult } from './arts';
+import { sectPerilMult } from './sect';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
@@ -133,12 +134,13 @@ export function resolveAscensionChoice(s: RunState, choiceId: string): LogLine[]
   return [{ cls: 'god', text: '你止步于仙门之外，将这一世的传说留给后人。' }];
 }
 
-export function perilTick(s: RunState, rng: RngBag): LogLine[] {
+export function perilTick(s: RunState, rng: RngBag, c: ContentBundle): LogLine[] {
   if (s.realm.arc !== 'immortal' || s.dead) return [];
   s.yearsStayed += 1;
   const risk = Math.min(IMM_PERIL_MAX, IMM_PERIL_BASE + s.yearsStayed * IMM_PERIL_SLOPE) +
     s.toxicity / TOXICITY_PERIL_BONUS;
-  if (!rng.tribulation.chance(Math.min(IMM_PERIL_MAX, risk))) return [];
+  // 天音寺「心境不染」：走火风险 ×0.8
+  if (!rng.tribulation.chance(Math.min(IMM_PERIL_MAX, risk) * sectPerilMult(s, c))) return [];
   if (s.chaosQi >= 1) {
     s.chaosQi -= 1;
     const loss = s.cultivation * (IMM_PERIL_LOSS_LO + rng.tribulation.next() * (IMM_PERIL_LOSS_HI - IMM_PERIL_LOSS_LO));
