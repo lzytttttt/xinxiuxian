@@ -5,7 +5,7 @@ import { applyChoice, rollYear } from './tick';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
-import type { DecisionRecord, PastPartnerRef, RunState } from './types/run';
+import type { DecisionRecord, CaveLevels, PastPartnerRef, RunState } from './types/run';
 
 export interface RunOptions {
   seed: string;
@@ -19,6 +19,10 @@ export interface RunOptions {
   startFlags?: Record<string, number>;
   /** 前世道侣：由边界层（store / simlib）从 MetaState 取出后注入（引擎不读 MetaState） */
   pastPartner?: PastPartnerRef | null;
+  /** 洞府六室等级：同上 */
+  cave?: CaveLevels | null;
+  /** 开局气运档位加权加成（累计成就给的百分点，跨局注入） */
+  goldBoost?: number;
   /**
    * 纯观察钩子：每年结算（含决策应答）完成后回调一次。
    * 不得在其中修改状态或消费 RNG——只供平衡工具按等级采样。
@@ -45,12 +49,15 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
   const rng = makeRngBag(opts.seed);
   const maxYears = opts.maxYears ?? 200;
   const card =
-    typeof opts.card === 'function' ? opts.card(rng) : (opts.card ?? drawCard(rng, content, {}));
+    typeof opts.card === 'function'
+      ? opts.card(rng)
+      : (opts.card ?? drawCard(rng, content, { goldBoost: opts.goldBoost ?? 0 }));
   const s = createRun(opts.seed, 1, card, rng, {
     runId: opts.seed,
     createdAt: 0,
     battlePolicy: opts.battlePolicy ?? 'manual',
     pastPartner: opts.pastPartner ?? null,
+    cave: opts.cave ?? null,
   });
   for (const id of opts.startArts ?? []) grantStarterArt(s, id, content);
   for (const [id, value] of Object.entries(opts.startFlags ?? {})) s.flags[id] = value;

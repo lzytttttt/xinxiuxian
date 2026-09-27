@@ -87,17 +87,19 @@
 
 | # | 验收项 | 命令 | 通过标准 |
 |---|---|---|---|
-| 6.1 | **传承不碾压** | `tsx tools/sim.ts --lives 20` | 第 20 世最终等级 **≤ 第 1 世的 1.35×** |
-| 6.2 | 洞府加成封顶 | `npm test -- meta` | 任何洞府等级下 Z1 不超过 ×3.0 |
-| 6.3 | 难度不随传承变化 | `npm test -- meta` | 突破概率/天劫阈值/机缘档位**不读取 `MetaState`** |
-| 6.4 | 存档迁移 | `npm test -- migrations` | 每个版本都有 fixture 测试，且 fixture 为真实导出 |
-| 6.5 | 存档校验和 | `npm test -- persistence` | 篡改任一字节能被检出 |
-| 6.6 | 失败归档 | `npm test -- persistence` | 损坏存档被归档到 `bak.{v}` 而非删除 |
-| 6.7 | 节流写入 | `npm test -- persistence` | 90 年模拟写入 ≤ 25 次 |
-| 6.8 | 字段不冲突 | `npm test -- types` | `RunState` 与 `MetaState` 顶层字段名无交集 |
-| 6.9 | 存档体积 | `npm test -- persistence` | ≤ 50 KB |
+| 6.1 | **传承不碾压** | `npm run sim:lives` | 第 20 世最终等级 **≤ 第 1 世的 1.35×**。实测 53 → 61 = **1.151**（每世 20 局 × 200 年，跨世固定同一种子，逐世唯一变量是洞府与成就加成） |
+| 6.2 | 洞府加成封顶 | `npm test -- meta` | 任何洞府等级下 Z1 ≤ ×3.0。满级聚灵阵 + 静室合计 +45%；六室全满 + 满级功法实测 Z1 = 3.00（**正好触顶，不越顶**） |
+| 6.3 | 难度不随传承变化 | `npm test -- meta` | 突破概率/天劫阈值/机缘档位不读洞府：`breakthrough / tribulation / encounter / fate / artifact` 五个文件零 `cave` 引用；引擎 16 个文件零跨局状态导入 |
+| 6.4 | 存档迁移 | `npm test -- migrations` | v1..v5 每个版本都有 fixture，且 fixture **由 `MIGRATIONS` 逐级跑出来**（测试重跑一遍并比对校验和） |
+| 6.5 | 存档校验和 | `npm test -- persistence` | 篡改任一字节能被检出（改 run / 改 meta / 只改一个字符，三种） |
+| 6.6 | 失败归档 | `npm test -- persistence` | 损坏存档归档到 `bak.{v}`；JSON 解不开时归档到 `bak.unknown`，原始内容一字不改 |
+| 6.7 | 节流写入 | `npm test -- persistence` | 90 年模拟写入 ≤ 25 次（每 5 年一档 = 18 次请求，debounce 后只会更少） |
+| 6.8 | 字段不冲突 | `npm test -- persistence` | `RunState` 与 `MetaState` 顶层字段名无交集。**为此把 `RunState.cave` 改名 `RunState.legacyCave`**（见 [v0.1.0-07 §七](../v0.1.0-07-legacy-cave.md)） |
+| 6.9 | 存档体积 | `npm test -- persistence` | 跨局层全满（20 条高光 + 10 位道侣 + 全部成就 + 六张满位串）+ 一局真实存档 ≤ 50 KB |
 
 > 6.1 必须在**设计上**成立（见 [product/08-legacy-cave.md §四](../product/08-legacy-cave.md#四防碾压设计)），而不只是被测试发现。
+> 实测推翻了一处设计假设：成就的 `goldBoost` 原本同时加权**灵根**档位抽取，等于让传承直接买突破概率，
+> 20 世比值 1.491 直接破线；改成只加权气运后降到 1.151。
 
 ### Phase 7 · 平衡、打磨
 
@@ -146,7 +148,7 @@ tsx tools/balance.ts                          # 平衡红线
 tsx tools/sim.ts --golden                     # 黄金回归
 tsx tools/sim.ts --calibrate                  # 分位标定
 tsx tools/sim.ts --pacing                     # 单局节奏
-tsx tools/sim.ts --lives 20                   # 传承不碾压
+npm run sim:lives                               # 传承不碾压（二十世进程）
 ```
 
 ---

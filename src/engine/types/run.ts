@@ -3,6 +3,11 @@ import type { LogLine } from './log';
 
 export type Arc = 'mortal' | 'immortal';
 
+/** 洞府六室。等级定义在 `types/run.ts` 而非 `types/meta.ts`——引擎不读 MetaState（6.3 红线） */
+export type RoomId = '药园' | '丹房' | '藏经阁' | '悟道室' | '聚灵阵' | '静室';
+
+export type CaveLevels = Record<RoomId, number>;
+
 export interface Realm {
   arc: Arc;
   stage: number;
@@ -195,6 +200,10 @@ export interface RunState {
 
   /** 前世道侣（跨局情感锚点）：由边界层注入，引擎只读 */
   pastPartner: PastPartnerRef | null;
+
+  /** 本局生效的洞府等级（跨局注入，引擎只读）：0-5，见 product/08-legacy-cave.md §二。
+      名字带 `legacy` 前缀是为了与跨局层的 `MetaState.cave` 区分——验收 6.8 要求两者顶层字段名无交集 */
+  legacyCave: CaveLevels;
 
   flags: Record<string, number>;
   cooldowns: Record<string, number>;

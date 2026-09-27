@@ -1,9 +1,10 @@
 import { COMBAT_COEF, PAST_LOVER_EVENT, PITY_TRIGGER, TALENT_BASE, TIER_WEIGHTS } from './constants';
+import { emptyCave } from './cave';
 import { drawFates } from './fate';
 import { talentTier } from './selectors';
 import type { ContentBundle, Fate } from './types/effects';
 import type { RngBag } from './types/rng';
-import type { RunState, PastPartnerRef } from './types/run';
+import type { CaveLevels, RunState, PastPartnerRef } from './types/run';
 
 export interface CharCard {
   tier: number;
@@ -34,7 +35,9 @@ export function drawCard(
 ): CharCard {
   const guard = opts.guard ?? false;
   const goldBoost = opts.goldBoost ?? 0;
-  const tier = pickTier(rng, goldBoost, guard);
+  // **灵根档不吃 `goldBoost`**：灵根 → talentMult → 突破概率，是难度曲线的一环。
+  // 成就与传承只该买到"气运"（机缘/法宝概率），买到灵根就等于跨局买突破概率（验收 6.1 / 6.3）。
+  const tier = pickTier(rng, 0, guard);
   const value = guard ? Math.max(rollTierValue(rng, 10), 91) : rollTierValue(rng, tier);
   const luckTier = pickTier(rng, goldBoost, false);
   const luckRoll = rollTierValue(rng, luckTier);
@@ -78,6 +81,8 @@ export function createRun(
     battlePolicy?: RunState['battlePolicy'];
     /** 前世道侣：由边界层从 MetaState 注入（引擎不读 MetaState，见 6.3 红线） */
     pastPartner?: PastPartnerRef | null;
+    /** 洞府六室等级：由边界层从 MetaState 注入（同上） */
+    cave?: CaveLevels | null;
   },
 ): RunState {
   const tier = talentTier(card.value);
@@ -139,6 +144,7 @@ export function createRun(
     },
     bonds: { list: [], nextId: 1 },
     pastPartner: opts.pastPartner ?? null,
+    legacyCave: opts.cave ?? emptyCave(),
     flags: {},
     cooldowns: {},
     onceFired: [],

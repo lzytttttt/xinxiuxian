@@ -20,6 +20,7 @@ import {
   TOXICITY_DECAY_RATE,
 } from './constants';
 import { plunderDrain, swordNarrow, toxicityDecayMult } from './arts';
+import { herbOfYear, herbYield, plunderRelief } from './cave';
 import { bondMeetTick, bondTick } from './bonds';
 import { tickPillBuffs } from './alchemy';
 import { defectTargets, eventOrMission, sectPlunderSim, stipendTick, tensionTick } from './sect';
@@ -339,6 +340,22 @@ function toxicityTick(s: RunState, c: ContentBundle): void {
   s.toxicity = Math.max(0, s.toxicity - decay);
 }
 
+/**
+ * 槽 6.5：洞府药园每年产出。
+ *
+ * 药材 id 按 `year % 6` 在六种基础药材间轮转——**确定性，不抽 RNG**。洞府等级为 0 时整槽直接
+ * return，连一次取模都不做：黄金回归（验收 1.1）逐字节比对 50 种子 × 200 年，多抽一次就全线漂移。
+ */
+function caveTick(s: RunState, logs: LogLine[]): void {
+  const yieldCount = herbYield(s);
+  if (yieldCount <= 0) return;
+  const herb = herbOfYear(s.year);
+  s.herbs[herb] = (s.herbs[herb] ?? 0) + yieldCount;
+  if (s.year % 10 === 0) {
+    push(s, logs, { cls: 'ev1', text: `药园轮作，本年得${yieldCount}株药材。` });
+  }
+}
+
 /** 张力 ≥ 阈值时把叛宗邀请排进本年候选（走正常仲裁，不抢占） */
 function queueDefectInvite(s: RunState, c: ContentBundle): void {
   if (s.sect.id === null) return;
@@ -377,7 +394,7 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   tickPillBuffs(s);
   s.insight += insightPerYear(s);
   const drain = plunderDrain(s, c);
-  if (drain > 0) s.simPoints = Math.max(0, s.simPoints - drain);
+  if (drain > 0) s.simPoints = Math.max(0, s.simPoints - drain * plunderRelief(s));
 
   // 槽 6：宗门俸禄与宗门政治
   for (const line of stipendTick(s, c)) push(s, logs, line);
@@ -385,6 +402,8 @@ export function rollYear(s: RunState, rng: RngBag, c: ContentBundle): TickResult
   if (sectPlunder > 0) s.simPoints += sectPlunder;
   tensionTick(s);
   queueDefectInvite(s, c);
+  // 槽 6.5：洞府药园（确定性轮转，不抽 RNG——洞府等级为 0 时本槽直接 return）
+  caveTick(s, logs);
   // 槽 7：羁绊（年常邂逅 + NPC 同步成长 + 宿敌论剑）
   for (const line of bondMeetTick(s, rng.bond, c)) push(s, logs, line);
   for (const line of bondTick(s, rng.bond, c)) push(s, logs, line);

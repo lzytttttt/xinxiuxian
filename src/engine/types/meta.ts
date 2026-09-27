@@ -1,7 +1,5 @@
-import type { AutopilotConfig } from './run';
+import type { AutopilotConfig, CaveLevels } from './run';
 import type { RunEndReason } from './log';
-
-export type RoomId = '药园' | '丹房' | '藏经阁' | '悟道室' | '聚灵阵' | '静室';
 
 export interface LifeSummary {
   life: number;
@@ -39,13 +37,16 @@ export interface CodexBits {
   encounters: string;
   artifacts: string;
   realms: string;
+  pills: string;
+  arts: string;
+  herbs: string;
 }
 
 export interface MetaState {
   version: 1;
   legacyPoints: number;
   lifetimeLegacy: number;
-  cave: Record<RoomId, number>;
+  cave: CaveLevels;
   unlocks: { arts: string[]; recipes: string[]; sects: string[] };
   sectLegacy: Record<string, number>;
   pastLives: LifeSummary[];

@@ -4,6 +4,7 @@ import {
   ART_LEVEL_MAX,
   ART_SLOTS_INITIAL,
   ART_SLOTS_TOTAL,
+  CAVE_ROOM_STUDY,
   MIXED_SCHOOLS_EACH,
   PLUNDER_SIM_PER_YEAR,
   POISON_BODY_TOX_MIN,
@@ -26,6 +27,7 @@ import {
   TREASURE_RATIO,
   Z3_TREASURE_MULT,
 } from './constants';
+import { caveLevel, scriptDiscount } from './cave';
 import { sectToxMult } from './sect';
 import type { ArtDef, ContentBundle, SchoolId, ZoneId } from './types/effects';
 import type { RunState } from './types/run';
@@ -36,14 +38,15 @@ export function artById(c: ContentBundle, id: string): ArtDef | undefined {
   return c.arts?.find((a) => a.id === id);
 }
 
-/** 槽位解锁：初始 3；悟道室 L2 补 1、L4 再补 1（Phase 6）；道台现世补 1（本 Phase 实装） */
+/** 槽位解锁：初始 3；悟道室 L2 补到 4 槽、L4 补到 5 槽（Phase 6）；道台现世补 1 */
 export function slotCountOf(caveStudy: number, hasDaoSeat: boolean): number {
+  // 阈值是**等级** 2 / 4（`ART_SLOTS_CAVE_L2` / `ART_SLOTS_CAVE_L4` 记的是解锁后的槽位数 4 / 5）
   const cave = (caveStudy >= 2 ? 1 : 0) + (caveStudy >= 4 ? 1 : 0);
   return Math.min(ART_SLOTS_TOTAL, ART_SLOTS_INITIAL + cave + (hasDaoSeat ? 1 : 0));
 }
 
 export function slotCount(s: RunState): number {
-  return slotCountOf(0, (s.flags['dao_seat'] ?? 0) > 0);
+  return slotCountOf(caveLevel(s, CAVE_ROOM_STUDY), (s.flags['dao_seat'] ?? 0) > 0);
 }
 
 /** 已装备功法：slots 即权威集合（解锁范围由 equipArt 把关，读侧不做二次截断） */
@@ -73,12 +76,19 @@ export function insightCost(level: number): number {
   return Math.round(ART_INSIGHT_BASE * Math.pow(ART_INSIGHT_GROWTH, level - 2));
 }
 
+/** 藏经阁折扣后的实际成本：满级 −25%（成本下限 1，折扣不得把成本压到 0） */
+export function insightCostFor(s: RunState, level: number): number {
+  const base = insightCost(level);
+  if (base <= 0) return 0;
+  return Math.max(1, Math.round(base * (1 - scriptDiscount(s))));
+}
+
 export function upgradeCostOf(s: RunState, id: string, c: ContentBundle): number | null {
   const art = s.arts[id];
   const def = artById(c, id);
   if (!def || !art || art.level <= 0) return null;
   if (art.level >= ART_LEVEL_MAX) return null;
-  return insightCost(art.level + 1);
+  return insightCostFor(s, art.level + 1);
 }
 
 /** 升级（消耗悟性）。返回是否升级成功 */

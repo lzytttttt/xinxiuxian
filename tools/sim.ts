@@ -7,6 +7,7 @@ import {
   logDigest,
   replayRun,
   simulate,
+  simulateLives,
   type CalibrateRow,
   type GoldenEntry,
 } from './simlib';
@@ -199,6 +200,51 @@ if (has('--golden')) {
   const ok = p50 >= 25;
   console.log(`验收 2.4（选项点总数 p50 ≥ 25）：${ok ? `通过（${p50}）` : `未达标（${p50}）`}`);
   process.exitCode = ok ? 0 : 1;
+} else if (has('--lives')) {
+  /* 验收 6.1：二十世进程。每世取中位局做一次局末结算，再按贪心策略升级洞府。
+     第 20 世最终等级 ≤ 第 1 世 × 1.35 —— 传承点买的是起跑线，不是上限。 */
+  const lives = num('--lives', 20);
+  const runs = num('--runs', 40);
+  const years = num('--years', 200);
+  const tier = num('--tier', 0);
+  const control = has('--control');
+  const rows = simulateLives(BUNDLE, {
+    lives,
+    runs,
+    years,
+    ...(tier > 0 ? { tier } : {}),
+    build: 'greedy',
+    pills: 'normal',
+    sect: 'greedy',
+    noLegacy: control,
+  });
+  console.log(
+    `── 二十世进程（验收 6.1）lives=${lives} · 每世 ${runs} 局 × ${years} 年${control ? ' · 裸传承对照组' : ''} ──`,
+  );
+  console.log('世次  洞府总等级  传承点余额  本世所得  成就数  等级 p50  等级 p90  战力 p50  寿元 p50');
+  for (const r of rows) {
+    console.log(
+      `${String(r.life).padEnd(5)} ${String(r.caveLevels).padEnd(11)} ${String(r.legacyPoints).padEnd(11)} ` +
+        `${String(r.gained).padEnd(9)} ${String(r.achievements).padEnd(7)} ${String(r.levelP50).padEnd(9)} ` +
+        `${String(r.levelP90).padEnd(9)} ${r.powerP50.toExponential(2).padEnd(10)} ${r.yearsP50}`,
+    );
+  }
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  if (!first || !last) {
+    console.error('lives: 没有产出任何世次');
+    process.exitCode = 1;
+  } else {
+    const ratio = first.levelP50 === 0 ? 0 : last.levelP50 / first.levelP50;
+    const budget = 1.35;
+    const ok = ratio <= budget;
+    console.log(`等级 p50：第 1 世 ${first.levelP50} → 第 ${last.life} 世 ${last.levelP50}，比值 ${ratio.toFixed(3)}（判据 ≤ ${budget}）`);
+    console.log(`等级 p90：第 1 世 ${first.levelP90} → 第 ${last.life} 世 ${last.levelP90}`);
+    console.log(`战力 p50：第 1 世 ${first.powerP50.toExponential(2)} → 第 ${last.life} 世 ${last.powerP50.toExponential(2)}`);
+    console.log(`洞府：第 ${last.life} 世共 ${last.caveLevels}/30 级，传承点余额 ${last.legacyPoints}`);
+    console.log(`验收 6.1（传承不碾压）：${ok ? '通过' : '未达标'}`);
+    process.exitCode = ok ? 0 : 1;
+  }
 } else if (has('--replay')) {
   const runs = num('--runs', 200);
   const years = num('--years', 200);

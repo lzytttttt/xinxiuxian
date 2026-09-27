@@ -22,6 +22,7 @@
     "sim:calibrate:write": "tsx tools/sim.ts --calibrate --write",
     "sim:pacing": "tsx tools/sim.ts --pacing",
     "sim:replay": "tsx tools/sim.ts --replay",
+    "sim:lives": "tsx tools/sim.ts --lives",
     "sim:balance": "tsx tools/balance.ts",
     "content:names": "tsx tools/gen-names.ts",
     "content:names:check": "tsx tools/gen-names.ts --check",

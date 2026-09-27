@@ -31,14 +31,13 @@ import { makeRngBag } from '../engine/rng';
 import { recordPowerTrail, zones, type ZoneBreakdown } from '../engine/selectors';
 import { LOG_LIMIT } from '../engine/constants';
 import type { ArtDef, ContentBundle, Decision } from '../engine/types/effects';
-import type { MetaState } from '../engine/types/meta';
+import { useMetaStore, legacyInjection, settleRun } from './metaStore';
 import type { RngBag } from '../engine/types/rng';
 import type { BatchState, RunState } from '../engine/types/run';
-import { createSaver, defaultMeta, loadEnvelope, shouldPersistYear } from './persistence';
+import { createSaver, loadEnvelope, shouldPersistYear } from './persistence';
 
 export interface RunStoreState {
   content: ContentBundle;
-  meta: MetaState;
   run: RunState | null;
   pending: Decision | null;
   cards: CharCard[];
@@ -88,12 +87,12 @@ let runCounter = 0;
 let content: ContentBundle = HOME_BUNDLE;
 let contentPromise: Promise<void> | null = null;
 
-interface SaveSlot {
-  meta: MetaState;
-  run: RunState | null;
-}
-const slot: SaveSlot = { meta: defaultMeta(), run: null };
-const saver = createSaver(() => slot);
+const slot: { run: RunState | null } = { run: null };
+const saver = createSaver(() => ({ meta: useMetaStore.getState().meta, run: slot.run }));
+
+/* 洞府升级、设置修改都发生在 `useMetaStore` 里，而存档器在 runStore。订阅一次即可，
+   不必让 metaStore 反向依赖 runStore（那会成环）。 */
+useMetaStore.subscribe(() => saver.request());
 
 function stopTimer(): void {
   if (timer !== null) {
@@ -139,6 +138,11 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     result: { pending: Decision | null; ended: string | null },
   ): void => {
     if (result.ended) {
+      const meta = useMetaStore.getState().meta;
+      const settled = settleRun(meta, { state: run, content, power: zones(run, content).finalPower });
+      useMetaStore.getState().replace(settled.meta);
+      for (const id of settled.unlocked) log(run, `【成就】${id}`, 'gold');
+      log(run, `【传承】此世结算 ${settled.gained} 点传承，洞府可升级。`, 'gold');
       set({
         run,
         pending: null,
@@ -167,7 +171,6 @@ export const useRunStore = create<RunStoreState>((set, get) => {
 
   return {
     content,
-    meta: slot.meta,
     run: null,
     pending: null,
     cards: [],
@@ -183,13 +186,14 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       loadContent();
       const loaded = loadEnvelope();
       if (loaded) {
-        slot.meta = loaded.meta;
+        useMetaStore.getState().replace(loaded.meta);
         slot.run = loaded.run;
       }
+      const meta = useMetaStore.getState().meta;
       const seed = `card-${Date.now()}-${Math.round(performance.now())}`;
       const bag = makeRngBag(seed);
-      const cards = drawCards(bag, content, {});
-      set({ cards, meta: slot.meta, version: get().version + 1 });
+      const cards = drawCards(bag, content, { goldBoost: legacyInjection(meta).goldBoost });
+      set({ cards, version: get().version + 1 });
     },
 
     pickCard: (card) => {
@@ -215,10 +219,14 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       runCounter += 1;
       const seed = `run-${Date.now()}-${runCounter}`;
       rng = makeRngBag(seed);
-      const run = createRun(seed, slot.meta.totals.runs + 1, card, rng, {
+      const meta = useMetaStore.getState().meta;
+      const legacy = legacyInjection(meta);
+      const run = createRun(seed, meta.totals.runs + 1, card, rng, {
         runId: seed,
         createdAt: Date.now(),
-        battlePolicy: slot.meta.autoPolicy.battlePolicy,
+        battlePolicy: meta.autoPolicy.battlePolicy,
+        pastPartner: legacy.pastPartner,
+        cave: legacy.cave,
       });
       grantArt(run, artId, content);
       run.slots[0] = artId;

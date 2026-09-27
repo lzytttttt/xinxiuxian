@@ -34,6 +34,7 @@ export {
   upgradeArt,
   upgradeCostOf,
   insightCost,
+  insightCostFor,
   equippedIds,
   equippedArts,
   isEquipped,
@@ -185,3 +186,26 @@ export {
   type Stipend,
   type TournamentResult,
 } from './sect';
+export {
+  ROOMS,
+  ROOM_META,
+  emptyCave,
+  caveLevel,
+  herbYield,
+  herbOfYear,
+  alchemyQualityBonus,
+  scriptDiscount,
+  studyInsight,
+  z1CaveBonus,
+  plunderRelief,
+} from './cave';
+export {
+  legacyPointsOf,
+  caveUpgradeCost,
+  caveTotalCost,
+  caveFullCost,
+  canUpgradeCave,
+  upgradeCave,
+  type LegacySources,
+  type LegacyBreakdown,
+} from './meta';

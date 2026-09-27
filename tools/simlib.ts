@@ -1,11 +1,11 @@
-import { TALENT_BASE, ART_LEVEL_MAX } from '../src/engine/constants';
+import { TALENT_BASE, ART_LEVEL_MAX, CAVE_LEVEL_MAX } from '../src/engine/constants';
 
 /** 「正常」玩家只在悟性富余到此值以上时才用药市补货（保证 build 不被药铺挤垮） */
 const HERB_MARKET_SURPLUS = 30;
 import {
   equipArt,
   equippedIds,
-  insightCost,
+  insightCostFor,
   slotCount,
   upgradeArt,
 } from '../src/engine/arts';
@@ -27,11 +27,16 @@ import { makeRngBag } from '../src/engine/rng';
 import { runRun, type AnswerFn, type RunOptions } from '../src/engine/replay';
 import { powerOf, zones } from '../src/engine/selectors';
 import { aidBonus } from '../src/engine/bonds';
+import { emptyCave } from '../src/engine/cave';
+import { caveUpgradeCost, upgradeCave } from '../src/engine/meta';
+import { legacyInjection, settleRun } from '../src/store/settle';
+import { defaultMeta } from '../src/store/persistence';
 import type { CharCard } from '../src/engine/newRun';
 import type { ArtDef, ContentBundle, Decision, Fate, SchoolId } from '../src/engine/types/effects';
 import type { LogLine } from '../src/engine/types/log';
 import type { RngBag } from '../src/engine/types/rng';
-import type { DecisionRecord, RunState } from '../src/engine/types/run';
+import type { MetaState } from '../src/engine/types/meta';
+import type { DecisionRecord, CaveLevels, RoomId, RunState } from '../src/engine/types/run';
 
 export type EventPolicy = 'first' | 'random';
 
@@ -70,6 +75,10 @@ export interface SimOptions extends RunOptions {
   startSectId?: string;
   /** 是否参加大比（界面操作，模拟里由策略代按） */
   tournament?: boolean;
+  /** 洞府六室等级（验收 6.1 的二十世进程用它做跨局变量） */
+  cave?: CaveLevels;
+  /** 开局气运抽取加成（累计成就给的百分点，验收 6.1） */
+  goldBoost?: number;
 }
 
 export interface SimOutcome {
@@ -112,9 +121,14 @@ function countDecision(tally: Tally, d: Decision): void {
   tally.options += d.choices.filter((c) => c.show).length;
 }
 
-export function cardForTier(tier: number, content: ContentBundle, rng: RngBag): CharCard {
+export function cardForTier(
+  tier: number,
+  content: ContentBundle,
+  rng: RngBag,
+  goldBoost = 0,
+): CharCard {
   const value = Math.max(1, (TALENT_BASE[tier] ?? 0) + 5);
-  const fates: Fate[] = drawFates(content.fates, rng.fate, 2, {});
+  const fates: Fate[] = drawFates(content.fates, rng.fate, 2, { goldBoost });
   return {
     tier,
     value,
@@ -210,7 +224,7 @@ export function buildStep(s: RunState, content: ContentBundle, preferSchool?: Sc
     for (const id of equippedIds(s)) {
       const st = s.arts[id];
       if (!st || st.level >= ART_LEVEL_MAX) continue;
-      const cost = insightCost(st.level + 1);
+      const cost = insightCostFor(s, st.level + 1);
       if (s.insight < cost) continue;
       const probe: RunState = {
         ...s,
@@ -374,6 +388,9 @@ function runOptions(
   if (opts.maxYears !== undefined) out.maxYears = opts.maxYears;
   if (opts.battlePolicy !== undefined) out.battlePolicy = opts.battlePolicy;
   if (opts.startFlags) out.startFlags = opts.startFlags;
+  if (opts.cave) out.cave = opts.cave;
+  if (opts.pastPartner) out.pastPartner = opts.pastPartner;
+  if (opts.goldBoost) out.goldBoost = opts.goldBoost;
   if (card) out.card = card;
   const starterId = opts.starter === 'none' ? null : bestStarter(content);
   if (starterId) out.startArts = [starterId];
@@ -403,7 +420,9 @@ export function simulate(content: ContentBundle, opts: SimOptions): SimOutcome {
   // 显式 card > tier 固定卡 > 引擎现抽（三者互斥）
   const card =
     opts.card ??
-    (opts.tier !== undefined ? (bag: RngBag) => cardForTier(opts.tier!, content, bag) : undefined);
+    (opts.tier !== undefined
+      ? (bag: RngBag) => cardForTier(opts.tier!, content, bag, opts.goldBoost ?? 0)
+      : undefined);
   const tally: Tally = { decisions: 0, options: 0 };
   const out = runRun(
     content,
@@ -423,7 +442,9 @@ export function replayRun(
   decisions: DecisionRecord[],
 ): SimOutcome {
   const card =
-    opts.tier !== undefined ? (bag: RngBag) => cardForTier(opts.tier!, content, bag) : undefined;
+    opts.tier !== undefined
+      ? (bag: RngBag) => cardForTier(opts.tier!, content, bag, opts.goldBoost ?? 0)
+      : undefined;
   const tally: Tally = { decisions: 0, options: 0 };
   let cursor = 0;
   const answer: AnswerFn = (d, s) => {
@@ -514,4 +535,137 @@ export function calibrate(content: ContentBundle, samplesPerTier = 200, maxYears
     });
   }
   return rows;
+}
+
+// ── 验收 6.1：二十世进程 ──
+
+/**
+ * 洞府升级优先级（工具侧的"玩家策略"，不是游戏机制）。
+ * 悟道室最高（补槽是离散的、边际最大），其次聚灵阵/静室（Z1），资源侧三项垫底。
+ */
+const CAVE_PRIORITY: readonly { room: RoomId; weight: number }[] = [
+  { room: '悟道室', weight: 1.4 },
+  { room: '聚灵阵', weight: 1.1 },
+  { room: '静室', weight: 0.95 },
+  { room: '藏经阁', weight: 0.8 },
+  { room: '丹房', weight: 0.7 },
+  { room: '药园', weight: 0.65 },
+];
+
+function greedyUpgradeCave(meta: MetaState): void {
+  for (;;) {
+    let spent = 0;
+    let best: RoomId | null = null;
+    for (const { room } of CAVE_PRIORITY) {
+      if ((meta.cave[room] ?? 0) >= CAVE_LEVEL_MAX) continue;
+      const cost = caveUpgradeCost(room, meta.cave[room] ?? 0);
+      if (cost > meta.legacyPoints) continue;
+      best = room;
+      spent = cost;
+      break;
+    }
+    if (!best || spent === 0) return;
+    const res = upgradeCave(meta.cave, best, meta.legacyPoints);
+    if (res.spent === 0) return;
+    meta.cave = res.cave;
+    meta.legacyPoints = res.points;
+  }
+}
+
+export interface LifeRecord {
+  life: number;
+  caveLevels: number;
+  legacyPoints: number;
+  gained: number;
+  achievements: number;
+  levelP50: number;
+  levelP90: number;
+  powerP50: number;
+  yearsP50: number;
+}
+
+export interface LivesOptions {
+  lives?: number;
+  runs?: number;
+  years?: number;
+  tier?: number;
+  build?: BuildPolicy;
+  pills?: PillPolicy;
+  sect?: SectPolicy;
+  market?: boolean;
+  /** 关掉洞府与成就加成，跑"裸传承"对照组（诊断用） */
+  noLegacy?: boolean;
+}
+
+/**
+ * 二十世进程。每世跑 `runs` 局取**中位局**做一次局末结算（不是每局都结算——那会让
+ * 传承点按队列规模线性膨胀，与真实"一个玩家一世"不符），再按贪心策略升级洞府。
+ */
+export function simulateLives(content: ContentBundle, opts: LivesOptions = {}): LifeRecord[] {
+  const lives = opts.lives ?? 20;
+  const runs = opts.runs ?? 40;
+  const years = opts.years ?? 200;
+  const meta: MetaState = defaultMeta();
+  const out: LifeRecord[] = [];
+
+  for (let life = 1; life <= lives; life++) {
+    const legacy = opts.noLegacy
+      ? { cave: emptyCave(), pastPartner: null, goldBoost: 0 }
+      : legacyInjection(meta);
+    const levels: number[] = [];
+    const powers: number[] = [];
+    const lifeRuns: SimOutcome[] = [];
+    for (let i = 0; i < runs; i++) {
+      // **跨世固定同一种子**：命帖、事件序列全部一致，逐世之间唯一的变量就是洞府与成就加成。
+      // 若每世换种子，队列噪声（±10 级）会盖过传承带来的差异，6.1 就测不出东西。
+      const seed = `life-fixed-r${String(i).padStart(3, '0')}`;
+      const res = simulate(content, {
+        seed,
+        maxYears: years,
+        ...(opts.tier !== undefined ? { tier: opts.tier } : {}),
+        build: opts.build ?? 'greedy',
+        pills: opts.pills ?? 'normal',
+        sect: opts.sect ?? 'greedy',
+        market: opts.market ?? true,
+        cave: legacy.cave,
+        goldBoost: legacy.goldBoost,
+        pastPartner: legacy.pastPartner,
+      });
+      levels.push(res.level);
+      powers.push(res.power);
+      lifeRuns.push(res);
+    }
+    const sortedLevels = [...levels].sort((a, b) => a - b);
+    const median = lifeRuns.slice().sort((a, b) => a.level - b.level)[Math.floor(runs / 2)];
+    const before = meta.legacyPoints;
+    let gained = 0;
+    void before;
+    if (median && !opts.noLegacy) {
+      const settled = settleRun(meta, { state: median.state, content, power: median.power });
+      meta.legacyPoints = settled.meta.legacyPoints;
+      meta.lifetimeLegacy = settled.meta.lifetimeLegacy;
+      meta.achievements = settled.meta.achievements;
+      meta.pastLives = settled.meta.pastLives;
+      meta.pastPartners = settled.meta.pastPartners;
+      meta.sectLegacy = settled.meta.sectLegacy;
+      meta.unlocks = settled.meta.unlocks;
+      meta.codex = settled.meta.codex;
+      meta.totals = settled.meta.totals;
+      gained = settled.gained;
+      greedyUpgradeCave(meta);
+    }
+    const sortedYears = lifeRuns.map((r) => r.years).sort((a, b) => a - b);
+    out.push({
+      life,
+      caveLevels: Object.values(meta.cave).reduce((a, b) => a + b, 0),
+      legacyPoints: meta.legacyPoints,
+      gained,
+      achievements: meta.achievements.length,
+      levelP50: percentile(sortedLevels, 0.5),
+      levelP90: percentile(sortedLevels, 0.9),
+      powerP50: percentile(powers, 0.5),
+      yearsP50: percentile(sortedYears, 0.5),
+    });
+  }
+  return out;
 }

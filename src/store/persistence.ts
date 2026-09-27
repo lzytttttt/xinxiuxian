@@ -1,13 +1,14 @@
-import { NPC_ROOT_TIER_MAX, NPC_ROOT_TIER_MIN } from '../engine/constants';
+import { CAVE_LEVEL_MAX, NPC_ROOT_TIER_MAX, NPC_ROOT_TIER_MIN } from '../engine/constants';
 import { ORIGINS, PERSONALITIES } from '../engine/bonds';
+import { ROOMS, emptyCave } from '../engine/cave';
 import { makeRngBag } from '../engine/rng';
 import type { Npc } from '../engine/types/effects';
-import type { MetaState } from '../engine/types/meta';
+import type { CodexBits, MetaState } from '../engine/types/meta';
 import type { DeferredEntry, RunState } from '../engine/types/run';
 
 export const SAVE_KEY = 'xiuxian.save';
 export const SETTINGS_KEY = 'xiuxian.settings';
-export const CURRENT_VERSION = 5;
+export const CURRENT_VERSION = 6;
 
 export interface SaveEnvelope {
   v: number;
@@ -25,13 +26,13 @@ export function defaultMeta(): MetaState {
     version: 1,
     legacyPoints: 0,
     lifetimeLegacy: 0,
-    cave: { 药园: 0, 丹房: 0, 藏经阁: 0, 悟道室: 0, 聚灵阵: 0, 静室: 0 },
+    cave: emptyCave(),
     unlocks: { arts: [], recipes: [], sects: [] },
     sectLegacy: {},
     pastLives: [],
     pastPartners: [],
     achievements: [],
-    codex: { encounters: '', artifacts: '', realms: '' },
+    codex: { encounters: '', artifacts: '', realms: '', pills: '', arts: '', herbs: '' },
     pity: 0,
     autoPolicy: { battlePolicy: 'manual', smartX: 1 },
     settings: { reducedMotion: false, visualIntensity: 'mid', textSpeed: 1, tickMs: 300 },
@@ -166,6 +167,42 @@ export const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
       pastPartner: run.pastPartner ?? null,
     };
     return { ...old, v: 5, run: migrated, checksum: checksumOf(old.meta, migrated) };
+  },
+  // v5 → v6：Phase 6 传承与洞府。
+  //  - codex 由三张位串扩到六张（丹药 / 功法 / 药材），旧档补空串
+  //  - cave 六个等级一律夹到 [0, CAVE_LEVEL_MAX]（旧档可能来自手改存档）
+  //  - RunState 增 cave（本局生效的洞府等级；未注入的旧档一律全 0）
+  5: (env) => {
+    const old = env as SaveEnvelope;
+    const legacyMeta = old.meta as MetaState & {
+      codex?: Partial<CodexBits>;
+      cave?: Record<string, number>;
+    };
+    const zeroCave = emptyCave();
+    const rawCave = legacyMeta.cave ?? {};
+    const cave = { ...zeroCave };
+    for (const room of ROOMS) {
+      const v = rawCave[room];
+      cave[room] = typeof v === 'number' ? Math.max(0, Math.min(CAVE_LEVEL_MAX, Math.floor(v))) : 0;
+    }
+    const legacyCodex = legacyMeta.codex ?? {};
+    const str = (k: keyof CodexBits): string => (typeof legacyCodex[k] === 'string' ? (legacyCodex[k] as string) : '');
+    const meta: MetaState = {
+      ...legacyMeta,
+      cave,
+      codex: {
+        encounters: str('encounters'),
+        artifacts: str('artifacts'),
+        realms: str('realms'),
+        pills: str('pills'),
+        arts: str('arts'),
+        herbs: str('herbs'),
+      },
+    };
+    if (!old.run) return { ...old, v: 6, meta, checksum: checksumOf(meta, null) };
+    const run = old.run as RunState & { legacyCave?: RunState['legacyCave'] };
+    const migrated: RunState = { ...run, legacyCave: run.legacyCave ?? { ...zeroCave } };
+    return { ...old, v: 6, meta, run: migrated, checksum: checksumOf(meta, migrated) };
   },
 };
 

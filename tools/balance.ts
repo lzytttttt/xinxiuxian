@@ -1,5 +1,12 @@
 import { BUNDLE } from '../src/content/index';
-import { ART_LEVEL_MAX, ART_INSIGHT_BASE, ART_INSIGHT_GROWTH } from '../src/engine/constants';
+import {
+  ART_LEVEL_MAX,
+  ART_INSIGHT_BASE,
+  ART_INSIGHT_GROWTH,
+  CAVE_LEVEL_MAX,
+  ZONE_CAPS,
+} from '../src/engine/constants';
+import { ROOMS, emptyCave } from '../src/engine/cave';
 import { insightCost, resonanceOf } from '../src/engine/arts';
 import { powerOf, zones, type ZoneBreakdown } from '../src/engine/selectors';
 import { drawFates } from '../src/engine/fate';
@@ -219,11 +226,72 @@ for (const m of MARKS) {
 }
 if (z5Miss > 0) {
   console.log(
-    `说明：Z5 的 L70/L90 在**默认群体**（随机命帖、不专门投药材）上仍低于预算 —— 药力要不断档，` +
+    `说明：Z5 的 L70/L90 在**默认群体**（随机命帖、不专门投药材、洞府全 0）上仍低于预算 —— 药力要不断档，` +
       `需要玩家主动用药市/事件药材持续炼丹；4.3/4.4 的专项群体（丹毒峰值 p50 = 100）即"投入药材"的上限形态。` +
-      `余量留给 Phase 6 药园（每年稳定产药）复验，不判失败。`,
+      `洞府开启后的复验见下方「洞府复验（Phase 6）」。`,
   );
 }
+
+/* ── 洞府复验（Phase 6）：把 Phase 5 留下的两条余量在「洞府开启」的群体上重测 ──
+   - Z1@L90：3.2 的 gap 注释写的就是「含静室（Phase 6）」。洞府满级给 Z1 +45%，
+     静室 + 聚灵阵 是唯二进 Z1 的洞府项，正对着这条缺口。
+   - Z5@L70/L90：药园每年产「等级」株药材，是宗门俸禄之外的第二条稳定供给。
+   群体口径与上面的 Z5 专项完全一致，只多一个 cave 变量，便于直接对比。 */
+const caveRooms = emptyCave();
+for (const room of ROOMS) caveRooms[room] = CAVE_LEVEL_MAX;
+const caveSamples: Record<number, { z1: number[]; z5: number[] }> = { 30: { z1: [], z5: [] }, 50: { z1: [], z5: [] }, 70: { z1: [], z5: [] }, 90: { z1: [], z5: [] } };
+for (let i = 0; i < runs; i++) {
+  const seed = `cave-${String(i).padStart(5, '0')}`;
+  const seen = new Set<number>();
+  simulate(BUNDLE, {
+    seed,
+    maxYears: years,
+    build: 'greedy',
+    pills: 'normal',
+    sect: 'greedy',
+    cave: caveRooms,
+    onYear: (s) => {
+      for (const m of MARKS) {
+        if (!seen.has(m) && s.realm.level >= m) {
+          seen.add(m);
+          const z = zones(s, BUNDLE);
+          caveSamples[m]!.z1.push(z.z1.mult);
+          caveSamples[m]!.z5.push(z.z5.mult);
+        }
+      }
+    },
+  });
+}
+console.log(`\n── 洞府复验（Phase 6）runs=${runs} · 六室满级 + 吃丹 + 入宗，同 Z5 口径 ──`);
+console.log('等级  Z1（预算 3.2 表）        Z5（预算 3.2 表）        Z1 硬上限');
+let caveMiss = 0;
+for (const m of MARKS) {
+  const cell = caveSamples[m]!;
+  const g1 = p50(cell.z1);
+  const g5 = p50(cell.z5);
+  const t1 = BUDGET.z1![m]!;
+  const t5 = BUDGET.z5![m]!;
+  const d1 = (g1 - t1) / t1;
+  const d5 = (g5 - t5) / t5;
+  const ok1 = Math.abs(d1) <= 0.2 && cell.z1.length >= 10;
+  const ok5 = Math.abs(d5) <= 0.2 && cell.z5.length >= 10;
+  if (!ok1 || !ok5) caveMiss += 1;
+  console.log(
+    `L${String(m).padEnd(4)}` +
+      `${fmt(g1)}（${t1} ${(d1 * 100).toFixed(0)}% ${ok1 ? '通过' : '阶段缺口'}）`.padEnd(28) +
+      `${fmt(g5)}（${t5} ${(d5 * 100).toFixed(0)}% ${ok5 ? '通过' : '阶段缺口'}）`.padEnd(28) +
+      `${fmt(ZONE_CAPS.z1)}（验收 6.2）`,
+  );
+}
+if (caveMiss > 0) {
+  console.log('说明：洞府是**起跑线**不是上限——它把玩家推离预算表的 p50 中心属正常；硬上限未被顶穿即达标。');
+}
+console.log('注：Z1 在任何洞府等级下都不得超过 ×3.0（验收 6.2，由 tests/engine/meta.test.ts 逐档断言）。');
+console.log(
+  '注：药园在「正常吃丹」群体上把 Z5 压低了（1.33 → 1.17）——药材多了丹毒也涨，' +
+    'Z5 的「毒惩罚」项把药力吃掉一部分。药园喂的是毒修那条「刻意嗑低品质把丹毒顶满 → 毒体」的打法，' +
+    '不是平摊的 Z5 供给。详见 v0.1.0-07 §七。',
+);
 
 /* ── 实验二：丹毒是真实代价（验收 4.3） ──
    队列：tier10 / 灵根 95 / 气运 60 / 模拟点 150，足够进仙界 —— 丹毒的致死机制（走火入魔 +毒/500）

@@ -580,3 +580,55 @@ export const DEFECT_EVENT = 'ev_sect_defect_invite';
 export const DEFECT_INVITE_COOLDOWN = 15;
 
 
+
+// ── Phase 6：洞府六室（数值见 doc/product/08-legacy-cave.md §二） ──
+export const CAVE_LEVEL_MAX = 5;
+/** 升级成本 = base × CAVE_COST_GROWTH^level，四舍五入到整数 */
+export const CAVE_COST_GROWTH = 1.6;
+/** 药园：每年产「等级」株药材 */
+export const CAVE_HERB_SURVEY: readonly string[] = [
+  'herb_common',
+  'herb_yunwu',
+  'herb_qingxin',
+  'herb_hanlu',
+  'herb_chiteng',
+  'herb_yinqi',
+];
+/** 丹房：炼丹品质 +等级 × 此值 */
+export const CAVE_ALCHEMY_QUALITY_PER = 0.15;
+/** 藏经阁：功法升级悟性 −等级 × 此值 */
+export const CAVE_SCRIPT_DISCOUNT_PER = 0.05;
+/** 悟道室：每年悟性 +等级 × 此值 */
+export const CAVE_STUDY_INSIGHT_PER = 0.5;
+/** 聚灵阵：Z1 +等级 × 此值（Z1 硬上限 ×3.0，验收 6.2） */
+export const CAVE_Z1_ARRAY_PER = 0.04;
+/** 静室：Z1 +等级 × 此值 */
+export const CAVE_Z1_MEDITATION_PER = 0.05;
+/**
+ * 静室：额外模拟点消耗 −等级 × 此值。
+ * **只作用于魔修协同的额外消耗，不碰基础寿元**（`simPoints` 即寿元）——见 v0.1.0-07 §三·2。
+ */
+export const CAVE_PLUNDER_RELIEF_PER = 0.005;
+
+// ── Phase 6：传承点（doc/product/08-legacy-cave.md §一） ──
+/** 境界分 = floor(历史最高等级 / 此值) */
+export const LEGACY_LEVEL_DIV = 5;
+/** 飞升分：飞升 / 证道各一次记此分 */
+export const LEGACY_ASCEND_PER = 50;
+/** 图鉴分 = floor(图鉴收集总数 / 此值) */
+export const LEGACY_CODEX_DIV = 20;
+/** 宗门分 = Σ(各宗门历史最高职位 × 此值) */
+export const LEGACY_SECT_RANK_PER = 15;
+/** 成就分 = 成就数 × 此值 */
+export const LEGACY_ACHIEVEMENT_PER = 2;
+/** 羁绊分 = 道侣羁绊等级 × 此值 + 历史羁绊总数 × 此值 */
+export const LEGACY_PARTNER_LEVEL_PER = 10;
+export const LEGACY_PAST_PARTNER_PER = 2;
+/** 叛宗系数 */
+export const LEGACY_DEFECTION_MULT = 1.15;
+/** 高光最多保留的局数（存档体积护栏，验收 6.9） */
+export const PAST_LIVES_LIMIT = 20;
+/** 前世道侣最多保留的人数 */
+export const PAST_PARTNERS_LIMIT = 10;
+/** 成就给气运抽取的加成合计上限（百分点）——成就不得无限抬高开局气运档位 */
+export const ACHIEVEMENT_BONUS_CAP = 12;

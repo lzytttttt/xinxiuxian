@@ -9,6 +9,7 @@ import {
 } from './arts';
 import { pillBuffPower } from './alchemy';
 import { friendZ6Bonus, teacherInsight } from './bonds';
+import { studyInsight, z1CaveBonus } from './cave';
 import { sectArtifactBonus } from './sect';
 import {
   AGE_COEF_LATE,
@@ -221,7 +222,10 @@ function artSources(
 export function zones(s: RunState, c: ContentBundle): ZoneBreakdown {
   const base = basePowerOf(s);
 
-  const z1 = zoneOf('z1', artSources(s, c, 'z1'));
+  const z1Sources: ZoneSource[] = [...artSources(s, c, 'z1')];
+  const caveZ1 = z1CaveBonus(s);
+  if (caveZ1 > 0) z1Sources.push({ label: '洞府·聚灵阵/静室', delta: caveZ1, kind: 'cave' });
+  const z1 = zoneOf('z1', z1Sources);
 
   const pillSrc = (zone: 'z2' | 'z3' | 'z5' | 'z6', label: string): ZoneSource[] => {
     const power = pillBuffPower(s, zone);
@@ -374,9 +378,9 @@ export function xianqiRate(s: RunState): number {
   return 0;
 }
 
-/** 每年悟性：基础 1 + 境界档，师徒羁绊每级 +1（Phase 5） */
+/** 每年悟性：基础 1 + 境界档，师徒羁绊每级 +1（Phase 5），悟道室 +等级 × 0.5（Phase 6） */
 export function insightPerYear(s: RunState): number {
-  return 1 + Math.floor(s.realm.level / 20) + teacherInsight(s);
+  return 1 + Math.floor(s.realm.level / 20) + teacherInsight(s) + studyInsight(s);
 }
 
 export function readTarget(s: RunState, t: Target): number {
