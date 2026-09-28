@@ -19,6 +19,7 @@ import {
   type CraftResult,
 } from '../engine/alchemy';
 import { applyChoice, rollYear } from '../engine/tick';
+import { applyStartEffects } from '../engine/replay';
 import {
   acceptMission,
   joinSect,
@@ -32,6 +33,8 @@ import { recordPowerTrail, zones, type ZoneBreakdown } from '../engine/selectors
 import { LOG_LIMIT } from '../engine/constants';
 import type { ArtDef, ContentBundle, Decision } from '../engine/types/effects';
 import { useMetaStore, legacyInjection, settleRun } from './metaStore';
+import { useSettingsStore } from './settingsStore';
+import { doctrineEffects } from './doctrines';
 import type { RngBag } from '../engine/types/rng';
 import type { BatchState, RunState } from '../engine/types/run';
 import { createSaver, loadEnvelope, shouldPersistYear } from './persistence';
@@ -47,7 +50,6 @@ export interface RunStoreState {
   running: boolean;
   ended: string | null;
   version: number;
-  tickMs: number;
   refreshCards: () => void;
   pickCard: (card: CharCard) => void;
   chooseStarter: (artId: string) => void;
@@ -129,7 +131,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       }
       current.tickOnce();
       loop();
-    }, state.tickMs);
+    }, useSettingsStore.getState().settings.tickMs);
     timer = nextTimer;
   };
 
@@ -177,7 +179,6 @@ export const useRunStore = create<RunStoreState>((set, get) => {
     running: false,
     ended: null,
     version: 0,
-    tickMs: 300,
 
     starterOptions: [],
     pendingCard: null,
@@ -230,6 +231,7 @@ export const useRunStore = create<RunStoreState>((set, get) => {
       });
       grantArt(run, artId, content);
       run.slots[0] = artId;
+      applyStartEffects(run, doctrineEffects(legacy.doctrines, content), content);
       slot.run = run;
       set({
         run,

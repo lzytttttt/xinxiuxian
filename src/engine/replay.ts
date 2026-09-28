@@ -1,11 +1,28 @@
 import { createRun, drawCard, type CharCard } from './newRun';
-import { grantStarterArt } from './arts';
+import { grantArt, grantStarterArt } from './arts';
 import { makeRngBag } from './rng';
 import { applyChoice, rollYear } from './tick';
 import type { ContentBundle, Decision } from './types/effects';
 import type { LogLine } from './types/log';
 import type { RngBag } from './types/rng';
 import type { DecisionRecord, CaveLevels, PastPartnerRef, RunState } from './types/run';
+
+/** 跨局注入的起手包。**引擎只接收已解析的原始效果**，不认识道统表本身 */
+export interface StartEffects {
+  /** 持有（不占槽）的功法 id */
+  art?: string[];
+  /** 直接标记为已知的丹方 id */
+  recipe?: string[];
+  /** 起手持有的药材与株数 */
+  herb?: [string, number][];
+}
+
+/** 把起手包落到新局上。`runRun` 与 store 的 `chooseStarter` 共用同一份实现 */
+export function applyStartEffects(s: RunState, fx: StartEffects, content: ContentBundle): void {
+  for (const id of fx.art ?? []) grantArt(s, id, content);
+  for (const id of fx.recipe ?? []) s.recipes[id] = { known: true, mastery: 0 };
+  for (const [id, n] of fx.herb ?? []) s.herbs[id] = (s.herbs[id] ?? 0) + n;
+}
 
 export interface RunOptions {
   seed: string;
@@ -15,6 +32,8 @@ export interface RunOptions {
   battlePolicy?: RunState['battlePolicy'];
   /** 开局三选一的结果：入道即得的功法 id（由调用方决定，引擎只落地） */
   startArts?: string[];
+  /** 前世道统解析出的起手包（功法持有 / 丹方已知 / 药材持有）。只给持有，不占槽、不改概率 */
+  startEffects?: StartEffects;
   /** 开局 flag（如洞府解锁的 `dao_seat`）；平衡对照用 */
   startFlags?: Record<string, number>;
   /** 前世道侣：由边界层（store / simlib）从 MetaState 取出后注入（引擎不读 MetaState） */
@@ -60,6 +79,7 @@ export function runRun(content: ContentBundle, opts: RunOptions, answer: AnswerF
     cave: opts.cave ?? null,
   });
   for (const id of opts.startArts ?? []) grantStarterArt(s, id, content);
+  if (opts.startEffects) applyStartEffects(s, opts.startEffects, content);
   for (const [id, value] of Object.entries(opts.startFlags ?? {})) s.flags[id] = value;
   const logs: LogLine[] = [];
   let ended: string | null = null;

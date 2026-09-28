@@ -4,23 +4,29 @@ import { CAVE_LEVEL_MAX } from '../../engine/constants';
 import { ROOMS, ROOM_META } from '../../engine/cave';
 import { canUpgradeCave, caveUpgradeCost, codexCountOf } from '../../engine/meta';
 import { slotCount } from '../../engine/arts';
+import { buyableDoctrines, canBuyDoctrine } from '../../store/doctrines';
 import { PowerBreakdown } from '../panels/PowerBreakdown';
 import type { RoomId } from '../../engine/types/run';
 
 /* 洞天：跨局层的花销界面。六室用传承点升级，效果全部落在已封顶的乘区或资源侧——
-   洞府买的是「起跑线更高」，不是「上限更高」（product/08-legacy-cave.md §四）。 */
+   洞府买的是「起跑线更高」，不是「上限更高」（product/08-legacy-cave.md §四）。
+   道统是洞府满级之后的第二出口：同样只买持有与已知，不买概率。 */
 
 export function Cave() {
   const run = useRunStore((s) => s.run);
   const version = useRunStore((s) => s.version);
+  const content = useRunStore((s) => s.content);
   const meta = useMetaStore((s) => s.meta);
   const upgrade = useMetaStore((s) => s.upgrade);
+  const buy = useMetaStore((s) => s.buy);
   void version;
   if (!run) return null;
 
   const points = meta.legacyPoints;
   const totalLevels = ROOMS.reduce((a, room) => a + (meta.cave[room] ?? 0), 0);
   const slots = slotCount(run);
+  const catalog = buyableDoctrines(content);
+  const owned = new Set(meta.doctrines);
 
   return (
     <>
@@ -64,6 +70,54 @@ export function Cave() {
                 onBuy={() => upgrade(room)}
               />
             ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-title">
+            <span>前世道统</span>
+            <span className="hint">
+              已承 <span className="num">{owned.size}</span> / {catalog.length}
+            </span>
+          </div>
+          <div className="panel-body">
+            <p className="hint">
+              洞府满级之后传承点无处可花，这是第二个出口。道统给的是**起手就持有**——
+              功法给持有不占槽、丹方给已知、药材给存量。买不到的东西：灵根、突破概率、寿元。
+              传承能让你少走弯路，改不了你走的路。
+            </p>
+            {(['art', 'recipe', 'herb'] as const).map((kind) => {
+              const rows = catalog.filter((d) => d.kind === kind);
+              if (rows.length === 0) return null;
+              return (
+                <div key={kind} className="zone-block">
+                  <div className="zone-head">
+                    <span>{KIND_LABEL[kind]}</span>
+                  </div>
+                  {rows.map((d) => {
+                    const has = owned.has(d.id);
+                    const can = canBuyDoctrine(d.id, d.cost, points, meta.doctrines);
+                    return (
+                      <div className="zone-row" key={d.id}>
+                        <span className="zone-src">
+                          <b>{d.name}</b>
+                          <br />
+                          {d.text}
+                        </span>
+                        <button
+                          className="btn-soft"
+                          type="button"
+                          disabled={has || !can}
+                          onClick={() => buy(d.id, d.cost)}
+                        >
+                          {has ? '已承' : `${d.cost} 传承点`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -116,6 +170,12 @@ export function Cave() {
     </>
   );
 }
+
+const KIND_LABEL: Record<'art' | 'recipe' | 'herb', string> = {
+  art: '功法道统',
+  recipe: '丹方道统',
+  herb: '药圃道统',
+};
 
 function RoomRow({
   room,

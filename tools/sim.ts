@@ -221,10 +221,10 @@ if (has('--golden')) {
   console.log(
     `── 二十世进程（验收 6.1）lives=${lives} · 每世 ${runs} 局 × ${years} 年${control ? ' · 裸传承对照组' : ''} ──`,
   );
-  console.log('世次  洞府总等级  传承点余额  本世所得  成就数  等级 p50  等级 p90  战力 p50  寿元 p50');
+  console.log('世次  洞府总等级  道统数  传承点余额  本世所得  成就数  等级 p50  等级 p90  战力 p50  寿元 p50');
   for (const r of rows) {
     console.log(
-      `${String(r.life).padEnd(5)} ${String(r.caveLevels).padEnd(11)} ${String(r.legacyPoints).padEnd(11)} ` +
+      `${String(r.life).padEnd(5)} ${String(r.caveLevels).padEnd(11)} ${String(r.doctrineCount).padEnd(7)} ${String(r.legacyPoints).padEnd(11)} ` +
         `${String(r.gained).padEnd(9)} ${String(r.achievements).padEnd(7)} ${String(r.levelP50).padEnd(9)} ` +
         `${String(r.levelP90).padEnd(9)} ${r.powerP50.toExponential(2).padEnd(10)} ${r.yearsP50}`,
     );
@@ -241,7 +241,7 @@ if (has('--golden')) {
     console.log(`等级 p50：第 1 世 ${first.levelP50} → 第 ${last.life} 世 ${last.levelP50}，比值 ${ratio.toFixed(3)}（判据 ≤ ${budget}）`);
     console.log(`等级 p90：第 1 世 ${first.levelP90} → 第 ${last.life} 世 ${last.levelP90}`);
     console.log(`战力 p50：第 1 世 ${first.powerP50.toExponential(2)} → 第 ${last.life} 世 ${last.powerP50.toExponential(2)}`);
-    console.log(`洞府：第 ${last.life} 世共 ${last.caveLevels}/30 级，传承点余额 ${last.legacyPoints}`);
+    console.log(`洞府：第 ${last.life} 世共 ${last.caveLevels}/30 级；道统 ${last.doctrineCount} 条；传承点余额 ${last.legacyPoints}`);
     console.log(`验收 6.1（传承不碾压）：${ok ? '通过' : '未达标'}`);
     process.exitCode = ok ? 0 : 1;
   }

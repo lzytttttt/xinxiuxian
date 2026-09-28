@@ -112,6 +112,23 @@
 | 7.5 | 视觉强度设置 | 低/中/高 门控 `劫雷` 与 `飞升` |
 | 7.6 | 两端试玩 | 新存档与满传承存档各 2 小时，手感都不崩 |
 
+**实测结果（2026-09-27，`npm run verify` exit 0）**：
+
+| # | 判据 | 命令 | 实测 | |
+|---|---|---|---|---|
+| 7.1 | 事件 ≥200、平均选项 ≥2.4 | `npm run content:stats` | 225 事件 / 604 选项 / **平均 2.68**；单选事件 **75 → 0** | ✓ |
+| 7.2 | 名称去重 | `npm run content:names:check` | 跨档零重复（机缘每档 ≥146、法宝每档 ≥162） | ✓ |
+| 7.3 | 无障碍 | `npx vitest run --project ui` | 14 条断言：两弹层共用焦点陷阱、初始聚焦、Tab 双向回卷、决策弹层 Esc **不可**关、终局弹层 Esc 可关 | ✓ |
+| 7.4 | 对比度 | `npm run a11y:contrast` | 29 项非豁免组合全过；豁免项显式列名 | ✓ |
+| 7.5 | 视觉强度 | `npx vitest run --project ui` | 低档关三处演出；设置落独立键 `xiuxian.settings`；存档损坏后仍在 | ✓ |
+| 7.6 | 两端试玩 | 人工 | **未做** —— 见 [v0.1.0-08 §七·7](v0.1.0-08-polish-balance.md) | ⏳ |
+
+7.1 的平均选项数已由 `tools/validate-content.ts` **作为 error 级断言进 verify**，不达标会红。
+
+不得回归的旧断言（Phase 7 后复测）：**6.1** 20 世 53 → 61 = **1.151**（与 Phase 6 一致）·
+**3.1** `P` 比值 L30/50/70/90 = 2.12 / 2.48 / 2.86 / 4.12 · **5.1** 散修 p50 = 23、p90 = 64 ≥ 宗门 p10 = 32 ·
+**1.1/1.2** 黄金回归与分位标定与新基线逐字节一致。
+
 ---
 
 ## 二、全局红线（任何阶段都必须成立）
@@ -137,7 +154,7 @@
 
 ```bash
 # 一次性全量验证
-npm run verify            # = typecheck + lint + test + content + balance + golden + pacing
+npm run verify            # = typecheck + lint + test + content + names + contrast + balance + golden
 
 # 分项
 tsc -b                                        # 类型与引擎纯净
@@ -149,6 +166,9 @@ tsx tools/sim.ts --golden                     # 黄金回归
 tsx tools/sim.ts --calibrate                  # 分位标定
 tsx tools/sim.ts --pacing                     # 单局节奏
 npm run sim:lives                               # 传承不碾压（二十世进程）
+npm run a11y:contrast                           # 对比度实测（7.4）
+npx vitest run --project ui                     # 无障碍与设置（7.3 / 7.5）
+npx tsx tools/gen-fixture.ts <N>                 # 生成 save-vN.json（存档迁移新增字段时）
 ```
 
 ---

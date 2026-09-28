@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { realmName } from './engine/selectors';
 import { useRunStore } from './store/runStore';
+import { useSettingsStore } from './store/settingsStore';
 import { DecisionModal } from './ui/components/DecisionModal';
 import { Alchemy } from './ui/screens/Alchemy';
 import { Bonds } from './ui/screens/Bonds';
@@ -11,12 +12,13 @@ import { Cultivate } from './ui/screens/Cultivate';
 import { Home } from './ui/screens/Home';
 import { Sect } from './ui/screens/Sect';
 import { Self } from './ui/screens/Self';
+import { Settings } from './ui/screens/Settings';
 
 /* 外壳：左栏（品牌/境界）+ 主屏 + 右栏（由各屏自绘）+ 移动端底部导航。
    决策弹层挂在外壳层：任何屏（修炼/吾身）下都必须能看到并结算。 */
 
-type Screen = '修炼' | '构筑' | '炼丹' | '宗门' | '羁绊' | '洞天' | '图鉴' | '吾身';
-const NAV = ['修炼', '构筑', '炼丹', '宗门', '羁绊', '洞天', '图鉴', '吾身'];
+type Screen = '修炼' | '构筑' | '炼丹' | '宗门' | '羁绊' | '洞天' | '图鉴' | '吾身' | '设置';
+const NAV = ['修炼', '构筑', '炼丹', '宗门', '羁绊', '洞天', '图鉴', '吾身', '设置'];
 
 function Ribbon({ children }: { children: ReactNode }) {
   return (
@@ -41,8 +43,16 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('修炼');
   void version;
 
+  const intensity = useSettingsStore((s) => s.settings.visualIntensity);
+  const reducedMotion = useSettingsStore((s) => s.settings.reducedMotion);
+  const modalOpen = Boolean(run && pending && !ended);
+
   return (
-    <>
+    <div
+      data-intensity={intensity}
+      data-reduced-motion={reducedMotion ? 'on' : 'off'}
+      aria-hidden={modalOpen ? true : undefined}
+    >
       <div className="shell">
         <aside className="rail">
           <div className="brand">
@@ -82,7 +92,7 @@ export default function App() {
             </ul>
           </nav>
           <p className="hint">
-            Phase 6：传承与洞府已上线（传承点结算 / 洞府六室 / 成就图鉴高光榜 / 本地三榜）。
+            Phase 7：打磨与平衡。视觉强度、减弱动效与调速在「设置」屏。
           </p>
         </aside>
 
@@ -102,6 +112,8 @@ export default function App() {
           <Cave />
         ) : screen === '图鉴' ? (
           <Codex />
+        ) : screen === '设置' ? (
+          <Settings />
         ) : (
           <Cultivate />
         )}
@@ -120,6 +132,6 @@ export default function App() {
           </button>
         ))}
       </nav>
-    </>
+    </div>
   );
 }

@@ -18,13 +18,6 @@ export interface PastPartner {
   level: number;
 }
 
-export interface UiSettings {
-  reducedMotion: boolean;
-  visualIntensity: 'low' | 'mid' | 'high';
-  textSpeed: number;
-  tickMs: number;
-}
-
 export interface MetaTotals {
   runs: number;
   years: number;
@@ -51,10 +44,11 @@ export interface MetaState {
   sectLegacy: Record<string, number>;
   pastLives: LifeSummary[];
   pastPartners: PastPartner[];
+  /** 已购道统 id。**与 `unlocks` 分开**——`unlocks` 是「曾经见过」，整包注入会破 6.1 */
+  doctrines: string[];
   achievements: string[];
   codex: CodexBits;
   pity: number;
   autoPolicy: AutopilotConfig;
-  settings: UiSettings;
   totals: MetaTotals;
 }

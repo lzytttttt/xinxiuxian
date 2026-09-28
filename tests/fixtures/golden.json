@@ -149,8 +149,8 @@
   },
   {
     "seed": "golden-007",
-    "level": 26,
-    "cultivation": 2195,
+    "level": 27,
+    "cultivation": 2259,
     "fates": [
       "fate_trib_green:1",
       "fate_brk_gold:19"
@@ -187,8 +187,8 @@
   },
   {
     "seed": "golden-009",
-    "level": 12,
-    "cultivation": 416,
+    "level": 15,
+    "cultivation": 433,
     "fates": [
       "fate_root_green:1",
       "fate_luck_blue:1"
@@ -251,8 +251,8 @@
   },
   {
     "seed": "golden-012",
-    "level": 77,
-    "cultivation": 426981,
+    "level": 78,
+    "cultivation": 462781,
     "fates": [
       "fate_artifact_purple:15",
       "fate_trib_green:1"
@@ -341,7 +341,7 @@
   {
     "seed": "golden-016",
     "level": 39,
-    "cultivation": 3263,
+    "cultivation": 3265,
     "fates": [
       "fate_artifact_blue:7",
       "fate_trib_purple:5"
@@ -486,7 +486,7 @@
   {
     "seed": "golden-023",
     "level": 18,
-    "cultivation": 1571,
+    "cultivation": 1543,
     "fates": [
       "fate_luck_purple:5",
       "fate_artifact_green:2"
@@ -504,8 +504,7 @@
       "ev_early_errand_run",
       "ev_bond_meet_market",
       "ev_early_stone_milk",
-      "ev_early_wood_chop",
-      "ev_early_herb_plot"
+      "ev_early_wood_chop"
     ]
   },
   {
@@ -584,7 +583,7 @@
   {
     "seed": "golden-028",
     "level": 78,
-    "cultivation": 11937576,
+    "cultivation": 12245438,
     "fates": [
       "fate_artifact_gold:30",
       "fate_brk_purple:8"
@@ -823,7 +822,7 @@
   {
     "seed": "golden-040",
     "level": 49,
-    "cultivation": 4724,
+    "cultivation": 4731,
     "fates": [
       "fate_brk_green:1",
       "fate_root_blue:2"
@@ -880,7 +879,7 @@
   {
     "seed": "golden-043",
     "level": 13,
-    "cultivation": 407,
+    "cultivation": 414,
     "fates": [
       "fate_xianqi_green:4",
       "fate_trib_blue:3"

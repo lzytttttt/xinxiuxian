@@ -633,7 +633,8 @@ ul {
   color: var(--ink-3);
 }
 
-/* LogLine.fx 的视觉出口（Phase 1 由引擎置位） */
+/* LogLine.fx 的视觉出口（Phase 1 由引擎置位）。
+   三处是演出不是过渡：不受 --t-* 时长约束，但受「视觉强度」门控（验收 7.5）。 */
 .fx-trib {
   animation: 劫雷 420ms var(--ease) both;
 }
@@ -644,6 +645,23 @@ ul {
 
 .fx-ascend {
   animation: 飞升 2200ms var(--ease) both;
+}
+
+/* 视觉强度 低：关掉三处演出。过渡动画保留——它们是理解状态变化所必需的，
+   而全屏闪光不是。中/高同表现：默认档必须已经是设计者验证过的观感。 */
+[data-intensity='low'] .fx-trib,
+[data-intensity='low'] .fx-levelup,
+[data-intensity='low'] .fx-ascend {
+  animation: none;
+}
+
+/* 设置里的「减弱动效」独立于系统偏好：系统开关是 CSS 媒体查询覆盖不到的开机默认，
+   这里与 base.css 第九节的 prefers-reduced-motion 通配块同口径。 */
+[data-reduced-motion='on'] *,
+[data-reduced-motion='on'] *::before,
+[data-reduced-motion='on'] *::after {
+  animation: none !important;
+  transition: opacity var(--t-fast) !important;
 }
 
 /* ═══ 七、外壳布局 ═══ */
@@ -1284,8 +1302,41 @@ ul {
   color: var(--tone-gold);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .gauge-mark {
-    transition: none;
-  }
+/* ═══ 十一、设置屏 ═══ */
+
+.seg {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  color: var(--ink-2);
+}
+
+.switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-deep);
+}
+
+.switch input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.setting-note {
+  margin-top: var(--sp-3);
+}
+
+code {
+  padding: 1px 5px;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 0.9em;
 }

@@ -25,6 +25,7 @@ import { STARTER_ART_IDS } from '../src/content/arts/index';
 import { drawFates } from '../src/engine/fate';
 import { makeRngBag } from '../src/engine/rng';
 import { runRun, type AnswerFn, type RunOptions } from '../src/engine/replay';
+import { buyableDoctrines, buyDoctrine, doctrineEffects } from '../src/store/doctrines';
 import { powerOf, zones } from '../src/engine/selectors';
 import { aidBonus } from '../src/engine/bonds';
 import { emptyCave } from '../src/engine/cave';
@@ -79,6 +80,8 @@ export interface SimOptions extends RunOptions {
   cave?: CaveLevels;
   /** 开局气运抽取加成（累计成就给的百分点，验收 6.1） */
   goldBoost?: number;
+  /** 已购道统 id（验收 6.1 的第二组跨局变量） */
+  doctrines?: string[];
 }
 
 export interface SimOutcome {
@@ -391,6 +394,9 @@ function runOptions(
   if (opts.cave) out.cave = opts.cave;
   if (opts.pastPartner) out.pastPartner = opts.pastPartner;
   if (opts.goldBoost) out.goldBoost = opts.goldBoost;
+  if (opts.doctrines && opts.doctrines.length > 0) {
+    out.startEffects = doctrineEffects(opts.doctrines, content);
+  }
   if (card) out.card = card;
   const starterId = opts.starter === 'none' ? null : bestStarter(content);
   if (starterId) out.startArts = [starterId];
@@ -552,7 +558,7 @@ const CAVE_PRIORITY: readonly { room: RoomId; weight: number }[] = [
   { room: '药园', weight: 0.65 },
 ];
 
-function greedyUpgradeCave(meta: MetaState): void {
+function greedyUpgradeCave(meta: MetaState, content: ContentBundle): void {
   for (;;) {
     let spent = 0;
     let best: RoomId | null = null;
@@ -564,10 +570,28 @@ function greedyUpgradeCave(meta: MetaState): void {
       spent = cost;
       break;
     }
-    if (!best || spent === 0) return;
+    if (!best || spent === 0) break;
     const res = upgradeCave(meta.cave, best, meta.legacyPoints);
-    if (res.spent === 0) return;
+    if (res.spent === 0) break;
     meta.cave = res.cave;
+    meta.legacyPoints = res.points;
+  }
+  // **洞府之后买道统**：洞府是指数成本，越早买越划算，且满级即无收益可加；
+  // 道统是固定价、全表买满仍有剩余，正好吸收洞府封顶后堆积的传承点。
+  greedyBuyDoctrines(meta, content);
+}
+
+/** 按价格从低到高把买得起的道统全部吃掉 */
+function greedyBuyDoctrines(meta: MetaState, content: ContentBundle): void {
+  const owned = new Set(meta.doctrines);
+  const catalog = buyableDoctrines(content)
+    .filter((d) => !owned.has(d.id))
+    .sort((a, b) => a.cost - b.cost);
+  for (const d of catalog) {
+    if (d.cost > meta.legacyPoints) continue;
+    const res = buyDoctrine(d.id, d.cost, meta.legacyPoints, meta.doctrines);
+    if (!res.ok) continue;
+    meta.doctrines = res.doctrines;
     meta.legacyPoints = res.points;
   }
 }
@@ -575,6 +599,7 @@ function greedyUpgradeCave(meta: MetaState): void {
 export interface LifeRecord {
   life: number;
   caveLevels: number;
+  doctrineCount: number;
   legacyPoints: number;
   gained: number;
   achievements: number;
@@ -610,7 +635,7 @@ export function simulateLives(content: ContentBundle, opts: LivesOptions = {}): 
 
   for (let life = 1; life <= lives; life++) {
     const legacy = opts.noLegacy
-      ? { cave: emptyCave(), pastPartner: null, goldBoost: 0 }
+      ? { cave: emptyCave(), pastPartner: null, goldBoost: 0, doctrines: [] as string[] }
       : legacyInjection(meta);
     const levels: number[] = [];
     const powers: number[] = [];
@@ -630,6 +655,7 @@ export function simulateLives(content: ContentBundle, opts: LivesOptions = {}): 
         cave: legacy.cave,
         goldBoost: legacy.goldBoost,
         pastPartner: legacy.pastPartner,
+        doctrines: legacy.doctrines,
       });
       levels.push(res.level);
       powers.push(res.power);
@@ -652,12 +678,13 @@ export function simulateLives(content: ContentBundle, opts: LivesOptions = {}): 
       meta.codex = settled.meta.codex;
       meta.totals = settled.meta.totals;
       gained = settled.gained;
-      greedyUpgradeCave(meta);
+      greedyUpgradeCave(meta, content);
     }
     const sortedYears = lifeRuns.map((r) => r.years).sort((a, b) => a - b);
     out.push({
       life,
       caveLevels: Object.values(meta.cave).reduce((a, b) => a + b, 0),
+      doctrineCount: meta.doctrines.length,
       legacyPoints: meta.legacyPoints,
       gained,
       achievements: meta.achievements.length,

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { Decision } from '../../engine/types/effects';
+import { useFocusTrap } from './useFocusTrap';
 
 export function DecisionModal({
   decision,
@@ -9,38 +10,8 @@ export function DecisionModal({
   onChoose: (choiceId: string) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const node = boxRef.current;
-    if (!node) return;
-
-    const focusables = () =>
-      Array.from(
-        node.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-
-    focusables()[0]?.focus();
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return;
-      const items = focusables();
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [decision.eventId]);
+  // 决策是引擎的硬停点：不传 onEscape，Esc 不能关掉它（验收 2.1）
+  useFocusTrap(boxRef, true);
 
   const visible = decision.choices.filter((c) => c.show);
   const dots = (n: number): string => '●'.repeat(n) + '○'.repeat(3 - n);

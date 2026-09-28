@@ -8,7 +8,7 @@ import type { DeferredEntry, RunState } from '../engine/types/run';
 
 export const SAVE_KEY = 'xiuxian.save';
 export const SETTINGS_KEY = 'xiuxian.settings';
-export const CURRENT_VERSION = 6;
+export const CURRENT_VERSION = 7;
 
 export interface SaveEnvelope {
   v: number;
@@ -31,11 +31,11 @@ export function defaultMeta(): MetaState {
     sectLegacy: {},
     pastLives: [],
     pastPartners: [],
+    doctrines: [],
     achievements: [],
     codex: { encounters: '', artifacts: '', realms: '', pills: '', arts: '', herbs: '' },
     pity: 0,
     autoPolicy: { battlePolicy: 'manual', smartX: 1 },
-    settings: { reducedMotion: false, visualIntensity: 'mid', textSpeed: 1, tickMs: 300 },
     totals: { runs: 0, years: 0, ascensions: 0, zhengdao: 0, bestLevel: 0 },
   };
 }
@@ -203,6 +203,27 @@ export const MIGRATIONS: Record<number, (env: unknown) => unknown> = {
     const run = old.run as RunState & { legacyCave?: RunState['legacyCave'] };
     const migrated: RunState = { ...run, legacyCave: run.legacyCave ?? { ...zeroCave } };
     return { ...old, v: 6, meta, run: migrated, checksum: checksumOf(meta, migrated) };
+  },
+  // v6 → v7：Phase 7 前世道统。
+  //  - MetaState 增 doctrines（已购道统 id）。**不复用 unlocks**：unlocks 累积「曾经见过」，
+  //    整包注入等于跨局白送构筑，会破 6.1（见 v0.1.0-08 §三·4）
+  //  - MetaState 去 settings：设置改存独立键 xiuxian.settings（tech/03-persistence.md §六）
+  6: (env) => {
+    const old = env as SaveEnvelope;
+    const legacyMeta = old.meta as MetaState & {
+      doctrines?: unknown;
+      settings?: unknown;
+    };
+    const { settings, ...kept } = legacyMeta;
+    void settings;
+    const meta: MetaState = {
+      ...kept,
+      doctrines: Array.isArray(legacyMeta.doctrines)
+        ? legacyMeta.doctrines.filter((d): d is string => typeof d === 'string')
+        : [],
+    };
+    if (!old.run) return { ...old, v: 7, meta, checksum: checksumOf(meta, null) };
+    return { ...old, v: 7, meta, run: old.run, checksum: checksumOf(meta, old.run) };
   },
 };
 

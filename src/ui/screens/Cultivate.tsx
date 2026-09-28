@@ -1,9 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { powerOf, realmName, talentTier } from '../../engine/selectors';
 import { TALENT_NAMES, TOXICITY_MAX } from '../../engine/constants';
 import { useRunStore } from '../../store/runStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { LogFeed } from '../components/LogFeed';
 import { PowerBreakdown } from '../panels/PowerBreakdown';
+import { useFocusTrap } from '../components/useFocusTrap';
 import type { CSSProperties } from 'react';
 
 const END_TEXT: Record<string, string> = {
@@ -16,14 +18,23 @@ const END_TEXT: Record<string, string> = {
   voluntary: '你主动结束了这一世的修行。',
 };
 
+const SPEEDS: readonly { ms: number; label: string }[] = [
+  { ms: 600, label: '缓' },
+  { ms: 300, label: '常' },
+  { ms: 120, label: '疾' },
+];
+
 export function Cultivate() {
   const run = useRunStore((s) => s.run);
   const ended = useRunStore((s) => s.ended);
   const running = useRunStore((s) => s.running);
   const version = useRunStore((s) => s.version);
-  const tickMs = useRunStore((s) => s.tickMs);
+  const tickMs = useSettingsStore((s) => s.settings.tickMs);
+  const patchSettings = useSettingsStore((s) => s.patch);
   const setRunning = useRunStore((s) => s.setRunning);
   const abandon = useRunStore((s) => s.abandon);
+  const endRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(endRef, Boolean(ended), abandon);
 
   useEffect(() => {
     const onHide = () => {
@@ -84,7 +95,19 @@ export function Cultivate() {
           </div>
           <LogFeed lines={run.log} version={version} />
           <p className="hint">
-            速度 {tickMs}ms/年（Phase 6 开放调速与结算）
+            速度
+            {SPEEDS.map((s) => (
+              <button
+                key={s.ms}
+                type="button"
+                className="btn-ghost"
+                aria-pressed={tickMs === s.ms}
+                onClick={() => patchSettings({ tickMs: s.ms })}
+              >
+                {s.label}
+              </button>
+            ))}
+            <span className="num">{tickMs}</span> ms/年 · 改动即时生效，存在本机设置里
           </p>
         </section>
       </main>
@@ -161,7 +184,13 @@ export function Cultivate() {
 
       {ended ? (
         <div className="mask">
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="end-title">
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="end-title"
+            ref={endRef}
+          >
             <h2 className="modal-title" id="end-title">
               一世终了
             </h2>
@@ -179,6 +208,7 @@ export function Cultivate() {
                 <span>享年</span>
                 <span className="num">{run.age}</span>
               </div>
+              <p className="hint">Esc 或「重新入道」皆可离开。传承点与图鉴已入账。</p>
             </div>
             <div className="modal-actions">
               <button className="btn" type="button" onClick={abandon}>

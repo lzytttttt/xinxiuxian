@@ -111,10 +111,12 @@
   --shadow-input-3d: 0 3px 0 0 #d4c9b4;
   --shadow-track: inset 0 2px 4px rgba(114, 93, 66, 0.15);
 
-  /* ── 焦点：黄。绝不用蓝色焦点环 */
-  --focus-ring: #ffcc00;
-  --focus-ring-warn: #f5c31c;
-  --focus-ring-btn: #19c8b9;
+  /* ── 焦点：黄。绝不用蓝色焦点环
+     浅底上「纯黄」不可见：原始 #ffcc00 on --bg-page 只有 1.42:1，够不上 WCAG 1.4.11 的 3:1。
+     保留色相、加深明度，由 tools/contrast.ts 实测守线。 */
+  --focus-ring: #a07f00; /* 输入/开关焦点环  3.56:1 on --bg-page */
+  --focus-ring-warn: #8a6a00; /* 单选焦点环      4.75:1 */
+  --focus-ring-btn: #0f8a80; /* 按钮焦点环      3.96:1 */
 
   /* ── 氛围：羊皮纸波点 + 双色柔光 */
   --dots: rgba(114, 93, 66, 0.055);

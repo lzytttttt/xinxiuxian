@@ -19,6 +19,7 @@ import fixtureV2 from '../fixtures/save-v2.json';
 import fixtureV3 from '../fixtures/save-v3.json';
 import fixtureV4 from '../fixtures/save-v4.json';
 import fixtureV5 from '../fixtures/save-v5.json';
+import fixtureV6 from '../fixtures/save-v6.json';
 
 const EV_TWO = defineEvent({
   id: 'ev_migrate_two',
@@ -42,17 +43,29 @@ const EV_TWO = defineEvent({
 
 const bundle: ContentBundle = { events: [EV_TWO] as EventDef[], fates: [], rollTables: [] };
 
+/** 跑迁移链到 `upTo`（含）。测**单步**时用 `MIGRATIONS[v]!(migrateTo(fixture, v))` */
+function migrateTo(env: SaveEnvelope, upTo: number): SaveEnvelope {
+  let cur = env;
+  while (cur.v < upTo) {
+    const s = MIGRATIONS[cur.v];
+    if (!s) throw new Error(`no migration from v${cur.v}`);
+    cur = s(cur) as SaveEnvelope;
+  }
+  return cur;
+}
+
 const FIXTURES: [string, number, SaveEnvelope][] = [
   ['save-v1.json', 1, fixtureV1 as unknown as SaveEnvelope],
   ['save-v2.json', 2, fixtureV2 as unknown as SaveEnvelope],
   ['save-v3.json', 3, fixtureV3 as unknown as SaveEnvelope],
   ['save-v4.json', 4, fixtureV4 as unknown as SaveEnvelope],
   ['save-v5.json', 5, fixtureV5 as unknown as SaveEnvelope],
+  ['save-v6.json', 6, fixtureV6 as unknown as SaveEnvelope],
 ];
 
 describe('存档迁移链（验收 6.4）', () => {
-  it('CURRENT_VERSION 为 6，且 MIGRATIONS 覆盖 v1..v5 每一步', () => {
-    expect(CURRENT_VERSION).toBe(6);
+  it('CURRENT_VERSION 为 7，且 MIGRATIONS 覆盖 v1..v6 每一步', () => {
+    expect(CURRENT_VERSION).toBe(7);
     // 缺任何一步，`migrate` 会在半路抛 MigrationError（下方另有断言）
     for (let v = 1; v < CURRENT_VERSION; v++) {
       expect(() => migrate({ v, meta: fixtureV1.meta, run: null })).not.toThrow();
@@ -93,7 +106,7 @@ describe('存档迁移链（验收 6.4）', () => {
   });
 
   it('v1 → v6：deferredQueue 转对象、powerTrail / 丹药 / 宗门 / 羁绊 / 洞府全部补默认', () => {
-    const v6 = migrate(fixtureV1 as unknown as SaveEnvelope);
+    const v6 = migrateTo(fixtureV1 as unknown as SaveEnvelope, 6);
     expect(v6.v).toBe(6);
     const run = v6.run as RunState;
     expect(run.decisionLog).toEqual([]);
@@ -115,7 +128,7 @@ describe('存档迁移链（验收 6.4）', () => {
 
   it('v5 → v6：codex 由三张位串补到六张，其余字段不动', () => {
     const v5 = fixtureV5 as unknown as SaveEnvelope;
-    const v6 = migrate(v5);
+    const v6 = migrateTo(v5, 6);
     expect(v6.v).toBe(6);
     expect(Object.keys(v6.meta.codex).sort()).toEqual(
       ['arts', 'artifacts', 'encounters', 'herbs', 'pills', 'realms'].sort(),
@@ -140,7 +153,7 @@ describe('存档迁移链（验收 6.4）', () => {
       },
     } as unknown as SaveEnvelope;
     legacy.checksum = checksumOf(legacy.meta, legacy.run);
-    const v6 = migrate(legacy);
+    const v6 = migrateTo(legacy, 6);
     expect(v6.meta.cave).toEqual({
       药园: CAVE_LEVEL_MAX,
       丹房: 0,
@@ -155,13 +168,13 @@ describe('存档迁移链（验收 6.4）', () => {
     const legacy = { ...(fixtureV5 as unknown as SaveEnvelope), v: 5 } as unknown as SaveEnvelope;
     delete (legacy.meta as unknown as Record<string, unknown>).cave;
     legacy.checksum = checksumOf(legacy.meta, legacy.run);
-    const v6 = migrate(legacy);
+    const v6 = migrateTo(legacy, 6);
     expect(Object.values(v6.meta.cave).every((v) => v === 0)).toBe(true);
     expect(Object.values((v6.run as RunState).legacyCave).every((v) => v === 0)).toBe(true);
   });
 
   it('v2 → v6：补 powerTrail、丹药、宗门与羁绊、洞府', () => {
-    const v6 = migrate(fixtureV2 as unknown as SaveEnvelope);
+    const v6 = migrateTo(fixtureV2 as unknown as SaveEnvelope, 6);
     const run = v6.run as RunState;
     expect(run.powerTrail).toBeNull();
     expect(run.pillBuffs).toEqual([]);
@@ -188,7 +201,7 @@ describe('存档迁移链（验收 6.4）', () => {
       },
     } as unknown as SaveEnvelope;
     legacy.checksum = checksumOf(legacy.meta, legacy.run);
-    const v6 = migrate(legacy);
+    const v6 = migrateTo(legacy, 6);
     const npc = v6.run?.bonds.list[0];
     expect(npc?.bondType).toBe('道侣');
     expect(npc?.bondLevel).toBe(4);
@@ -230,10 +243,50 @@ describe('存档迁移链（验收 6.4）', () => {
   });
 
   it('当前版本再迁移是恒等（不会重复改写）', () => {
-    const v6 = migrate(fixtureV1 as unknown as SaveEnvelope);
-    const again = migrate(v6);
-    expect(again.v).toBe(6);
-    expect(again.checksum).toBe(v6.checksum);
+    const v7 = migrate(fixtureV1 as unknown as SaveEnvelope);
+    const again = migrate(v7);
+    expect(again.v).toBe(7);
+    expect(again.checksum).toBe(v7.checksum);
+  });
+
+  it('v6 → v7：doctrines 补空数组，settings 从存档里剥掉（改存独立键）', () => {
+    const legacy = {
+      ...(fixtureV6 as unknown as SaveEnvelope),
+      v: 6,
+      meta: {
+        ...fixtureV6.meta,
+        settings: { reducedMotion: true, visualIntensity: 'low', textSpeed: 1, tickMs: 300 },
+      },
+    } as unknown as SaveEnvelope;
+    delete (legacy.meta as unknown as Record<string, unknown>).doctrines;
+    legacy.checksum = checksumOf(legacy.meta, legacy.run);
+
+    const v7 = migrate(legacy);
+    expect(v7.v).toBe(7);
+    expect(v7.meta.doctrines).toEqual([]);
+    expect('settings' in v7.meta).toBe(false);
+    expect(v7.run?.cultivation).toBe(legacy.run?.cultivation);
+    expect(() => verifyChecksum(v7)).not.toThrow();
+  });
+
+  it('v6 → v7：doctrines 里的非字符串项被丢弃，不带脏数据进存档', () => {
+    const legacy = {
+      ...(fixtureV6 as unknown as SaveEnvelope),
+      v: 6,
+      meta: { ...fixtureV6.meta, doctrines: ['doc_art_jian_q5', 42, null, { a: 1 }] },
+    } as unknown as SaveEnvelope;
+    legacy.checksum = checksumOf(legacy.meta, legacy.run);
+    expect(migrate(legacy).meta.doctrines).toEqual(['doc_art_jian_q5']);
+  });
+
+  it('v1 → v7：整条链一次跑通，校验和自洽', () => {
+    const v7 = migrate(fixtureV1 as unknown as SaveEnvelope);
+    expect(v7.v).toBe(7);
+    expect(v7.meta.doctrines).toEqual([]);
+    expect(() => verifyChecksum(v7)).not.toThrow();
+    const run = v7.run as RunState;
+    expect(run.legacyCave).toBeDefined();
+    expect(Object.keys(run.legacyCave)).toHaveLength(6);
   });
 
   it('RunState 增洞府后，旧档迁移来的局仍能读 cave（引擎不读 MetaState，6.3）', () => {

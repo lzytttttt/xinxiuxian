@@ -1466,6 +1466,61 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'seek_rope',
+        label: '先去谷底寻绳',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 55,
+            text: '你从谷底摸来一截旧麻绳，绕着树根打了死结，贴着绳子一寸寸挪到花前，连土带根摘下。',
+            tone: 'gold',
+            effects: [
+              { op: 'grantHerb', id: 'herb_qingxin', count: 2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '绳子磨在岩棱上断了一截。你把绳收回来，顺着崖壁把每一道石缝的位置记进了心里。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'take_root',
+        label: '舍了花，去掏崖根',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你蹲在崖脚，把指头探进石缝，一寸寸掏出那段盘在石里的根须，指尖麻了半日。',
+            tone: 'gold',
+            effects: [
+              { op: 'grantHerb', id: 'herb_yinqi', count: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '掏到一半，石缝里涌出一股冷气，手背麻了半晌。根没掏全，你却记住了那股寒意的来路。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1509,6 +1564,61 @@ export const MORTAL_EARLY = [
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: -2 },
               { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'drive_fire',
+        label: '举火把把它逼上石壁',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '火把横在兽径上，那畜生被光逼得后退半步，猎户的枪随即扎进它颈下。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '火苗燎着了你的眉毛，彘趁乱撞塌半堵土埂。你退到林边上，看猎户自己收了场。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'hold_net',
+        label: '守在网边不出手',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 60,
+            text: '彘撞进网里，被网绳勒得翻了两个跟头。猎户按规矩分你两斤肉，你把肉腌了留到开春。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 1 },
+              { op: 'add', target: { k: 'simPoints' }, value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你在网边蹲到月上梢。那畜生嗅出腥味，从网眼里踩了过去，你只带回一裤腿的露水。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
             ],
           },
         ],
@@ -1565,6 +1675,61 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'take_bowl',
+        label: '弯腰把碗端起来',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你弯腰把碗端起来，一口一口吃完。他愣了愣，此后见你便绕着灶台走。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你吃得太急，噎了一下午。灶房里从此没人来抢你的碗，也再没人肯同你一桌。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'catch_wrist',
+        label: '不扑上去，只扣他手腕',
+        hint: { risk: 2, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你侧身让开那一巴掌，反手扣住他手腕往下一带。他半个身子失了重心，碗落到你手里。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '你扣住了他，也被他一肘撞在胸口。两人各退三步，谁也没讨着好，碗还在地上。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1613,6 +1778,69 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'listen_well',
+        label: '伏在井口听',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你伏在井口听了整夜。那嗡鸣有起有伏，像有什么在极深的地方正一呼一吸地调息。',
+            tone: 'rare',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '夜风灌进井口，呜声叠了三层。你听了一宿，起身时手脚冻得发麻，什么也没听出来。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'drain_well',
+        label: '想法子把井水抽干',
+        hint: { risk: 2, reward: 3 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 2 }],
+        outcomes: [
+          {
+            weight: 45,
+            text: '你叫上两个挑水的孩子干了六日。水抽干，井底露出来：石台上嵌着一枚半埋的青玉。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'add', target: { k: 'luck' }, value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '绳桶断了七八只。井底露出来的是一堆烂铁，你白干了六日，只记清了哪一寸见底。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 25,
+            text: '抽到第四日，井壁塌了一角，浑水漫回坑里。管井的罚你挑了半月粪肥，井里仍是那个声音。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -3 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1655,6 +1883,60 @@ export const MORTAL_EARLY = [
             tone: 'red',
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: -3 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'take_blame',
+        label: '认下是自己浇坏的',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你说这几畦是你前日多浇了水。长老看了你半晌，只罚你把亏空补上，不必再挑十日粪肥。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '长老不信，把值日簿翻出来对了名。你被罚去守丹房，三个月不许出院门，苗还是蔫的。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'dig_root',
+        label: '撬开一株看根',
+        hint: { risk: 2, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你拿竹签撬开一株，根上爬着极细的白虫。你喊出声，长老当即把整畦换成了新苗。',
+            tone: 'gold',
+            effects: [
+              { op: 'grantHerb', id: 'herb_yinqi', count: 3 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 1 },
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '根早已烂透，一撬就断。你手上全是黑泥，长老看了半晌，叫你去把全圃旧土翻一遍。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
               { op: 'gainInsight', value: 2 },
             ],
           },
@@ -1707,6 +1989,59 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'smelt_sell',
+        label: '抬到铁匠铺熔了',
+        hint: { risk: 0, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '炉火烧了两个时辰，铁匠按废铁给了你四枚铜板。他说这料发闷，熔起来比寻常的铁吃力。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '铁匠敲了半晌忽然停手，把铁推回给你：换半斗米吧，莫再问。他转身便关了铺门。',
+            tone: 'rare',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'weigh_scale',
+        label: '借杆秤称一称',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你借了杆秤。那铁比同样粗细的铁重出小半斤，秤房的老头说，这样的料他从前来过一块。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '秤砣压断了绳，秤杆也折了。你赔了半日工夫，只把那截铁的锈色记在了心里。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1750,6 +2085,60 @@ export const MORTAL_EARLY = [
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: -1 },
               { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'throw_stone',
+        label: '朝回声里扔石子',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '石子掷进回声里，回音跟着一串乱响，像是还有别的声音在里头跟着你掷。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '石子反弹回来砸在你脚背上，肿了三天。你蹲在谷口，把那几声回音数完了才起身。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'climb_echo',
+        label: '顺着回声去找崖口',
+        hint: { risk: 2, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 2 }],
+        outcomes: [
+          {
+            weight: 45,
+            text: '你攀着石棱爬到半腰，回声忽然从另一面涌回来。凉风里带着一点草药的苦味。',
+            tone: 'rare',
+            effects: [
+              { op: 'grantHerb', id: 'herb_hanlu', count: 1 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 55,
+            text: '半山无路，你下到天黑，衣裳被荆棘挂得稀烂。回声倒是听清了一路。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
             ],
           },
         ],
@@ -1802,6 +2191,61 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'seal_jug',
+        label: '寻个瓷罐封存',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 2 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你在洞口寻了个粗瓷罐，垫着湿布把那一滴裹好，一路上贴身带着，掌心凉了两日才散。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '瓷罐在石阶上磕裂，乳白淌了满手，凉得你半边身子都麻了。三日不敢沾荤食。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'feed_fire',
+        label: '滴进火里炼气',
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 45,
+            text: '乳白落进火里，火焰猛地窜高三寸。你借着那股热把气机推过一道关，浑身汗透。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'addToxicity', value: 8 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 55,
+            text: '火里蹿起一股白烟，熏得你咳了半日，胸口像压了块烧红的炭。那股燥气三年未散。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 12 },
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1843,6 +2287,59 @@ export const MORTAL_EARLY = [
             text: '一夜未眠，第二日你倒在台阶上睡了一整天，被执事拎着耳朵骂醒。',
             tone: 'red',
             effects: [{ op: 'add', target: { k: 'simPoints' }, value: -2 }],
+          },
+        ],
+      },
+      {
+        id: 'follow_sound',
+        label: '循声摸到那户人家',
+        hint: { risk: 2, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 45,
+            text: '你循着那声轻响摸到巷尾。门缝里透出一线微光，一柄断了的旧枪正被人用布慢慢擦着。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 55,
+            text: '巷子七拐八绕，你摸到天亮也没找着那户人家。回程时腿抽了筋，靠墙睡到晌午。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'copy_rhythm',
+        label: '照它的节拍调息',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把呼吸放到和那声轻响一样长，一夜过去，胸中那口浊气竟自己散开了。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '那节拍太快，你憋着跟了三回，胸口发闷。记下来的只有"快"这一个字。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
           },
         ],
       },
@@ -1889,6 +2386,60 @@ export const MORTAL_EARLY = [
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 3 },
               { op: 'add', target: { k: 'simPoints' }, value: -1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'serve_tea',
+        label: '留下替长老续水扫地',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 55,
+            text: '你续到第三壶，长老忽然开口："仙"不是高处的东西。你听得背心发凉，手里的水却没洒。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你扫到深夜，长老始终没再开口。你抱着扫帚在阶上睡了一宿，冻得直打哆嗦。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ask_path',
+        label: '追着问：走得远的是谁',
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '长老看了你很久，只说：你自己。他起身走了，廊下的石案上多了一张纸，上头一个"行"字。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '长老脸色沉下来，命你在阶下站到天亮，说修行人先管住嘴。你罚站三日不许进廊。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 1 },
             ],
           },
         ],
@@ -1940,6 +2491,61 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'take_hide',
+        label: '取了它的皮',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 45,
+            text: '你把火生起来，剥下那张焦黑的皮，硝了三日，换得两枚灵石和半袋米。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 55,
+            text: '皮没硝透，焦毛的气味招来了林子里的东西。你丢下皮跑出来，从此不肯再走那条路。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'bury_mother',
+        label: '先把母兽埋了',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 60,
+            text: '你挖了个坑把母兽埋了。兽崽在坑边守了半日，天黑前才跟着你走，一路不肯落远。',
+            tone: 'rare',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '土太硬，你挖到天黑也没填上坑。兽崽不肯走，母兽的尸首却把山里的东西引了来。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -1983,6 +2589,59 @@ export const MORTAL_EARLY = [
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 3 },
               { op: 'add', target: { k: 'simPoints' }, value: -2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'count_steps',
+        label: '一步一步数着走',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你数到第三千步时梦忽然轻了。醒来还记得那个数，脚底也还留着踩实了的触感。',
+            tone: 'rare',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你数着数着乱了步子，石径在脚下变得极长。醒来时天已大亮，这一夜记不清半分。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'sit_down',
+        label: '就地坐下不走了',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你在石径正中坐下。梦里没有风，没有饿，也没有老，只有石头的凉气从掌心渗上来。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '你坐下没多久，脚下这条路就一寸寸热起来。你是被烫醒的，掌心一片红。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 1 },
             ],
           },
         ],
@@ -2036,6 +2695,61 @@ export const MORTAL_EARLY = [
           },
         ],
       },
+      {
+        id: 'ask_name',
+        label: '问他：仙从何来',
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 45,
+            text: '他笑了，说仙不过是一个不必再问的人。话音落下，你眉心那点凉意又停了很久。',
+            tone: 'xian',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 1 },
+            ],
+          },
+          {
+            weight: 55,
+            text: '他收住笑，只看了你一眼。那一眼像山压下来，你膝头一软跪在原地，再抬头已是天明。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'offer_soup',
+        label: '转身去端一碗热汤',
+        hint: { risk: 1, reward: 2 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 2 },
+        disabledReason: '需模拟点≥2',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 1 }],
+        outcomes: [
+          {
+            weight: 50,
+            text: '你回屋舀了一碗热汤端出来。他接过时看了你很久，临走前在门槛上留了一句话。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 50,
+            text: '汤端出来时石上已经空了，碗底结着一层薄霜。你把汤泼在阶下，霜化了，人没了。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+            ],
+          },
+        ],
+      },
     ],
   }),
   defineEvent({
@@ -2080,6 +2794,68 @@ export const MORTAL_EARLY = [
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: -2 },
               { op: 'gainInsight', value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rewrite',
+        label: '用树枝再写一遍',
+        hint: { risk: 2, reward: 3 },
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 2 }],
+        outcomes: [
+          {
+            weight: 45,
+            text: '你照着记忆写了七遍。写到第七遍落笔时，手腕自己动了一下，雪上的字比老者的还稳。',
+            tone: 'xian',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 30,
+            text: '你写出的只是自己记得的样子。天亮时雪化了，你盯着那片水看了很久，看不出是什么。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 25,
+            text: '写到第五遍，指尖忽然发烫，字迹越写越重，掌心那层皮燎得起了泡。醒来时雪上什么也没有。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -2 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'burn_it',
+        label: '添把火，把它烧掉',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '火苗一起，那个字化成一缕极淡的烟。你把灰扫进雪里，当夜睡得极沉，一个梦也没做。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 1 },
+              { op: 'gainInsight', value: 1 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '火没点着。你呵着气把那个字擦掉，擦到指尖发麻。这一夜什么也没想明白，睡得也不安稳。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: -1 },
+              { op: 'gainInsight', value: 1 },
             ],
           },
         ],

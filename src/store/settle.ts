@@ -204,12 +204,15 @@ export function legacyInjection(meta: MetaState): {
   cave: MetaState['cave'];
   pastPartner: PastPartnerRef | null;
   goldBoost: number;
+  /** 已购道统 id：起手包（功法持有 / 丹方已知 / 药材持有） */
+  doctrines: string[];
 } {
   const top = meta.pastPartners[0];
   return {
     cave: meta.cave,
     pastPartner: top ? { name: top.name, seed: top.seed, level: top.level } : null,
     goldBoost: goldBoostOf(meta.achievements),
+    doctrines: meta.doctrines,
   };
 }
 

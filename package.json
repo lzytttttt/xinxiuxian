@@ -28,7 +28,8 @@
     "content:names:check": "tsx tools/gen-names.ts --check",
     "content:validate": "tsx tools/validate-content.ts",
     "content:stats": "tsx tools/validate-content.ts --stats",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run content:validate && npm run sim:golden && npm run sim:balance"
+    "a11y:contrast": "tsx tools/contrast.ts",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run content:names:check && npm run content:validate && npm run a11y:contrast && npm run sim:golden && npm run sim:balance"
   },
   "dependencies": {
     "immer": "^11.1.18",

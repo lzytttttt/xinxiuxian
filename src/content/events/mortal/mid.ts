@@ -1566,6 +1566,59 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'soak',
+        label: '以真气慢慢浸它',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你连坐七日只喂一口真气，器灵应得极轻，纹路一寸寸亮起来。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 2 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '真气被它抽得七零八落，你收功时眼前发黑，器身只温了一夜。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 1 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'seal',
+        label: '结印把器灵封回去',
+        enable: { op: 'cmp', target: { k: 'artifactBonus' }, cmp: '>=', value: 105 },
+        disabledReason: '需法宝加成≥105（器已被你养开，舍得落印）',
+        cost: [{ op: 'sub', target: { k: 'artifactBonus' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你落印封住它，任它再躁也出不来，器身反倒比原先更稳。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '印压得太重，器灵在你掌心碎了一角，成色从此差了一截。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1602,6 +1655,59 @@ export const MORTAL_MID = [
               { op: 'sub', target: { k: 'simPoints' }, value: 4 },
               { op: 'sub', target: { k: 'luck' }, value: 3 },
               { op: 'gainInsight', value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'withdraw',
+        label: '递名帖退赛',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你托人递上名帖，说伤病未愈。榜首空悬，你安安稳固坐到了散场。',
+            tone: 'ev2',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '避战的名头传得比败绩还快，此后同辈再没人肯认真约你上台。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'add', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'dissect',
+        label: '闭门拆他的剑谱',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 6 },
+        disabledReason: '需悟性≥6（拆谱要拿悟性去顶）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 2 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把他三招拆成九段，第七段看了整整一月，看完便改了自家的步法。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '你推演到第三夜便停不住，索性烧了笔记，人也熬得形容枯槁。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 1 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
             ]
           }
         ]
@@ -1643,6 +1749,61 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'take',
+        label: '收他入门，亲自教',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3（三年衣食与拜师礼）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '少年叩了三个头，从此唤你一声师尊。你教一段，他学一段，夜里常有新的念头。',
+            tone: 'gold',
+            effects: [
+              { op: 'bond', action: 'create', type: '师徒' },
+              { op: 'bondAct', action: 'affinity', type: '师徒', value: 12 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '他入门第三年急于求进，反噬了根基。你赔上几年心力，还是送他回了家。',
+            tone: 'red',
+            effects: [
+              { op: 'bond', action: 'create', type: '师徒' },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'escort',
+        label: '只送他一程',
+        hint: { risk: 2, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你送到半路便分道。他临去回头喊了一声，你把这声喊记了很久。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '他没走出那条山径。消息传回来那日，你正把少年的木牌收进匣里。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1681,6 +1842,62 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'haggle',
+        label: '讨价，只买半卷口诀',
+        enable: { op: 'toxicityAtMost', value: 40 },
+        disabledReason: '需丹毒≤40（身上毒太重，撑不住他的法子）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 2 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '半卷也是卷。你按残缺处硬推三夜，气机果然快了一截，只是经脉发凉。',
+            tone: 'ev3',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'addToxicity', value: 6 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '残缺处接不上气机，反噬先到。你吐了口黑血，从此见不得这路法门。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 10 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'antidote',
+        label: '照他的路子反推一味解药',
+        enable: { op: 'cmp', target: { k: 'toxicity' }, cmp: '>=', value: 20 },
+        disabledReason: '需丹毒≥20（先有毒，才谈得上解）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你以毒攻毒地推了五日，居然真磨出一味压得住那门功的丸药。',
+            tone: 'gold',
+            effects: [
+              { op: 'grantPill', id: 'pill_liaodu_1', count: 1 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '推至第四味便乱了性，你把药材与灵石一齐赔进去，人也病了半季。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 1 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1716,6 +1933,60 @@ export const MORTAL_MID = [
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: 2 },
               { op: 'sub', target: { k: 'luck' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'decoy',
+        label: '引开他们，让车队先走',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把刀口往自己这边一引，三辆车先过了峡口。回头时你自己也只擦破点皮。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 4 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '你把人引过了山，人却也追着你不放。领队只保住了车，你赔了半年修为。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bargain',
+        label: '喊话：货留下，人放走',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3（先押一笔买命钱）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '对方掂了掂你抛过去的分量，挥手让开峡口。车队保住了大半货。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '对方笑说这点买命钱太薄，顺手连你的买命钱也收了，转身便走。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 },
+              { op: 'gainInsight', value: 1 }
             ]
           }
         ]
@@ -1758,6 +2029,61 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'sheath',
+        label: '把暗劲引进剑鞘',
+        enable: { op: 'cmp', target: { k: 'artifactBonus' }, cmp: '>=', value: 102 },
+        disabledReason: '需法宝加成≥102（得有件东西替你吃这一记）',
+        cost: [{ op: 'sub', target: { k: 'artifactBonus' }, value: 2 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '鞘身嗡了一声便哑下去，长老浑然未觉，还在把你的引气之法夸给众人听。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'simPoints' }, value: 3 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '鞘裂了一道细纹。暗劲只卸去一半，你仍被震得退了七步。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'report',
+        label: '不动声色，回去报掌门',
+        enable: { op: 'inSect' },
+        disabledReason: '需身在宗门',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把那句暗话一字不漏地递上去，掌门当场记你一功，赏下三日静室。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainContribution', value: 25 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '你既没挡，也没出首。掌门疑你，长老也疑你，从此两道门里都不好做人。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1797,6 +2123,59 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'terms',
+        label: '约他改日，先把话说开',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4（备一份体面的见面礼）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把两辈子的账摊在桥栏上算了半日。他听完收了剑，说下辈子再找你。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 3 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '话说到一半他便拔了剑。这一场没打成，礼倒是白送了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+              { op: 'sub', target: { k: 'luck' }, value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'wait',
+        label: '立于桥头，等他先动',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你先出的手，也先收得住。两招之后他认了，转身走进雨里。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '你先沉不住气。他一剑挑开你的剑，转身便走，你独自在雨里站了半夜。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1829,6 +2208,59 @@ export const MORTAL_MID = [
             effects: [
               { op: 'sub', target: { k: 'simPoints' }, value: 5 },
               { op: 'gainInsight', value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'grind',
+        label: '一寸寸磨它，磨到自己认不出',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 8 },
+        disabledReason: '需悟性≥8（磨镜面要拿悟数去磨）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 3 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你磨了七天，镜面由模糊转清，最后照出的那张脸你已认不出是恨是放下了。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '镜面碎在半途，碎光扎进眼里。你捂着眼走了下山，此后见不得水面。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 1 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'shard',
+        label: '敲下一角，炼进随身之物',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你把镜角磨成薄片贴在剑脊上，此后与人交手时，总能早半息看见对方的起手。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 4 },
+              { op: 'add', target: { k: 'artifactBonus' }, value: 2 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '镜角割破了你的掌心，血滴在塔下三层才止住。那点预知，代价是七日高热。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'gainInsight', value: 1 }
             ]
           }
         ]
@@ -1868,6 +2300,59 @@ export const MORTAL_MID = [
             effects: [{ op: 'gainInsight', value: 3 }]
           }
         ]
+      },
+      {
+        id: 'sealed',
+        label: '拆那封没署名的',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '落款处空着，写的却是一处真秘境。你去了，出来时袖里多了一枚丹。',
+            tone: 'gold',
+            effects: [
+              { op: 'grantPill', id: 'pill_juqi_2', count: 1 },
+              { op: 'add', target: { k: 'simPoints' }, value: 3 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '那是一处做局的地方。你在阵中待了半日才脱身，出来时衣襟带血。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'addToxicity', value: 8 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'reply_all',
+        label: '一一回帖，只留一份人情',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3（回帖要备回礼）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你照着名册一份份回礼，一个也没得罪，也没赴一个约。回门时心是静的。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '回得太齐，反倒像看不上人家。几位在坊间说你架子大，帖子转眼就少了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1901,6 +2386,59 @@ export const MORTAL_MID = [
             text: '泉水烫得古怪，你泡到半途便上岸，只觉精神尚可。',
             tone: 'ev2',
             effects: [{ op: 'add', target: { k: 'simPoints' }, value: 4 }]
+          }
+        ]
+      },
+      {
+        id: 'drain',
+        label: '在泉边架炉，熬尽药性',
+        enable: { op: 'toxicityAtMost', value: 60 },
+        disabledReason: '需丹毒≤60（身上毒重，架炉先熏倒自己）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你守着火熬了三日，泉气尽入经脉。那股暖劲随后半夜退净，留下一身燥。',
+            tone: 'ev3',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 7 },
+              { op: 'addToxicity', value: 10 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '火候压不住泉里的杂气，你熬到第二日便收了摊，泉眼也被熏得浑了。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 5 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'stele',
+        label: '不取水，在泉边立一方石刻',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你刻下泉眼方位与水脉走向。后来者照着石刻找路，你在山门外也得了些好名声。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '有人嫌你多事，夜里把石刻砸了。你拾了半块回去，心里空落落的。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 1 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
           }
         ]
       }
@@ -1943,6 +2481,62 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'hold_post',
+        label: '哪边都不沾，只守住自己那摊',
+        enable: { op: 'inSect' },
+        disabledReason: '需身在宗门',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '封山的第三日，你把手里那摊事理得一点不乱。事后论功，你这一笔排在前头。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainContribution', value: 22 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '两边都觉得你该站队。你谁也没帮上，事后分差事时也没人替你说一句话。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 1 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'leave_sect',
+        label: '交腰牌下山，等分出胜负再说',
+        enable: { op: 'inSect' },
+        disabledReason: '需身在宗门（散修无腰牌可交）',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你把腰牌搁在空席上就走。半年后分出胜负，两边都当你早看清了。',
+            tone: 'ev2',
+            effects: [
+              { op: 'sectLeave', defect: true },
+              { op: 'gainInsight', value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '你没走成。两边都当你是对方的耳目，搜山时先拿你开的路。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -1982,6 +2576,59 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'restore',
+        label: '照碑上残方推一张丹方',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 12 },
+        disabledReason: '需悟性≥12（补全一张丹方要压进去三十年功夫）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 5 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把缺的两味药性推了出来，解毒真方就此补全，此后丹毒不再是你一个人的枷锁。',
+            tone: 'gold',
+            effects: [
+              { op: 'learnRecipe', id: 'rec_jiedu' },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '推出来的两味彼此相冲，炉温一上来就炸。你伤了手，也伤了丹房里的旧规矩。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 1 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'carry_furnace',
+        label: '把残炉整个搬走',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '炉身虽残，火口还在。你以真火养了半年，炉底竟又焐出一炉丹气。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 3 },
+              { op: 'pct', target: { k: 'artifactPower' }, value: 3 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '炉里还压着前人未散的丹气，你搬了半座山回来，从此体内总有一线焦苦。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'addToxicity', value: 6 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -2017,6 +2664,59 @@ export const MORTAL_MID = [
             effects: [
               { op: 'add', target: { k: 'artifactBonus' }, value: 1 },
               { op: 'add', target: { k: 'simPoints' }, value: 5 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'divine',
+        label: '不碰器，先在池边布下禁制',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你先封了四壁再探手。古器被你镇住，没有再撞池。此后多年它都没再动过。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 3 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '禁制布早了，阵脚被池水一浸便散。你绕着它转了半月，终究没敢伸手。',
+            tone: 'ev2',
+            effects: [
+              { op: 'gainInsight', value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'repair',
+        label: '先补池壁，再起器',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 5 },
+        disabledReason: '需模拟点≥5（雇人夯土补壁的工钱）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 5 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你把池壁夯了三层才下去。古器起出时还带着新石的湿气，一路无惊。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 2 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '夯得越实，压在底下的旧禁制反越反弹。你被掀出池口，器仍在泥里。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'addToxicity', value: 6 }
             ]
           }
         ]
@@ -2059,6 +2759,59 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'warn',
+        label: '先喊一嗓子，把人引到镇上去',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你一声喝退了几个过路的修士，那邪修一时也不敢当众动手。他记下了你的脸。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+              { op: 'add', target: { k: 'simPoints' }, value: 3 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '没人肯管这桩闲事，反倒有人替你应了一句"多管闲事"。他趁乱脱身，你白忙一场。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'counter',
+        label: '以毒攻毒，反吸他的血气',
+        enable: { op: 'cmp', target: { k: 'toxicity' }, cmp: '>=', value: 45 },
+        disabledReason: '需丹毒≥45（身上毒太轻，压不住他的血气）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 2 }],
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你把他散出的血气尽数吞下。那一夜涨得极快，识海里却多了一股不属于你的腥甜。',
+            tone: 'ev3',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+              { op: 'addToxicity', value: 14 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '他的血气比你重，反压过来。你吐了三口黑血，人瘫在原地，他却笑着走了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 6 },
+              { op: 'addToxicity', value: 10 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -2094,6 +2847,59 @@ export const MORTAL_MID = [
             effects: [
               { op: 'pct', target: { k: 'cultivation' }, value: 6 },
               { op: 'sub', target: { k: 'luck' }, value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'ask_elder',
+        label: '去问师门，这是不是他们的手笔',
+        enable: { op: 'inSect' },
+        disabledReason: '需身在宗门（散修无处可问）',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '师门查了半月，认出那是他们早年埋下的一粒引子。他们替你压下了，也换了条件。',
+            tone: 'gold',
+            effects: [
+              { op: 'gainContribution', value: 18 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '长辈听完只说"你自己惹的"。他们给了一张压制的方子，条件是你闭口不言。',
+            tone: 'ev2',
+            effects: [
+              { op: 'grantPill', id: 'pill_liaodu_1', count: 1 },
+              { op: 'sub', target: { k: 'insight' }, value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'share',
+        label: '引它入功法里试',
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你把那点温热引入主脉，它与旧法相合，气机自此生生不息。',
+            tone: 'ev3',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'grantArt', id: 'art_ni_tian' }
+            ]
+          },
+          {
+            weight: 50,
+            text: '它与旧法相冲，夜里疼得你几乎咬碎牙。此后每进一层，都要先熬过这一关。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'addToxicity', value: 10 }
             ]
           }
         ]
@@ -2142,6 +2948,61 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'pill_break',
+        label: '取一枚破境丹硬撞关隘',
+        enable: { op: 'hasPill', id: 'pill_pojing_1', countAtLeast: 1 },
+        disabledReason: '需破境丹×1',
+        cost: [{ op: 'sub', target: { k: 'pill', id: 'pill_pojing_1' }, value: 1 }],
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '药力撞开关隘那一瞬，你听见壁后有门轴转动的声音。开是开了，门却不是你的。',
+            tone: 'ev4',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'addToxicity', value: 12 }
+            ]
+          },
+          {
+            weight: 45,
+            text: '药力在半途散尽，反震把你的气机搅成一团。出关时你比入关时更虚。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 6 },
+              { op: 'addToxicity', value: 8 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'open_gate',
+        label: '照着关隘的样子，在身上另开一道',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你不再冲它，改而在别处凿出同一条路。绕了远路，却走通了。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '凿到一半你才明白，壁上那道痕就是为凿它的人留的。你收手时已经伤了根基。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -2181,6 +3042,59 @@ export const MORTAL_MID = [
             ]
           }
         ]
+      },
+      {
+        id: 'trace',
+        label: '顺着它散去的方向追',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你追出三百里，那道清气在半空凝了一瞬。你没抓住它，却把这一瞬记进了骨头里。',
+            tone: 'ev4',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'add', target: { k: 'xianqi' }, value: 1 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '你追到云海尽头便失了足，踏空坠下半日，醒来时身上青一块紫一块。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 6 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bury',
+        label: '以土掩之，不去惊动',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4（布一场遮蔽的坛场）',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把那一线清气原样埋了。此后它每隔数年自行浮起一寸，你也不再去看。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '坛场布得不够净，那一线清气一夜散尽。你培土的地方只剩一个空坑。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+              { op: 'gainInsight', value: 1 }
+            ]
+          }
+        ]
       }
     ]
   }),
@@ -2217,6 +3131,63 @@ export const MORTAL_MID = [
             effects: [
               { op: 'add', target: { k: 'root' }, value: 8 },
               { op: 'add', target: { k: 'luck' }, value: 5 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'take_partial',
+        label: '赴约，但只取丹不办事',
+        enable: { op: 'toxicityAtMost', value: 50 },
+        disabledReason: '需丹毒≤50（身上毒太重，炉边坐不住）',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 4 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 50,
+            text: '你吞了丹便起身走人。他没有拦，只是笑着看你背影。走出三里，你才发觉手在抖。',
+            tone: 'ev4',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+              { op: 'addToxicity', value: 16 }
+            ]
+          },
+          {
+            weight: 50,
+            text: '他早备好了替身的血。你替那人办了十日的事，醒来时已在另一个山谷。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+              { op: 'addToxicity', value: 20 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'expose',
+        label: '把信原样送到正道几家去',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 12 },
+        disabledReason: '需气运≥12（递这样的帖子要有人肯接）',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 5 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '几家一合计议，老魔的庄口被围了半月。你名不见经传，却记在了几份人情账上。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+              { op: 'gainInsight', value: 2 }
+            ]
+          },
+          {
+            weight: 40,
+            text: '几家互相推诿，反倒把你的住址递了出去。你连夜搬家，半年不敢用真名。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 }
             ]
           }
         ]

@@ -2,14 +2,15 @@ import { create } from 'zustand';
 import { upgradeCave } from '../engine/meta';
 import { defaultMeta } from './persistence';
 import { bestPowerOf, legacyInjection, settleRun } from './settle';
-import type { MetaState, UiSettings } from '../engine/types/meta';
+import { buyDoctrine } from './doctrines';
+import type { MetaState } from '../engine/types/meta';
 import type { RoomId } from '../engine/types/run';
 
 export interface MetaStoreState {
   meta: MetaState;
   replace: (meta: MetaState) => void;
   upgrade: (room: RoomId) => void;
-  patchSettings: (patch: Partial<UiSettings>) => void;
+  buy: (doctrineId: string, cost: number) => void;
   reset: () => void;
 }
 
@@ -25,8 +26,12 @@ export const useMetaStore = create<MetaStoreState>((set, get) => ({
     set({ meta: { ...meta, cave: res.cave, legacyPoints: res.points } });
   },
 
-  patchSettings: (patch) =>
-    set({ meta: { ...get().meta, settings: { ...get().meta.settings, ...patch } } }),
+  buy: (doctrineId, cost) => {
+    const { meta } = get();
+    const res = buyDoctrine(doctrineId, cost, meta.legacyPoints, meta.doctrines);
+    if (!res.ok) return;
+    set({ meta: { ...meta, doctrines: res.doctrines, legacyPoints: res.points } });
+  },
 
   reset: () => set({ meta: defaultMeta() }),
 }));

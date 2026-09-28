@@ -757,11 +757,28 @@ function main(): void {
   let choiceTotal = 0;
   let multiChoice = 0;
   let choicePoints = 0;
+  const singleChoice: string[] = [];
+  const choiceHistogram = new Map<number, number>();
   for (const ev of content.events) {
     byCategory.set(ev.category, (byCategory.get(ev.category) ?? 0) + 1);
     choiceTotal += ev.choices.length;
     choicePoints += ev.choices.length;
     if (ev.choices.length >= 2) multiChoice += 1;
+    else singleChoice.push(ev.id);
+    choiceHistogram.set(ev.choices.length, (choiceHistogram.get(ev.choices.length) ?? 0) + 1);
+  }
+
+  /** 验收 7.1：事件 ≥200 且平均选项 ≥2.4。缺口必须可复跑地报出来，而不是靠人肉数 */
+  const MIN_EVENTS = 200;
+  const MIN_AVG_CHOICES = 2.4;
+  const avgChoices = choiceTotal / content.events.length;
+  const densityFailures: string[] = [];
+  if (content.events.length < MIN_EVENTS) {
+    densityFailures.push(`事件数 ${content.events.length} < ${MIN_EVENTS}`);
+  }
+  if (avgChoices < MIN_AVG_CHOICES) {
+    const short = Math.ceil(MIN_AVG_CHOICES * content.events.length - choiceTotal);
+    densityFailures.push(`平均选项数 ${avgChoices.toFixed(2)} < ${MIN_AVG_CHOICES}（还差 ${short} 个选项点）`);
   }
 
   const errors = findings.filter((f) => f.level === 'error');
@@ -772,6 +789,16 @@ function main(): void {
     console.log(`事件数: ${content.events.length}`);
     console.log(`选项总数: ${choiceTotal}，平均选项数: ${(choiceTotal / content.events.length).toFixed(2)}`);
     console.log(`多选项事件（≥2）: ${multiChoice}`);
+    console.log(
+      `选项数分布: ${[...choiceHistogram.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([n, c]) => `${n} 选项 ×${c}`)
+        .join(' / ')}`,
+    );
+    if (singleChoice.length > 0) {
+      console.log(`单选事件（验收 7.1 的改写对象，${singleChoice.length} 个）:`);
+      for (const id of singleChoice) console.log(`  ${id}`);
+    }
     console.log(`事件池分布: ${[...byCategory.entries()].map(([k, v]) => `${k} ${v}`).join(' / ')}`);
     console.log(`覆盖事件: ${content.events.length - unreachable.length}/${content.events.length}`);
     if (content.arts?.length) {
@@ -822,8 +849,12 @@ function main(): void {
     const tag = f.level === 'error' ? 'ERROR' : 'WARN ';
     console.log(`${tag} [${f.rule}] ${f.detail}`);
   }
-  console.log(`\n校验完成：${errors.length} error / ${warnings.length} warning`);
-  process.exitCode = errors.length > 0 ? 1 : 0;
+  if (densityFailures.length > 0) {
+    for (const f of densityFailures) console.log(`ERROR [7.1 选项密度] ${f}`);
+  }
+  const errCount = errors.length + densityFailures.length;
+  console.log(`\n校验完成：${errCount} error / ${warnings.length} warning`);
+  process.exitCode = errCount > 0 ? 1 : 0;
 }
 
 main();

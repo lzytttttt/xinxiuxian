@@ -695,6 +695,54 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'wipe',
+        label: '推平重起',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '墙、梁、瓦，一样样推平。往后再回这座山，你只能站在空地上——可气海里那点挂碍也跟着散了。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '推到一半你才发觉自己没了落脚处。天黑后你坐在空院的瓦砾上，第一次认真想了想"回"这个字。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'squat',
+        label: '在塌檐下坐一夜',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你在瓦砾里坐到天亮。想起的事比想通的少，可身体里那点横着的硬气软了下去。',
+            effects: [{ op: 'gainInsight', value: 4 }],
+          },
+          {
+            weight: 35,
+            text: '夜太静，静得你把从前绕着走的事都绕了一遍。天亮时你很累，心里却很干净。',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -997,6 +1045,62 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'shelter',
+        label: '替山下的人挡一挡',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你在城上守了整夜，把逸散的星气尽数挡在城外。天亮时城里无恙，怀里的旧器却从此暗了下去。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 8 },
+              { op: 'mul', target: { k: 'artifactPower' }, value: 0.95 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '城是护住了，你自己却让一片星屑穿体。回山路上咳了半月，那点余烬烧在肺里，一时化不掉。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+              { op: 'addToxicity', value: 12 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'wait_next',
+        label: '按住不动，等下一颗',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 5 },
+        disabledReason: '需气运≥5',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 5 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '第二颗落在东南，你一步跨到，正落在怀里的旧器上。那一夜器鸣了整宿，像在跟什么东西打招呼。',
+            tone: 'rare',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 6 },
+              { op: 'add', target: { k: 'artifactBonus' }, value: 5 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '第二颗没有落。等了七天，星散尽了，你还守在坑边不肯走。回程路上你想不起自己在等什么。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1132,6 +1236,62 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'gainInsight', value: 2 },
               { op: 'addToxicity', value: 10 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'vow',
+        label: '趁这口气立一个誓',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 5 },
+        disabledReason: '需悟性≥5',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 5 }],
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你把往后要做的事写成三条，写完一字不改。誓立得死，往后的路反倒走得轻了。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '誓写到第三条你停了笔——那一条你不敢写。执笔的手悬了半宿，气机也跟着散了半寸。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'seek_one',
+        label: '下山找一个还在的人',
+        enable: { op: 'bondReady', type: '挚友', minAffinity: 55, countAtLeast: 1 },
+        disabledReason: '需挚友好感≥55',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你找到了他/她，没说什么，只是并排坐了一下午。走回山时，你又是个人，又不那么像个人。',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '挚友', value: 20 },
+              { op: 'bondAct', action: 'levelUp', type: '挚友' },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '旧处只剩一个扫地的老人。他/她说人去年冬天就没了。你替两个人把话都说完，才上的山。',
+            tone: 'red',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '挚友', value: 8 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+              { op: 'gainInsight', value: 4 },
             ],
           },
         ],
@@ -1301,6 +1461,59 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'take_beast',
+        label: '按住那头异种',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你按住了那头异种，从它腹中取出一枚暗珠。兽群散去前，齐齐朝你低了一次头。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'artifactPower' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你扑出去时，它撞散了整片兽群。待你回山，洞府前只剩踩烂的药圃，替它挡了一夜的弟子不见了。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'feed',
+        label: '分一份兽粮出去',
+        enable: { op: 'hasHerb', id: 'herb_qingxin', countAtLeast: 2 },
+        disabledReason: '需清心花×2',
+        cost: [{ op: 'sub', target: { k: 'herb', id: 'herb_qingxin' }, value: 2 }],
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你把两株清心花碾碎撒在兽群中间。它们吃得很安静，天亮前自行散了，一株也没带走。',
+            effects: [
+              { op: 'grantHerb', id: 'herb_yunwu', count: 2 },
+              { op: 'gainInsight', value: 4 },
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '一头老鹿没吃，低头拱开了药圃的篱笆。你追出去时，圃里少了三成，而兽群已经散尽。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1344,6 +1557,55 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'add', target: { k: 'simPoints' }, value: 6 },
               { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'dye',
+        label: '以血把剑穗染深',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 3 },
+        disabledReason: '需模拟点≥3',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 3 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你割破指尖，把血浸进那根旧穗。系上剑柄的一瞬，剑锋的声音果然沉了一分。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '血浸得太多，剑穗从此发闷。此后每次拔剑你都要先想起这件事，手就慢上半线。',
+            tone: 'red',
+            effects: [
+              { op: 'add', target: { k: 'artifactBonus' }, value: 2 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ask',
+        label: '问他家的后人：怎么走的',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '那孩子说，最后那年他一直喊你的名字。你听完半晌没出声，只把剑穗收得更紧了些。',
+            effects: [{ op: 'gainInsight', value: 5 }],
+          },
+          {
+            weight: 40,
+            text: '那孩子恨你，恨了半辈子，一句好话也没给。你没有辩，把剑穗留下，转身走出门。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
             ],
           },
         ],
@@ -1393,6 +1655,59 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'find_last',
+        label: '去寻最后一个还没走的',
+        enable: { op: 'bondReady', type: '挚友', minAffinity: 40, countAtLeast: 1 },
+        disabledReason: '需挚友好感≥40',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你翻过三座山找到了他/她。两个人坐着把该说的说完，然后各自闭关，谁也没提下次。',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '挚友', value: 20 },
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '找到的是一座空坟，守坟人说"三年前就搬走了"。你在原地坐到天黑，回程比来时快得多。',
+            tone: 'red',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '挚友', value: -5 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+              { op: 'gainInsight', value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'tomb',
+        label: '垒一座无名的冢',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你在山头垒了一座空冢，刻了十四个名字，末一格空着。你把那一格留给了自己。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '冢垒到一半塌了。你没有再垒，只把名字一个个刻在石上，剩下的空着——空着比填满更难受。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1438,6 +1753,60 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'gainInsight', value: 6 },
               { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'name_self',
+        label: '用你名字里的字做匾',
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '匾额上刻了你名字里的那两个字。此后天下每提这一脉，便要想起你一次。',
+            tone: 'gold',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 10 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '有弟子小声问："祖师若先走，这一脉还算不算？"你答不上来，当夜在山门坐到天亮。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'hand_over',
+        label: '把山门交出去',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 6 },
+        disabledReason: '需气运≥6',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 6 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把山门交给了门里最稳的那一个，自己搬进后山。凡俗的烦心事从此都归了他，你只管走自己的路。',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 6 },
+              { op: 'add', target: { k: 'luck' }, value: 8 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '接手那人撑了三十年就散了。你没有回头收拾，只把山门重新关起来，在里面坐到天亮。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
+              { op: 'gainInsight', value: 6 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
             ],
           },
         ],
@@ -1492,6 +1861,60 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'share',
+        label: '分给脚下的门人',
+        enable: { op: 'inSect' },
+        disabledReason: '需身在宗门',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把那缕气引给了三个弟子。三人同时跪下，你自己胸口空了一块——这样的缘，再遇不知是哪一年。',
+            effects: [
+              { op: 'gainInsight', value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '引到一半，几只手同时抢那缕气。你收了手，剩下的散在夜空里，弟子们从此不再提这一夜。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 5 },
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'let_go',
+        label: '摊开手，放它走',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '冷泉从指缝穿过去，什么也没留下，只在掌心化成一截藤。此后多年你仍常想起那一夜的凉。',
+            tone: 'xian',
+            effects: [
+              { op: 'grantHerb', id: 'herb_xianling', count: 1 },
+              { op: 'gainInsight', value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '你松手时它一滞，反卷回来擦过你的道基。一道白痕留在气海上，很久才淡下去。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 10 },
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1537,6 +1960,59 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'sub', target: { k: 'simPoints' }, value: 5 },
               { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rubbing',
+        label: '只把墙上的图拓下来',
+        enable: { op: 'cmp', target: { k: 'insight' }, cmp: '>=', value: 4 },
+        disabledReason: '需悟性≥4',
+        cost: [{ op: 'sub', target: { k: 'insight' }, value: 4 }],
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 65,
+            text: '你把半幅图临在绢上，一笔不差。回山后照着它走了一遍旧关——通了，走得比从前稳。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 35,
+            text: '临到一半你才发觉自己抄的是自己的笔法，不是殿里的。撕了重来，天已黑，绢也废了。',
+            tone: 'red',
+            effects: [
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rebury',
+        label: '把殿重新埋回去',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你用原土把殿门掩回原样，什么也没带。走远后回头，地面平平整整，像没有人来过。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 7 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '掩土时塌了一角，你补了三天三夜也没填平。这件事像根刺，此后每次路过都要绕着走。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
             ],
           },
         ],
@@ -1597,6 +2073,62 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'seize',
+        label: '借它硬冲一次关',
+        enable: { op: 'cmp', target: { k: 'toxicity' }, cmp: '>=', value: 35 },
+        disabledReason: '需丹毒≥35',
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你不但不压它，反引着它上冲。旧关被撞开一道缝，代价是识海从此合不严。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 10 },
+              { op: 'addToxicity', value: 15 },
+              { op: 'sub', target: { k: 'luck' }, value: 2 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '它反手把你拽了进去。你在识海里打了个转才醒，醒来时外间的天已经黑透了。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 20 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'confess',
+        label: '认了：它说得对',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你对着虚空说了一句"你说得对"，说完反倒静了。它要的是你抵赖，不是你认。',
+            tone: 'gold',
+            effects: [
+              { op: 'clamp', target: { k: 'toxicity' }, hi: 45 },
+              { op: 'gainInsight', value: 6 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你认了，它便攀着这句话不肯松手。道心上从此多了一个洞，填它的人只有你自己。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 12 },
+              { op: 'gainInsight', value: 3 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1639,6 +2171,58 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'sub', target: { k: 'simPoints' }, value: 4 },
               { op: 'gainInsight', value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'stay_put',
+        label: '就在此处收尾',
+        hint: { risk: 1, reward: 1 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你住了下来。村口的人给你留了门，从此不必再赶路——路本来也不是为了走到头的。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '住到第三年，村里的人开始替你张罗后事。你这才明白"留下"也是要力气的。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'with_one',
+        label: '带一个后辈同行',
+        enable: { op: 'bondReady', type: '师徒', minAffinity: 60, countAtLeast: 1 },
+        disabledReason: '需师徒好感≥60',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你带他/她走完这一程。回来时他/她已能自己上路了，你在山门口停下，没有再往前。',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '师徒', value: 25 },
+              { op: 'bondAct', action: 'levelUp', type: '师徒' },
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '走到雪线他/她染了寒。你折返送人回去，一来一回，这段路再没有走完。',
+            tone: 'red',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '师徒', value: 10 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'gainInsight', value: 3 },
             ],
           },
         ],
@@ -1692,6 +2276,63 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'seal_self',
+        label: '以血气封住自己',
+        enable: { op: 'cmp', target: { k: 'simPoints' }, cmp: '>=', value: 4 },
+        disabledReason: '需模拟点≥4',
+        cost: [{ op: 'sub', target: { k: 'simPoints' }, value: 4 }],
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你以自身气血封住气脉，邪火进不来也出不去。这一夜你坐在月下，一根汗毛也没动过。',
+            tone: 'gold',
+            effects: [
+              { op: 'clamp', target: { k: 'toxicity' }, hi: 30 },
+              { op: 'add', target: { k: 'luck' }, value: 5 },
+              { op: 'pct', target: { k: 'cultivation' }, value: 3 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '封到亥时你便撑不住，封印反噬。经脉裂了半年，你靠熬把这半年熬了过去。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 10 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'trace_back',
+        label: '顺着邪火找源头',
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你逆着邪火追出百里，斩了那个借月发力的东西。血月西沉时，你衣上一点火星都不剩。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 11 },
+              { op: 'addToxicity', value: 18 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '你追到一条早已干涸的河床上，那东西早走了。回程的月亮还没红，你就在原地坐到天亮。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1736,6 +2377,59 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'gainInsight', value: 4 },
               { op: 'add', target: { k: 'simPoints' }, value: 5 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'bury_it',
+        label: '埋进土里，标个方位',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你没刻字，只把一柄用旧的剑埋进土里，标了方位。多少年后有人会挖到它，认作哪位前辈的遗物。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 7 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '埋完你却忘了埋在何处。此后每次路过那片林子，都要找上一阵。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+              { op: 'gainInsight', value: 4 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'to_one',
+        label: '只留一句给那个人',
+        enable: { op: 'bondReady', type: '道侣', minAffinity: 50, countAtLeast: 1 },
+        disabledReason: '需道侣好感≥50',
+        hint: { risk: 1, reward: 3 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你把最后那句话留在崖上，没写名字。他/她来时天正好亮了，看完在崖下站了半日才走。',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '道侣', value: 25 },
+              { op: 'add', target: { k: 'luck' }, value: 3 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '落笔时你改了主意，把整句抹了。有些话一旦写下就成了证词，你不想留。',
+            tone: 'red',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '道侣', value: 10 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
+              { op: 'gainInsight', value: 5 },
             ],
           },
         ],
@@ -1786,6 +2480,61 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'sub', target: { k: 'root' }, value: 4 },
               { op: 'gainInsight', value: 6 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'turn_back',
+        label: '不接，把背留给他',
+        hint: { risk: 1, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你转过身去，把背后的空当整个留给他。他在你身后站了很久，最终没有出手。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你到底没忍住，回了头。就是那一下，气机被他最后半剑削去一角，几年都没养回来。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'addToxicity', value: 12 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'share_trib',
+        label: '约他同渡一场劫',
+        enable: { op: 'cmp', target: { k: 'luck' }, cmp: '>=', value: 8 },
+        disabledReason: '需气运≥8',
+        cost: [{ op: 'sub', target: { k: 'luck' }, value: 8 }],
+        hint: { risk: 3, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '你把话说得很难听：劫云只有一片，谁都别想一个人躲。他骂了一句，然后答应了。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 12 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 5 },
+              { op: 'add', target: { k: 'luck' }, value: 4 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '他听完大笑，转身就走。你们都知道，这一战往后不会再有第二次。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 5 },
+              { op: 'gainInsight', value: 6 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 2 },
             ],
           },
         ],
@@ -1841,6 +2590,60 @@ export const MORTAL_LATE = [
           },
         ],
       },
+      {
+        id: 'shut',
+        label: '退出来，不取',
+        hint: { risk: 0, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你在门前坐了一夜，天亮自己退了出来。门依旧开着，缝里那点东西已经凉了。',
+            effects: [
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'gainInsight', value: 4 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你退得太急，出来时肩上落了层白。风吹不掉，此后你再没去过那扇门。',
+            tone: 'red',
+            effects: [
+              { op: 'sub', target: { k: 'luck' }, value: 4 },
+              { op: 'addToxicity', value: 10 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'touch',
+        label: '伸手去摸那道人形浅痕',
+        enable: { op: 'toxicityAtMost', value: 50 },
+        disabledReason: '需丹毒≤50',
+        hint: { risk: 2, reward: 3 },
+        outcomes: [
+          {
+            weight: 55,
+            text: '手掌按上去，浅痕里透出一线旧气，顺着你的手臂走到气海。那不是你的东西，可它认得你。',
+            tone: 'xian',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 10 },
+              { op: 'addToxicity', value: 15 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 45,
+            text: '指腹才碰上去，那道痕就往你身上攀。攀到一半你才想起收手，代价是从此每逢阴天就手冷。',
+            tone: 'red',
+            effects: [
+              { op: 'addToxicity', value: 18 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
+              { op: 'sub', target: { k: 'luck' }, value: 3 },
+            ],
+          },
+        ],
+      },
     ],
   }),
 
@@ -1887,6 +2690,61 @@ export const MORTAL_LATE = [
             effects: [
               { op: 'sub', target: { k: 'simPoints' }, value: 5 },
               { op: 'gainInsight', value: 6 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'call_disciples',
+        label: '唤门人上山同看',
+        enable: { op: 'bondReady', type: '同门', minAffinity: 45, countAtLeast: 1 },
+        disabledReason: '需同门好感≥45',
+        hint: { risk: 1, reward: 3 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你叫了门人上山。光落下来时满山都是人，没有一个人哭——他们知道你看见的是什么。',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '同门', value: 20 },
+              { op: 'add', target: { k: 'luck' }, value: 8 },
+              { op: 'gainInsight', value: 3 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '来得太杂，有几个当场跪下就再没起来。你把光关在体外，此后多年不肯再召人上山。',
+            tone: 'red',
+            effects: [
+              { op: 'bondAct', action: 'affinity', type: '同门', value: -5 },
+              { op: 'addToxicity', value: 8 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'close_out',
+        label: '把这道光关在体外',
+        hint: { risk: 2, reward: 2 },
+        outcomes: [
+          {
+            weight: 60,
+            text: '你引着光走了一遍全身，又让它走。送的时候像送一位客人出门——客气，但也清楚。',
+            tone: 'gold',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 8 },
+              { op: 'add', target: { k: 'luck' }, value: 6 },
+              { op: 'gainInsight', value: 2 },
+            ],
+          },
+          {
+            weight: 40,
+            text: '你引它入体，它反客为主，锁了你三处关窍。理清用了十年，那十年你一步没离开山门。',
+            tone: 'red',
+            effects: [
+              { op: 'pct', target: { k: 'cultivation' }, value: 5 },
+              { op: 'addToxicity', value: 15 },
+              { op: 'sub', target: { k: 'simPoints' }, value: 4 },
             ],
           },
         ],
